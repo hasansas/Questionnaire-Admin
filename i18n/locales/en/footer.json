@@ -1,0 +1,30 @@
+{
+  "footer": {
+    "about": {
+      "p1": "SuperBazi is a modern BaZi and Chinese Metaphysics platform designed to help you understand your true energy, personality blueprint, and life potential through your Four Pillars of Destiny.",
+      "p2": "Whether you want deeper clarity in career, wealth, relationships, health, business decisions, or personal growth, SuperBazi gives you actionable insights based on classical and modern BaZi principles."
+    },
+    "follow": "Follow",
+    "contact": {
+      "title": "Contact"
+    },
+    "quickLinks": {
+      "title": "Quick Links"
+    },
+    "payments": {
+      "title": "Payment Methods",
+      "groups": {
+        "creditCard": "Credit Card",
+        "merchant": "Payment Merchant",
+        "bankTransfer": "Bank Transfer",
+        "wallet": "Wallet"
+      }
+    },
+    "bottom": {
+      "copyright": "© Copyright SuperBazi {year}. All rights reserved.",
+      "poweredBy": "Powered by",
+      "vemobo": "Vemobo Technology",
+      "note": "Feel free to contact Vemobo if you’d like to have software like SuperBazi or any other custom software."
+    }
+  }
+}
