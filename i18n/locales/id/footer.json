@@ -1,0 +1,30 @@
+{
+  "footer": {
+    "about": {
+      "p1": "SuperBazi adalah platform BaZi dan Metafisika Tiongkok modern yang dirancang untuk membantu Anda memahami energi sejati, blueprint kepribadian, dan potensi hidup melalui Four Pillars of Destiny.",
+      "p2": "Baik Anda ingin kejelasan dalam karier, kekayaan, relasi, kesehatan, keputusan bisnis, maupun pengembangan diri, SuperBazi memberikan insight yang bisa langsung dipraktikkan berdasarkan prinsip BaZi klasik dan modern."
+    },
+    "follow": "Ikuti",
+    "contact": {
+      "title": "Kontak"
+    },
+    "quickLinks": {
+      "title": "Tautan Cepat"
+    },
+    "payments": {
+      "title": "Metode Pembayaran",
+      "groups": {
+        "creditCard": "Kartu Kredit",
+        "merchant": "Merchant Pembayaran",
+        "bankTransfer": "Transfer Bank",
+        "wallet": "Dompet Digital"
+      }
+    },
+    "bottom": {
+      "copyright": "© Hak cipta SuperBazi {year}. Semua hak dilindungi.",
+      "poweredBy": "Didukung oleh",
+      "vemobo": "Vemobo Technology",
+      "note": "Silakan hubungi Vemobo jika Anda ingin membuat software seperti SuperBazi atau custom software lainnya."
+    }
+  }
+}
