@@ -20,6 +20,11 @@
           width="276"
           rail-width="84"
         >
+          <!-- <OrgSidebar
+            :rail="rail && !isMobile"
+            :active-path="route.path"
+            @toggle-rail="rail = !rail"
+          /> -->
           <AdminSidebar
             :rail="rail && !isMobile"
             :active-path="route.path"
