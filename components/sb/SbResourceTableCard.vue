@@ -1,237 +1,285 @@
 <!-- /components/sb/SbResourceTableCard.vue -->
 <template>
-  <v-card rounded="xl" variant="outlined" class="data-table overflow-hidden">
-    <v-card-text class="pa-0">
-      <!-- Error -->
-      <div v-if="state.error" class="pa-10 text-center">
-        <v-avatar
-          size="56"
-          rounded="xl"
-          color="error"
-          variant="tonal"
-          class="mb-4"
-        >
-          <v-icon icon="lucide:triangle-alert" size="26" />
-        </v-avatar>
+  <div class="sb-resource-page">
+    <AdminPageHeader
+      v-if="showHeader"
+      :title="pageTitle"
+      :subtitle="pageSubtitle"
+      :primary-text="primaryText"
+      :primary-icon="primaryIcon"
+      :primary-disabled="primaryDisabled"
+      :primary-loading="primaryLoading"
+      @primary="$emit('primary')"
+    >
+      <template #actions>
+        <!-- Forward slot from page -->
+        <slot name="page-action">
+          <!-- fallback: default primary button (existing behavior) -->
+          <v-btn
+            v-if="primaryText"
+            color="primary"
+            rounded="lg"
+            :prepend-icon="primaryIcon"
+            @click="$emit('primary')"
+          >
+            {{ primaryText }}
+          </v-btn>
+        </slot>
+      </template>
+    </AdminPageHeader>
 
-        <div class="text-h6 font-weight-black mb-1">{{ errorTitle }}</div>
-        <div class="text-body-2 text-medium-emphasis mb-5">
-          {{ state.errorMessage || fallbackErrorMessage }}
-        </div>
-
-        <v-btn
-          color="primary"
-          rounded="lg"
-          prepend-icon="lucide:refresh-cw"
-          :loading="state.loading"
-          @click="refresh({ reset: true })"
-        >
-          Retry
-        </v-btn>
-      </div>
-
-      <!-- Loading (first load) -->
-      <div v-else-if="state.loading && !state.loaded" class="pa-4">
-        <v-skeleton-loader type="table" />
-      </div>
-
-      <!-- Empty -->
-      <div v-else-if="isEmpty" class="pa-10 text-center">
-        <slot name="empty">
+    <v-card rounded="xl" variant="outlined" class="data-table overflow-hidden">
+      <v-card-text class="pa-0">
+        <!-- Error -->
+        <div v-if="state.error" class="pa-10 text-center">
           <v-avatar
             size="56"
             rounded="xl"
-            color="primary"
+            color="error"
             variant="tonal"
             class="mb-4"
           >
-            <v-icon :icon="emptyIcon" size="26" />
+            <v-icon icon="lucide:triangle-alert" size="26" />
           </v-avatar>
 
-          <div class="text-h6 font-weight-black mb-1">{{ emptyTitle }}</div>
-          <div class="text-body-2 text-medium-emphasis mb-4">
-            {{ emptySubtitle }}
+          <div class="text-h6 font-weight-black mb-1">{{ errorTitle }}</div>
+          <div class="text-body-2 text-medium-emphasis mb-5">
+            {{ state.errorMessage || fallbackErrorMessage }}
           </div>
 
           <v-btn
-            v-if="emptyPrimaryText"
             color="primary"
             rounded="lg"
-            prepend-icon="lucide:plus"
-            @click="$emit('empty:primary')"
+            prepend-icon="lucide:refresh-cw"
+            :loading="state.loading"
+            @click="refresh({ reset: true })"
           >
-            {{ emptyPrimaryText }}
+            Retry
           </v-btn>
-        </slot>
-      </div>
+        </div>
 
-      <!-- Data -->
-      <v-card v-else variant="flat" class="rounded-0">
-        <!-- Head -->
-        <div class="d-flex align-center ga-2 pa-3 flex-wrap">
-          <slot name="head-left" />
+        <!-- Loading (first load) -->
+        <div v-else-if="state.loading && !state.loaded" class="pa-4">
+          <v-skeleton-loader type="table" />
+        </div>
 
-          <v-spacer />
+        <!-- Empty -->
+        <div v-else-if="isEmpty" class="pa-10 text-center">
+          <slot name="empty">
+            <v-avatar
+              size="56"
+              rounded="xl"
+              color="primary"
+              variant="tonal"
+              class="mb-4"
+            >
+              <v-icon :icon="emptyIcon" size="26" />
+            </v-avatar>
 
-          <div class="d-flex align-center ga-2 flex-wrap">
-            <v-form @submit.prevent="onSearchSubmit">
-              <v-text-field
-                v-model="state.search"
-                density="compact"
-                variant="outlined"
-                rounded="lg"
-                hide-details
-                clearable
-                :placeholder="searchPlaceholder"
-                class="sb-search-form"
-                @click:clear="onSearchClear"
-              >
-                <template #prepend-inner>
-                  <v-icon
-                    icon="lucide:search"
-                    size="18"
-                    class="text-medium-emphasis"
-                  />
-                </template>
-              </v-text-field>
-            </v-form>
+            <div class="text-h6 font-weight-black mb-1">{{ emptyTitle }}</div>
+            <div class="text-body-2 text-medium-emphasis mb-4">
+              {{ emptySubtitle }}
+            </div>
 
             <v-btn
-              v-if="showFilter"
-              rounded="lg"
-              variant="outlined"
+              v-if="emptyPrimaryText"
               color="primary"
-              height="40"
-              @click="filterDrawer = true"
+              rounded="lg"
+              prepend-icon="lucide:plus"
+              @click="$emit('empty:primary')"
             >
-              <v-icon icon="lucide:sliders-horizontal" size="18" class="me-2" />
-              Filters
-              <v-chip
-                v-if="activeFilterCount > 0"
-                size="x-small"
-                rounded="lg"
-                color="primary"
-                variant="tonal"
-                class="ms-2 font-weight-bold"
-              >
-                {{ activeFilterCount }}
-              </v-chip>
+              {{ emptyPrimaryText }}
             </v-btn>
-
-            <slot name="head-right" />
-          </div>
+          </slot>
         </div>
 
-        <v-divider class="sb-divider" />
+        <!-- Data -->
+        <v-card v-else variant="flat" class="rounded-0">
+          <!-- Head -->
+          <div class="d-flex align-center ga-2 pa-3 flex-wrap">
+            <slot name="head-left">
+              <div class="min-w-0">
+                <div class="text-subtitle-1 font-weight-black">
+                  All {{ pageTitle }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ items.length }} shown · {{ pagination.total }} total
+                </div>
+              </div>
+            </slot>
 
-        <v-data-table
-          :headers="columns"
-          :items="items"
-          :item-key="itemKey as any"
-          class="sb-table"
-          :loading="state.loading"
-          hide-default-footer
-          @click:row="onRowClick"
-        >
-          <!-- Column templates:
-               - consumer can override: #item.<key>
-               - we pass our own column meta (NOT vuetify internal header) for stable typing
-          -->
-          <template
-            v-for="col in columns"
-            :key="String(col.key)"
-            v-slot:[`item.${String(col.key)}`]="slotProps"
+            <v-spacer />
+
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-form @submit.prevent="onSearchSubmit">
+                <v-text-field
+                  v-model="state.search"
+                  density="compact"
+                  variant="outlined"
+                  rounded="lg"
+                  hide-details
+                  clearable
+                  :placeholder="searchPlaceholder"
+                  class="sb-search-form"
+                  @click:clear="onSearchClear"
+                >
+                  <template #prepend-inner>
+                    <v-icon
+                      icon="lucide:search"
+                      size="18"
+                      class="text-medium-emphasis"
+                    />
+                  </template>
+                </v-text-field>
+              </v-form>
+
+              <v-btn
+                v-if="showFilter"
+                rounded="lg"
+                variant="outlined"
+                color="primary"
+                height="40"
+                @click="filterDrawer = true"
+              >
+                <v-icon
+                  icon="lucide:sliders-horizontal"
+                  size="18"
+                  class="me-2"
+                />
+                Filters
+                <v-chip
+                  v-if="activeFilterCount > 0"
+                  size="x-small"
+                  rounded="lg"
+                  color="primary"
+                  variant="tonal"
+                  class="ms-2 font-weight-bold"
+                >
+                  {{ activeFilterCount }}
+                </v-chip>
+              </v-btn>
+
+              <slot name="head-right" />
+            </div>
+          </div>
+
+          <v-divider class="sb-divider" />
+
+          <v-data-table
+            :headers="columns"
+            :items="items"
+            :item-key="itemKey as any"
+            class="sb-table"
+            :loading="state.loading"
+            hide-default-footer
+            @click:row="onRowClick"
           >
-            <slot
-              :name="`item.${String(col.key)}`"
-              :item="slotProps.item as TItem"
-              :value="slotProps.value"
-              :column="col"
+            <!-- Allow override any column (stable slot props: we pass `col` not Vuetify internal header) -->
+            <template
+              v-for="col in columns"
+              :key="String(col.key)"
+              v-slot:[`item.${String(col.key)}`]="slotProps"
             >
-              <SbCellRenderer
-                :col="col"
+              <slot
+                :name="`item.${String(col.key)}`"
                 :item="slotProps.item as TItem"
                 :value="slotProps.value"
-              />
-            </slot>
-          </template>
-
-          <!-- Actions column slot -->
-          <template v-if="actionsKey" v-slot:[`item.${actionsKey}`]="{ item }">
-            <div class="d-flex justify-end ga-2">
-              <slot name="actions" :item="item as TItem">
-                <v-btn
-                  icon
-                  variant="tonal"
-                  rounded="lg"
-                  width="28"
-                  height="28"
-                  class="pa-0"
-                  @click.stop="$emit('edit', item)"
-                >
-                  <v-icon icon="lucide:pencil" size="14" />
-                </v-btn>
-
-                <v-btn
-                  v-if="canDelete"
-                  icon
-                  variant="tonal"
-                  rounded="lg"
-                  width="28"
-                  height="28"
-                  class="pa-0"
-                  color="error"
-                  @click.stop="openDeleteDialog(item)"
-                >
-                  <v-icon icon="lucide:trash-2" size="14" />
-                </v-btn>
+                :column="col"
+              >
+                <SbCellRenderer
+                  :col="col"
+                  :item="slotProps.item as TItem"
+                  :value="slotProps.value"
+                />
               </slot>
-            </div>
-          </template>
-        </v-data-table>
+            </template>
 
-        <v-divider />
+            <!-- Actions column -->
+            <template
+              v-if="actionsKey"
+              v-slot:[`item.${actionsKey}`]="slotProps"
+            >
+              <slot
+                :name="`item.${String(actionsKey)}`"
+                v-bind="{
+                  item: slotProps.item as TItem,
+                  value: slotProps.value,
+                  column: slotProps.column as any,
+                }"
+              >
+                <slot name="actions" :item="slotProps.item as TItem">
+                  <div class="d-flex justify-end ga-2">
+                    <v-btn
+                      icon
+                      variant="tonal"
+                      rounded="lg"
+                      width="28"
+                      height="28"
+                      class="pa-0"
+                      @click.stop="$emit('edit', slotProps.item)"
+                    >
+                      <v-icon icon="lucide:pencil" size="14" />
+                    </v-btn>
 
-        <!-- Footer -->
-        <div
-          class="d-flex align-center justify-space-between flex-wrap ga-3 pa-4"
-        >
-          <div class="text-body-2 text-medium-emphasis">
-            Total:
-            <span class="font-weight-bold">{{ pagination.total }}</span> items
-          </div>
+                    <v-btn
+                      v-if="canDelete"
+                      icon
+                      variant="tonal"
+                      rounded="lg"
+                      width="28"
+                      height="28"
+                      class="pa-0"
+                      color="error"
+                      @click.stop="openDeleteDialog(slotProps.item)"
+                    >
+                      <v-icon icon="lucide:trash-2" size="14" />
+                    </v-btn>
+                  </div>
+                </slot>
+              </slot>
+            </template>
+          </v-data-table>
 
-          <div class="d-flex align-center ga-3 flex-wrap">
-            <div class="d-flex align-center ga-2">
-              <div class="text-body-2 text-medium-emphasis">Items per page</div>
+          <v-divider />
 
-              <v-select
-                class="sb-perpage"
-                :items="perPageOptions"
-                density="compact"
-                variant="outlined"
+          <!-- Footer -->
+          <div
+            class="d-flex align-center justify-space-between flex-wrap ga-3 pa-4"
+          >
+            <v-spacer></v-spacer>
+            <div class="d-flex align-center ga-3 flex-wrap">
+              <div class="d-flex align-center ga-2">
+                <div class="text-body-2 text-medium-emphasis">
+                  Items per page
+                </div>
+                <v-select
+                  class="sb-perpage"
+                  :items="perPageOptions"
+                  density="compact"
+                  variant="outlined"
+                  rounded="lg"
+                  hide-details
+                  :model-value="pagination.perPage"
+                  @update:model-value="onPerPageChanged"
+                />
+              </div>
+
+              <v-pagination
+                v-if="(pagination.lastPage ?? 1) > 1"
+                :length="pagination.lastPage ?? 1"
+                :total-visible="10"
+                :model-value="pagination.currentPage"
+                size="40"
                 rounded="lg"
-                hide-details
-                :model-value="pagination.perPage"
-                @update:model-value="onPerPageChanged"
+                @update:model-value="onPageChanged"
               />
             </div>
-
-            <v-pagination
-              v-if="(pagination.lastPage ?? 1) > 1"
-              :length="pagination.lastPage ?? 1"
-              :total-visible="10"
-              :model-value="pagination.currentPage"
-              size="40"
-              rounded="lg"
-              @update:model-value="onPageChanged"
-            />
           </div>
-        </div>
-      </v-card>
-    </v-card-text>
+        </v-card>
+      </v-card-text>
+    </v-card>
 
-    <!-- Filters drawer (UI is provided by page via slot; logic lives here) -->
+    <!-- Filters drawer -->
     <ClientOnly>
       <v-navigation-drawer
         v-model="filterDrawer"
@@ -272,6 +320,66 @@
             Apply
           </v-btn>
         </div>
+      </v-navigation-drawer>
+    </ClientOnly>
+
+    <!-- Optional Right Panel (for details/add/edit) -->
+    <ClientOnly>
+      <v-navigation-drawer
+        v-if="enablePanel"
+        v-model="panelOpen"
+        location="right"
+        :width="panelWidth"
+        temporary
+      >
+        <!-- <div class="pa-4 d-flex align-center justify-space-between ga-3">
+        <div class="text-h6 font-weight-black">{{ panelTitle }}</div>
+        <v-btn icon variant="text" @click="panelOpen = false">
+          <v-icon icon="lucide:x" />
+        </v-btn>
+      </div>
+
+      <v-divider />
+
+      <div class="pa-4">
+        <slot name="panel" :close="closePanel" />
+      </div> -->
+        <!-- Drawer Header -->
+        <template v-slot:prepend>
+          <v-toolbar color="transparent">
+            <h3 class="text-h6 font-weight-bold ml-4">{{ panelTitle }}</h3>
+            <v-spacer></v-spacer>
+            <div class="pr-4">
+              <template v-if="$slots['panel-actions']">
+                <div class="d-flex justify-end ga-2">
+                  <slot name="panel-actions" :close="closePanel">
+                    <v-btn
+                      icon
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      v-bind="props"
+                      class="mr-2"
+                      @click="closePanel"
+                    >
+                      <v-icon size="20" icon="lucide:x" />
+                    </v-btn>
+                  </slot>
+                </div>
+              </template>
+            </div>
+          </v-toolbar>
+          <v-divider />
+        </template>
+
+        <!-- Drawer Content -->
+        <div class="pa-4">
+          <slot name="panel" :close="closePanel" />
+        </div>
+
+        <template v-slot:append>
+          <v-card variant="flat" class="pa-2"></v-card>
+        </template>
       </v-navigation-drawer>
     </ClientOnly>
 
@@ -322,7 +430,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-card>
+  </div>
 </template>
 
 <script setup lang="ts" generic="TItem extends Record<string, any>">
@@ -367,13 +475,27 @@ type DataTableSlotProps = {
 };
 
 defineSlots<{
+  // header action slot
+  "page-action"?: () => any;
+
+  // dynamic column slots (optional but recommended to silence TS for `#item.xxx`)
   [key: `item.${string}`]: (p: DataTableSlotProps) => any;
+
+  // table slots
   actions?: (p: { item: TItem }) => any;
+
+  // filters drawer
   filters?: (p: {
     draft: AnyObj;
     applied: AnyObj;
     set: (k: string, v: any) => void;
   }) => any;
+
+  // panel slots (if you have panel feature)
+  panel?: (p: { close: () => void }) => any;
+  "panel-actions"?: (p: { close: () => void }) => any;
+
+  // existing slots (add the ones you use so Volar knows them)
   empty?: () => any;
   "head-left"?: () => any;
   "head-right"?: () => any;
@@ -381,57 +503,82 @@ defineSlots<{
 
 const props = withDefaults(
   defineProps<{
+    // header
+    showHeader?: boolean;
+    pageTitle: string;
+    pageSubtitle?: string;
+    primaryText?: string;
+    primaryIcon?: string;
+    primaryDisabled?: boolean;
+    primaryLoading?: boolean;
+
+    // table
     store: ResourceStore<TItem>;
     columns: SbTableColumn<TItem>[];
-
-    // query building
-    buildQuery?: (ctx: { search: string; filters: AnyObj }) => string | null; // returns "a=b&c=d"
+    buildQuery?: (ctx: { search: string; filters: AnyObj }) => string | null;
     initialFilters?: AnyObj;
 
-    // behavior
     autoFetch?: boolean;
     searchDebounceMs?: number;
 
-    // ui/table
     itemKey?: keyof TItem | string;
     actionsKey?: string | null;
     perPageOptions?: number[];
     showFilter?: boolean;
     searchPlaceholder?: string;
 
-    // empty
     emptyIcon?: string;
     emptyTitle?: string;
     emptySubtitle?: string;
     emptyPrimaryText?: string;
 
-    // error strings
     errorTitle?: string;
 
     // deletion
     deleteAction?: (item: TItem) => Promise<any>;
     deleteTitle?: string;
     deleteLabelKey?: string;
+
+    // optional panel
+    enablePanel?: boolean;
+    panelTitle?: string;
+    panelWidth?: number | string;
   }>(),
   {
+    showHeader: true,
+    pageSubtitle: "",
+    primaryText: "",
+    primaryIcon: "lucide:plus",
+    primaryDisabled: false,
+    primaryLoading: false,
+
     autoFetch: true,
     searchDebounceMs: 350,
+
     itemKey: "id",
     actionsKey: "actions",
     perPageOptions: () => [10, 25, 50, 100],
     showFilter: true,
     searchPlaceholder: "Search",
+
     emptyIcon: "lucide:inbox",
     emptyTitle: "No data found",
     emptySubtitle: "Try adjusting your search or filters.",
     emptyPrimaryText: "",
+
     errorTitle: "Couldn’t load data",
+
     deleteTitle: "Delete item?",
     deleteLabelKey: "code",
+
+    enablePanel: false,
+    panelTitle: "",
+    panelWidth: 460,
   },
 );
 
 const emit = defineEmits<{
+  (e: "primary"): void;
   (e: "edit", item: TItem): void;
   (e: "loaded"): void;
   (e: "deleted", item: TItem): void;
@@ -441,7 +588,6 @@ const emit = defineEmits<{
 const fallbackErrorMessage =
   "Something went wrong while fetching data. Please try again.";
 
-/** Local state */
 const state = reactive({
   loading: false,
   loaded: false,
@@ -452,12 +598,21 @@ const state = reactive({
 
 const filterDrawer = ref(false);
 
-/** Filters */
+// Panel
+const panelOpen = ref(false);
+function openPanel() {
+  panelOpen.value = true;
+}
+function closePanel() {
+  panelOpen.value = false;
+}
+defineExpose({ refresh, openPanel, closePanel });
+
+// Filters
 const baseFilters = computed<AnyObj>(() => props.initialFilters ?? {});
 const filtersDraft = reactive<AnyObj>({ ...baseFilters.value });
 const filtersApplied = reactive<AnyObj>({ ...baseFilters.value });
 
-/** Pagination + items from store */
 const pagination = computed(
   () =>
     props.store?.data?.pagination ?? {
@@ -490,8 +645,7 @@ const activeFilterCount = computed(() => {
 
 const isEmpty = computed(() => {
   const total = Number(pagination.value.total ?? 0);
-  const search = state.search ? state.search.trim() : "";
-  const hasSearch = search.length > 0;
+  const hasSearch = state.search.trim().length > 0;
   const hasFilters = activeFilterCount.value > 0;
   return (
     total === 0 &&
@@ -503,20 +657,17 @@ const isEmpty = computed(() => {
   );
 });
 
-/** Draft setter */
 function setDraft(key: string, value: any) {
   filtersDraft[key] = value;
 }
 
-/** Query builder */
 function buildQueryString() {
   const fn = props.buildQuery;
-  const search = state.search ? state.search.trim() : "";
-  if (fn) return fn({ search, filters: { ...filtersApplied } });
+  if (fn)
+    return fn({ search: state.search.trim(), filters: { ...filtersApplied } });
   return null;
 }
 
-/** Core fetch pattern */
 async function fetchPage({
   page = 1,
   reset = false,
@@ -551,8 +702,6 @@ function onPageChanged(p: number) {
 
 function onPerPageChanged(v: any) {
   const next = Number(v) || 10;
-  // If your store supports setPerPage, call it. Otherwise, we reset and re-fetch.
-  // NOTE: mutating store.pagination.perPage directly is not ideal; keep this simple for now.
   if (props.store?.data?.pagination)
     (props.store.data.pagination.perPage as any) = next;
   refresh({ reset: true });
@@ -562,13 +711,11 @@ function onRowClick(_: any, row: { item: any }) {
   emit("edit", row.item as TItem);
 }
 
-/** Search (debounced) */
 let searchTimer: any = null;
 
 function onSearchSubmit() {
   refresh({ reset: true });
 }
-
 function onSearchClear() {
   refresh({ reset: true });
 }
@@ -585,7 +732,6 @@ watch(
   },
 );
 
-/** Filters */
 function applyFilters() {
   Object.assign(filtersApplied, { ...filtersDraft });
   filterDrawer.value = false;
@@ -598,12 +744,9 @@ function resetFilters() {
   refresh({ reset: true });
 }
 
-/** Initial fetch */
-if (props.autoFetch) {
-  fetchPage({ page: 1, reset: true });
-}
+if (props.autoFetch) fetchPage({ page: 1, reset: true });
 
-/** Delete logic */
+// Delete
 const canDelete = computed(() => typeof props.deleteAction === "function");
 const deleteDialogOpen = ref(false);
 const deleteTarget = ref<any>(null);
@@ -641,11 +784,11 @@ const SbCellRenderer = defineComponent({
   props: {
     col: { type: Object as any, required: true },
     item: { type: Object as any, required: true },
-    value: { required: false },
+    value: {},
   },
   setup(p) {
     const asText = computed(
-      () => (p.value ?? p.item?.[p.col.key] ?? "") as any,
+      () => (p.value ?? (p.item as any)?.[(p.col as any).key] ?? "") as any,
     );
 
     const formatDate = (
@@ -731,7 +874,7 @@ const SbCellRenderer = defineComponent({
           h(
             "span",
             { class: "text-body-2" },
-            text || String(asText.value ?? ""),
+            text || String(asText.value ?? "—"),
           ),
         ]);
       }

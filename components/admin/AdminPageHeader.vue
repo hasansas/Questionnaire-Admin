@@ -1,23 +1,25 @@
 <template>
   <div class="d-flex align-center justify-space-between ga-3 flex-wrap mb-4">
     <div class="min-w-0">
-      <div class="d-flex align-center ga-2 flex-wrap">
-        <h1 class="text-h5 font-weight-black ma-0">{{ title }}</h1>
+      <slot name="heading">
+        <div class="d-flex align-center ga-2 flex-wrap">
+          <h1 class="text-h5 font-weight-black ma-0">{{ title }}</h1>
 
-        <v-chip
-          v-if="badge"
-          size="small"
-          variant="tonal"
-          color="primary"
-          class="sb-chip"
-        >
-          {{ badge }}
-        </v-chip>
-      </div>
+          <v-chip
+            v-if="badge"
+            size="small"
+            variant="tonal"
+            color="primary"
+            class="sb-chip"
+          >
+            {{ badge }}
+          </v-chip>
+        </div>
 
-      <p v-if="subtitle" class="text-body-2 text-medium-emphasis mt-1 mb-0">
-        {{ subtitle }}
-      </p>
+        <p v-if="subtitle" class="text-body-2 text-medium-emphasis mt-1 mb-0">
+          {{ subtitle }}
+        </p>
+      </slot>
     </div>
 
     <div class="d-flex align-center ga-2 flex-wrap justify-end">
