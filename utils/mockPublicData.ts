@@ -127,7 +127,7 @@ export interface Organization {
 }
 
 export const organizations: Organization[] = [
-  { id: 'org-001', name: 'SMA Negeri 1 Jakarta', code: 'SMA1JKT' },
+  { id: '2a76bd6c-4a7e-443a-847e-b098f79eb933', name: 'SMA Negeri 1 Jakarta', code: 'SMA1JKT' },
   { id: 'org-002', name: 'SMP Negeri 5 Bandung', code: 'SMP5BDG' },
   { id: 'org-003', name: 'SD Islam Al-Hikmah', code: 'SDALH' },
   { id: 'org-004', name: 'SMK Teknologi Nusantara', code: 'SMKTN' },

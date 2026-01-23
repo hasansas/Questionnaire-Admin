@@ -1,562 +1,765 @@
 <template>
-  <v-container class="pa-6">
-    <!-- Header -->
-    <div class="d-flex align-start justify-space-between ga-4 flex-wrap mb-6">
-      <div class="min-w-0">
-        <h1 class="text-h5 font-weight-black mb-1">Organizations</h1>
-        <div class="text-body-2 text-medium-emphasis">
-          Manage organizations, their users, and organization-scoped reports.
-        </div>
-      </div>
+  <div class="sb-Organization">
+    <!-- @vue-generic {import('~/models/organization').OrganizationModel} -->
+    <SbResourceTableCard
+      :key="tableKey"
+      ref="tableRef"
+      page-title="Organizations"
+      page-subtitle="Manage organizations, access, and questionnaire assignments."
+      primary-text="Add Organization"
+      primary-icon="lucide:plus"
+      :store="organizationsStore"
+      :columns="columns"
+      search-placeholder="Search code, name"
+      empty-icon="lucide:ticket-percent"
+      empty-title="No organization found"
+      empty-subtitle="Create your first organization."
+      empty-primary-text="Add Organization"
+      :build-query="buildQuery"
+      :delete-action="handleDelete"
+      delete-title="Delete organization?"
+      delete-label-key="code"
+      enable-panel
+      :panel-title="editorTitle"
+      @primary="openCreate"
+      @edit="openEdit"
+      @empty:primary="openCreate"
+    >
+      <!-- Columns -->
+      <template #item.org="{ item }">
+        <div class="d-flex align-center ga-3">
+          <v-avatar size="36" variant="tonal" rounded="lg" color="primary">
+            <!-- <v-img v-if="item.image" :src="item.image" cover />
+            <v-icon v-else icon="lucide:building-2" size="18" /> -->
+            <v-icon icon="lucide:building-2" size="18" />
+          </v-avatar>
 
-      <div class="d-flex align-center ga-2 flex-wrap">
-        <v-btn
-          rounded="lg"
-          variant="outlined"
-          prepend-icon="lucide:sliders-horizontal"
-        >
-          Filters
-          <v-dialog activator="parent" max-width="760">
-            <template #default="{ isActive }">
-              <v-card rounded="xl">
-                <v-card-title class="d-flex align-center justify-space-between">
-                  <div class="text-subtitle-1 font-weight-bold">Filters</div>
-                  <v-btn icon variant="text" @click="isActive.value = false">
-                    <v-icon icon="lucide:x" />
-                  </v-btn>
-                </v-card-title>
-                <v-divider />
-                <v-card-text class="pa-6">
-                  <v-row class="ga-4" no-gutters>
-                    <v-col cols="12" md="6">
-                      <v-select
-                        v-model="filters.status"
-                        :items="statusItems"
-                        label="Status"
-                        variant="outlined"
-                        rounded="lg"
-                        density="comfortable"
-                        clearable
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-select
-                        v-model="filters.type"
-                        :items="typeItems"
-                        label="Type"
-                        variant="outlined"
-                        rounded="lg"
-                        density="comfortable"
-                        clearable
-                      />
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-select
-                        v-model="filters.timezone"
-                        :items="timezoneItems"
-                        label="Timezone"
-                        variant="outlined"
-                        rounded="lg"
-                        density="comfortable"
-                        clearable
-                      />
-                    </v-col>
-                  </v-row>
-                </v-card-text>
-                <v-divider />
-                <v-card-actions class="pa-4">
-                  <v-btn rounded="lg" variant="text" @click="resetFilters"
-                    >Reset</v-btn
-                  >
-                  <v-spacer />
-                  <v-btn
-                    rounded="lg"
-                    variant="outlined"
-                    @click="isActive.value = false"
-                    >Close</v-btn
-                  >
-                  <v-btn
-                    rounded="lg"
-                    color="primary"
-                    @click="isActive.value = false"
-                    >Apply</v-btn
-                  >
-                </v-card-actions>
-              </v-card>
-            </template>
-          </v-dialog>
-        </v-btn>
-
-        <v-btn
-          rounded="lg"
-          color="primary"
-          prepend-icon="lucide:plus"
-          @click="openCreate"
-        >
-          New Organization
-        </v-btn>
-      </div>
-    </div>
-
-    <!-- Loading -->
-    <template v-if="ui.loading">
-      <v-card rounded="xl">
-        <v-card-title>
-          <v-skeleton-loader type="heading, text" />
-        </v-card-title>
-        <v-divider />
-        <v-card-text>
-          <v-skeleton-loader type="table" />
-        </v-card-text>
-      </v-card>
-    </template>
-
-    <!-- Error -->
-    <template v-else-if="ui.error">
-      <v-card rounded="xl" class="pa-6">
-        <v-alert type="error" variant="tonal" rounded="lg" class="mb-4">
-          {{ ui.error }}
-        </v-alert>
-        <div class="d-flex ga-2 flex-wrap">
-          <v-btn rounded="lg" color="primary" @click="reload">Retry</v-btn>
-          <v-btn rounded="lg" variant="outlined" to="/"
-            >Back to Dashboard</v-btn
-          >
-        </div>
-      </v-card>
-    </template>
-
-    <!-- Data / Empty -->
-    <template v-else>
-      <v-card rounded="xl">
-        <v-card-title
-          class="d-flex align-center justify-space-between ga-3 flex-wrap"
-        >
           <div class="min-w-0">
-            <div class="text-subtitle-1 font-weight-bold">
-              All organizations
+            <div class="text-body-2 font-weight-bold text-truncate">
+              {{ item.name }}
             </div>
-            <div class="text-caption text-medium-emphasis">
-              {{ filtered.length }} shown · {{ organizations.length }} total
+            <div class="text-caption text-medium-emphasis text-truncate">
+              {{ item.website || item.email }}
             </div>
           </div>
+        </div>
+      </template>
 
-          <div class="d-flex align-center ga-2 flex-wrap">
-            <v-text-field
-              v-model="search"
-              density="comfortable"
-              variant="outlined"
-              rounded="lg"
-              prepend-inner-icon="lucide:search"
-              placeholder="Search by name or code..."
-              hide-details
-              class="sb-search"
-            />
-          </div>
-        </v-card-title>
-
-        <v-divider />
-
-        <template v-if="filtered.length === 0">
-          <v-card-text class="pa-10">
-            <div class="d-flex flex-column align-center text-center">
-              <v-avatar size="56" color="primary" variant="tonal" class="mb-3">
-                <v-icon icon="lucide:building-2" />
-              </v-avatar>
-              <div class="text-subtitle-1 font-weight-bold">
-                No organizations found
-              </div>
-              <div class="text-body-2 text-medium-emphasis mt-1 mb-5">
-                Try clearing filters or create your first organization.
-              </div>
-              <div class="d-flex ga-2 flex-wrap justify-center">
-                <v-btn rounded="lg" variant="outlined" @click="resetAll"
-                  >Clear filters</v-btn
-                >
-                <v-btn
-                  rounded="lg"
-                  color="primary"
-                  prepend-icon="lucide:plus"
-                  @click="openCreate"
-                >
-                  New Organization
-                </v-btn>
-              </div>
-            </div>
-          </v-card-text>
-        </template>
-
-        <template v-else>
-          <v-data-table
-            :headers="headers"
-            :items="filtered"
-            item-key="id"
-            density="comfortable"
+      <template #item.category="{ item }">
+        <div class="d-flex flex-wrap ga-2">
+          <v-chip size="small" rounded="lg" variant="tonal">
+            {{ item.category }}
+          </v-chip>
+          <v-chip
+            v-if="item.subCategory"
+            size="small"
+            rounded="lg"
+            variant="outlined"
+            class="text-medium-emphasis"
           >
-            <template #item.name="{ item }">
-              <div class="min-w-0">
-                <div class="font-weight-semibold text-truncate">
-                  {{ item.name }}
-                </div>
-                <div class="text-caption text-medium-emphasis text-truncate">
-                  {{ item.code }}
-                </div>
-              </div>
-            </template>
+            {{ item.subCategory }}
+          </v-chip>
+        </div>
+      </template>
 
-            <template #item.status="{ item }">
-              <v-chip
-                size="small"
-                variant="tonal"
-                :color="item.status === 'active' ? 'success' : 'warning'"
-              >
-                {{ item.status }}
-              </v-chip>
-            </template>
+      <template #item.type="{ item }">
+        <v-chip size="small" rounded="lg" variant="tonal">
+          {{ item.type }}
+        </v-chip>
+      </template>
 
-            <template #item.created_at="{ item }">
-              <span class="text-body-2">{{ formatDate(item.created_at) }}</span>
-            </template>
+      <template #item.contact="{ item }">
+        <div class="d-flex flex-column">
+          <div class="text-body-2 text-truncate">{{ item.email }}</div>
+          <div class="text-caption text-medium-emphasis text-truncate">
+            {{ item.phone || "-" }}
+          </div>
+        </div>
+      </template>
 
-            <template #item.actions="{ item }">
-              <div class="d-flex justify-end">
-                <v-btn
-                  icon
-                  variant="text"
+      <template #item.location="{ item }">
+        <div class="d-flex flex-column">
+          <div class="text-body-2 text-truncate">
+            {{ item.country?.name }} • {{ item.state?.name }} •
+            {{ item.city?.name }}
+          </div>
+          <div class="text-caption text-medium-emphasis text-truncate">
+            {{
+              [item.subdistrict, item.postalCode].filter(Boolean).join(" • ") ||
+              "-"
+            }}
+          </div>
+        </div>
+      </template>
+
+      <template #item.status="{ item }">
+        <v-chip
+          size="small"
+          rounded="lg"
+          :variant="item.status === 'active' ? 'flat' : 'tonal'"
+          :color="
+            item.status === 'active'
+              ? 'success'
+              : item.status === 'inactive'
+                ? 'warning'
+                : 'grey'
+          "
+        >
+          {{ item.status }}
+        </v-chip>
+      </template>
+
+      <template #item.features="{ item }">
+        <div class="d-flex flex-wrap ga-2 justify-end justify-sm-start">
+          <v-chip
+            size="small"
+            rounded="lg"
+            variant="tonal"
+            :color="
+              item.settingsJson?.features?.allowPublicQuestionnaires
+                ? 'primary'
+                : 'grey'
+            "
+          >
+            Public
+          </v-chip>
+
+          <v-chip
+            size="small"
+            rounded="lg"
+            variant="tonal"
+            :color="
+              item.settingsJson?.features?.requireEmailVerification
+                ? 'primary'
+                : 'grey'
+            "
+          >
+            Email Verify
+          </v-chip>
+        </div>
+      </template>
+
+      <template #item.updatedAt="{ item }">
+        <div class="text-caption text-medium-emphasis">
+          {{ formatDateLabel(item.updatedAt) }}
+        </div>
+      </template>
+
+      <template #actions="{ item }">
+        <div class="d-flex justify-end ga-1">
+          <v-btn
+            icon
+            variant="text"
+            :to="`/organizations/${item.id}`"
+            aria-label="View"
+          >
+            <v-icon icon="lucide:arrow-right" />
+          </v-btn>
+
+          <v-btn icon variant="text" aria-label="More actions">
+            <v-icon icon="lucide:more-horizontal" />
+            <v-menu activator="parent" location="bottom end">
+              <v-list density="compact">
+                <v-list-item
                   :to="`/organizations/${item.id}`"
-                  aria-label="View"
-                >
-                  <v-icon icon="lucide:arrow-right" />
-                </v-btn>
+                  title="View details"
+                />
+                <v-list-item title="Edit (UI)" />
+                <v-list-item title="Disable (UI)" />
+              </v-list>
+            </v-menu>
+          </v-btn>
+        </div>
+      </template>
 
-                <v-btn icon variant="text" aria-label="More">
-                  <v-icon icon="lucide:more-vertical" />
-                  <v-menu activator="parent" location="bottom end">
-                    <v-list density="compact">
-                      <v-list-item
-                        :to="`/organizations/${item.id}`"
-                        title="View"
-                      ></v-list-item>
-                      <v-list-item
-                        title="Edit (UI)"
-                        @click="openEdit(item)"
-                      ></v-list-item>
-                      <v-list-item
-                        :title="
-                          item.status === 'active'
-                            ? 'Disable (UI)'
-                            : 'Enable (UI)'
-                        "
-                        @click="openToggle(item)"
-                      />
-                      <v-divider />
-                      <v-list-item
-                        title="Archive (UI)"
-                        @click="openArchive(item)"
-                      ></v-list-item>
-                    </v-list>
-                  </v-menu>
-                </v-btn>
+      <!-- Filters -->
+      <template #filters="{ draft, set }">
+        <v-form @submit.prevent> Coming soon </v-form>
+      </template>
+
+      <!-- Panel content (Create/Edit form) -->
+      <template #panel>
+        <div class="text-body-2 text-medium-emphasis mb-4">
+          Configure organizations, profiles, and settings.
+        </div>
+
+        <v-form ref="DataForm" @submit.prevent="onFormSubmit">
+          <v-row dense>
+            <!-- Basic -->
+            <v-col cols="12">
+              <div class="text-subtitle-1 font-weight-bold mb-2">Basic</div>
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                v-model.trim="form.name"
+                label="Organization Name"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                :rules="[rules.required, rules.min3]"
+                prepend-inner-icon="lucide:building-2"
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-select
+                v-model="form.type"
+                label="Type"
+                :items="typeOptions"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                :rules="[rules.required]"
+                prepend-inner-icon="lucide:layers"
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="form.category"
+                label="Category"
+                :items="categoryOptions"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                :rules="[rules.required]"
+                prepend-inner-icon="lucide:tag"
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model.trim="form.subCategory"
+                label="Sub Category (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                prepend-inner-icon="lucide:tags"
+                clearable
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-textarea
+                v-model.trim="form.description"
+                label="Description (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                auto-grow
+                rows="3"
+                prepend-inner-icon="lucide:align-left"
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <!-- Contact -->
+            <v-col cols="12">
+              <div class="text-subtitle-1 font-weight-bold mb-2 mt-2">
+                Contact
               </div>
-            </template>
-          </v-data-table>
-        </template>
-      </v-card>
+            </v-col>
 
-      <!-- Create / Edit Dialog (UI only) -->
-      <v-dialog v-model="dialogs.form" max-width="760">
-        <v-card rounded="xl">
-          <v-card-title class="d-flex align-center justify-space-between">
-            <div class="text-subtitle-1 font-weight-bold">
-              {{
-                formMode === "create" ? "New organization" : "Edit organization"
-              }}
-            </div>
-            <v-btn icon variant="text" @click="dialogs.form = false">
-              <v-icon icon="lucide:x" />
+            <v-col cols="12">
+              <v-text-field
+                v-model.trim="form.website"
+                label="Website (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                :rules="[rules.urlOptional]"
+                prepend-inner-icon="lucide:globe"
+                clearable
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                v-model.trim="form.email"
+                label="Email"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                :rules="[rules.email]"
+                prepend-inner-icon="lucide:mail"
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                v-model.trim="form.phone"
+                label="Phone (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                prepend-inner-icon="lucide:phone"
+                clearable
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <!-- <v-col cols="12">
+              <v-text-field
+                v-model.trim="form.image"
+                label="Logo/Image URL (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                :rules="[rules.urlOptional]"
+                prepend-inner-icon="lucide:image"
+                clearable
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col> -->
+
+            <!-- Address -->
+            <v-col cols="12">
+              <div class="text-subtitle-1 font-weight-bold mb-2 mt-2">
+                Address
+              </div>
+            </v-col>
+
+            <v-col cols="12">
+              <InputLocationDialog
+                :model-value="location"
+                :initialCountryId="form.countryId"
+                :initialStateId="form.stateId"
+                :initialCityId="form.cityId"
+                label="Location (optional)"
+                @change="setLocation"
+                @update:model-value="(val: any) => updateField(val)"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                v-model.trim="form.postalCode"
+                label="Postal Code (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                prepend-inner-icon="lucide:mailbox"
+                clearable
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                v-model.trim="form.address"
+                label="Address (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                prepend-inner-icon="lucide:home"
+                clearable
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <!-- Settings -->
+            <v-col cols="12">
+              <div class="text-subtitle-1 font-weight-bold mb-2 mt-2">
+                Settings
+              </div>
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                v-model.number="form.settingsJson.latitude"
+                label="Latitude (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                prepend-inner-icon="lucide:locate-fixed"
+                :rules="[rules.numberOptional]"
+                inputmode="decimal"
+                clearable
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                v-model.number="form.settingsJson.longitude"
+                label="Longitude (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                prepend-inner-icon="lucide:locate-fixed"
+                :rules="[rules.numberOptional]"
+                inputmode="decimal"
+                clearable
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                v-model.trim="form.settingsJson.notes"
+                label="Notes (optional)"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+                prepend-inner-icon="lucide:sticky-note"
+                clearable
+                hide-details="auto"
+                class="mb-2"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-card variant="outlined" rounded="xl" class="pa-3 h-100">
+                <div class="text-body-2 font-weight-bold mb-2">Features</div>
+
+                <v-switch
+                  v-model="form.settingsJson.features.allowPublicQuestionnaires"
+                  inset
+                  color="primary"
+                  label="Allow Public Questionnaires"
+                  hide-details
+                />
+
+                <v-switch
+                  v-model="form.settingsJson.features.requireEmailVerification"
+                  inset
+                  color="primary"
+                  label="Require Email Verification"
+                  hide-details
+                />
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-form>
+      </template>
+
+      <template #panel-actions="{ close }">
+        <v-tooltip text="Close" location="bottom">
+          <template #activator="{ props }">
+            <v-btn
+              icon
+              variant="outlined"
+              color="grey"
+              size="small"
+              v-bind="props"
+              @click="close"
+            >
+              <v-icon size="20" icon="lucide:x" />
             </v-btn>
-          </v-card-title>
-          <v-divider />
-          <v-card-text class="pa-6">
-            <v-row class="ga-4" no-gutters>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="form.code"
-                  label="Code"
-                  variant="outlined"
-                  rounded="lg"
-                />
-              </v-col>
-              <v-col cols="12" md="8">
-                <v-text-field
-                  v-model="form.name"
-                  label="Name"
-                  variant="outlined"
-                  rounded="lg"
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="form.type"
-                  :items="typeItems"
-                  label="Type"
-                  variant="outlined"
-                  rounded="lg"
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="form.status"
-                  :items="statusItems"
-                  label="Status"
-                  variant="outlined"
-                  rounded="lg"
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="form.timezone"
-                  :items="timezoneItems"
-                  label="Timezone"
-                  variant="outlined"
-                  rounded="lg"
-                />
-              </v-col>
-            </v-row>
-
-            <v-alert class="mt-4" variant="tonal" type="info" rounded="lg">
-              UI only — saving is not implemented in Phase 1 pages prompt.
-            </v-alert>
-          </v-card-text>
-          <v-divider />
-          <v-card-actions class="pa-4">
-            <v-btn rounded="lg" variant="text" @click="dialogs.form = false"
-              >Cancel</v-btn
+          </template>
+        </v-tooltip>
+        <v-tooltip text="Save" location="bottom">
+          <template #activator="{ props }">
+            <v-btn
+              icon
+              variant="flat"
+              color="primary"
+              size="small"
+              v-bind="props"
+              :loading="saving"
+              @click="handleSave(close)"
             >
-            <v-spacer />
-            <v-btn rounded="lg" variant="outlined" @click="dialogs.form = false"
-              >Save (UI)</v-btn
-            >
-            <v-btn rounded="lg" color="primary" @click="dialogs.form = false"
-              >Save & View (UI)</v-btn
-            >
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <!-- Confirmation Dialog (UI only) -->
-      <v-dialog v-model="dialogs.confirm" max-width="560">
-        <v-card rounded="xl">
-          <v-card-title class="d-flex align-center ga-2">
-            <v-avatar size="36" color="warning" variant="tonal">
-              <v-icon icon="lucide:alert-triangle" />
-            </v-avatar>
-            <div class="text-subtitle-1 font-weight-bold">
-              {{ confirm.title }}
-            </div>
-          </v-card-title>
-          <v-divider />
-          <v-card-text class="pa-6">
-            <div class="text-body-2 text-medium-emphasis">
-              {{ confirm.message }}
-            </div>
-          </v-card-text>
-          <v-divider />
-          <v-card-actions class="pa-4">
-            <v-btn rounded="lg" variant="text" @click="dialogs.confirm = false"
-              >Cancel</v-btn
-            >
-            <v-spacer />
-            <v-btn rounded="lg" color="primary" @click="dialogs.confirm = false"
-              >Confirm (UI)</v-btn
-            >
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </template>
-  </v-container>
+              <v-icon size="20" icon="lucide:check" />
+            </v-btn>
+          </template>
+        </v-tooltip>
+      </template>
+    </SbResourceTableCard>
+  </div>
 </template>
 
 <script setup lang="ts">
+import type { SubmitEventPromise } from "vuetify";
+import {
+  createDefaultOrganization as createDefaultDataForm,
+  normalizeOrganization,
+  type OrganizationModel,
+} from "~/models/organization";
+import { formatDateLabel } from "~/utils/dateUtils";
+
 definePageMeta({
-  layout: "admin",
   middleware: ["auth"],
+  title: "Organizations",
+  breadcrumbs: [{ title: "Organizations", disabled: true }],
 });
 
-type OrgStatus = "active" | "inactive";
+const snack = useAppSnackbar();
+const organizationsStore = useOrganizationsStore();
 
-interface Organization {
-  id: string;
-  code: string;
-  name: string;
-  type: string;
-  status: OrgStatus;
-  timezone: string;
-  created_at: string;
-  updated_at: string;
-}
+const tableKey = ref<number>(0);
+const tableRef = ref<any>(null);
 
-const route = useRoute();
-
-const ui = reactive({
-  loading: true,
-  error: "" as string | "",
-});
-
-const organizations = ref<Organization[]>([
-  {
-    id: "2bbd7b1a-2d9c-4b86-9a2c-9f1d01b5cdb1",
-    code: "SBZ",
-    name: "SuperBazi Internal",
-    type: "internal",
-    status: "active",
-    timezone: "Asia/Jakarta",
-    created_at: "2026-01-01T08:00:00Z",
-    updated_at: "2026-01-10T10:30:00Z",
-  },
-  {
-    id: "0d4b8b9e-4c70-4c4f-a98c-4608c7e972a4",
-    code: "ACME",
-    name: "Acme Wellness",
-    type: "client",
-    status: "active",
-    timezone: "Asia/Jakarta",
-    created_at: "2025-12-20T02:10:00Z",
-    updated_at: "2026-01-12T09:20:00Z",
-  },
-  {
-    id: "a5d0c2c1-902e-4c6f-9c75-4b29c3a2d5a1",
-    code: "EDU",
-    name: "EduLab Research",
-    type: "partner",
-    status: "inactive",
-    timezone: "Asia/Jakarta",
-    created_at: "2025-11-05T05:00:00Z",
-    updated_at: "2026-01-09T03:40:00Z",
-  },
-]);
-
-const headers = [
-  { title: "Organization", key: "name", sortable: true },
-  { title: "Type", key: "type", sortable: true },
-  { title: "Timezone", key: "timezone", sortable: true },
-  { title: "Status", key: "status", sortable: true },
-  { title: "Created", key: "created_at", sortable: true },
-  { title: "", key: "actions", sortable: false, align: "end" as const },
+/** Table */
+// Organization table columns (match Organization payload)
+const columns: SbTableColumn<OrganizationModel>[] = [
+  { title: "Organization", key: "org", sortable: true }, // name + code (optional) + logo
+  { title: "Category", key: "category", sortable: true }, // category + subCategory
+  { title: "Type", key: "type", sortable: true }, // client/partner/internal
+  { title: "Contact", key: "contact", sortable: false }, // email + phone
+  { title: "Location", key: "location", sortable: false }, // country/state/city/subdistrict/postalCode
+  { title: "Status", key: "status", sortable: true }, // active/inactive/archived
+  { title: "Features", key: "features", sortable: false }, // allowPublicQuestionnaires, requireEmailVerification
+  { title: "Updated", key: "updatedAt", sortable: true },
+  { title: "", key: "actions", sortable: false, align: "end" },
 ];
 
-const search = ref("");
-const filters = reactive({
-  status: "" as OrgStatus | "",
-  type: "" as string | "",
-  timezone: "" as string | "",
-});
+function buildQuery({
+  search,
+  filters,
+}: {
+  search: string;
+  filters: Record<string, any>;
+}) {
+  const params = new URLSearchParams();
 
-const statusItems: OrgStatus[] = ["active", "inactive"];
-const typeItems = ["internal", "client", "partner"];
-const timezoneItems = ["Asia/Jakarta", "UTC", "Asia/Singapore"];
+  const limit = Number(organizationsStore.data.pagination?.perPage ?? 10);
+  params.set("limit", String(limit));
 
-const filtered = computed(() => {
-  const q = search.value.trim().toLowerCase();
-  return organizations.value.filter((o) => {
-    if (filters.status && o.status !== filters.status) return false;
-    if (filters.type && o.type !== filters.type) return false;
-    if (filters.timezone && o.timezone !== filters.timezone) return false;
+  const s = String(search ?? "").trim();
+  if (s) params.set("search", s);
 
-    if (!q) return true;
-    return `${o.name} ${o.code}`.toLowerCase().includes(q);
-  });
-});
+  if (filters?.type) params.set("type", filters.type);
+  if (filters?.validity) params.set("validity", filters.validity);
+  if (filters?.onlyWithUses) params.set("onlyWithUses", "1");
 
-function formatDate(v: string) {
-  return new Date(v).toLocaleDateString();
+  const qs = params.toString();
+  return qs ? qs : null;
 }
 
-function resetFilters() {
-  filters.status = "";
-  filters.type = "";
-  filters.timezone = "";
+async function handleDelete(item: OrganizationModel) {
+  const res = await organizationsStore.remove(item.id as string);
+  if (!res.success)
+    throw new Error(res.error || "Failed to delete organization");
+  snack.open("organization deleted", { color: "success" });
 }
 
-function resetAll() {
-  search.value = "";
-  resetFilters();
-}
+/** Panel form logic */
+const editorMode = ref<"create" | "edit">("create");
+const saving = ref(false);
 
-const dialogs = reactive({
-  form: false,
-  confirm: false,
-});
+const selectedId = ref<string | null>(null);
+const selectedorganization = ref<OrganizationModel | null>(null);
 
-type FormMode = "create" | "edit";
-const formMode = ref<FormMode>("create");
-
-const form = reactive({
-  id: "",
-  code: "",
-  name: "",
-  type: "client",
-  status: "active" as OrgStatus,
-  timezone: "Asia/Jakarta",
-});
-
-const confirm = reactive({
-  title: "Confirm action",
-  message: "This is a UI-only confirmation dialog.",
-});
+const editorTitle = computed(() =>
+  editorMode.value === "create" ? "Create organization" : "Edit organization",
+);
 
 function openCreate() {
-  formMode.value = "create";
-  form.id = "";
-  form.code = "";
-  form.name = "";
-  form.type = "client";
-  form.status = "active";
-  form.timezone = "Asia/Jakarta";
-  dialogs.form = true;
+  handleOpenDataForm("create", null);
+}
+function openEdit(item: OrganizationModel) {
+  handleOpenDataForm("edit", item);
 }
 
-function openEdit(item: Organization) {
-  formMode.value = "edit";
-  form.id = item.id;
-  form.code = item.code;
-  form.name = item.name;
-  form.type = item.type;
-  form.status = item.status;
-  form.timezone = item.timezone;
-  dialogs.form = true;
+/** Data form */
+const DataForm = ref<any>(null);
+const rules = {
+  required: (v: any) => !!v || v === 0 || "This field is required",
+  min3: (v: any) =>
+    !v || String(v).trim().length >= 3 || "Minimum 3 characters",
+  email: (v: any) =>
+    !v ||
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v)) ||
+    "Invalid email address",
+  int: (v: any) => Number.isInteger(Number(v)) || "Must be an integer",
+  digitsOptional: (v: any) => !v || /^\d+$/.test(String(v)) || "Digits only",
+  numberOptional: (v: any) =>
+    v === null || v === "" || Number.isFinite(Number(v)) || "Must be a number",
+  urlOptional: (v: any) => {
+    if (!v) return true;
+    try {
+      // eslint-disable-next-line no-new
+      new URL(String(v));
+      return true;
+    } catch {
+      return "Invalid URL";
+    }
+  },
+};
+
+type OrgType = "client" | "partner" | "internal";
+
+type OrgCategory =
+  | "university"
+  | "company"
+  | "school"
+  | "government"
+  | "community"
+  | "other";
+
+const typeOptions: OrgType[] = ["client", "partner", "internal"];
+const categoryOptions: OrgCategory[] = [
+  "university",
+  "company",
+  "school",
+  "government",
+  "community",
+  "other",
+];
+
+const form = ref({
+  id: "" as any,
+  name: "" as any,
+  type: "" as any,
+  category: "" as any,
+  subCategory: "" as any,
+  email: "" as any,
+  phone: "" as any,
+  phoneSanitized: "" as any,
+  image: "" as any,
+  website: "" as any,
+  description: "" as any,
+  countryId: 0,
+  stateId: 0,
+  cityId: 0,
+  subdistrict: "" as any,
+  postalCode: "" as any,
+  address: "" as any,
+  status: "" as any,
+  settingsJson: {
+    timezone: "" as any,
+    latitude: null as number | null,
+    longitude: null as number | null,
+    notes: "" as any,
+    features: {
+      allowPublicQuestionnaires: false,
+      requireEmailVerification: false,
+    },
+  },
+});
+const location = ref<string | null>(null);
+
+async function handleOpenDataForm(
+  mode: "create" | "edit",
+  item: OrganizationModel | null,
+) {
+  editorMode.value = mode;
+  selectedId.value = item?.id ?? null;
+  selectedorganization.value = item;
+
+  const base = item ?? createDefaultDataForm();
+  form.value = normalizeOrganization(base) as any;
+
+  // Set location string (safely access optional nested country/state/city if present)
+  const fv: any = form.value;
+  const locationCity = fv?.city?.name ? fv.city.name + ", " : "";
+  const locationState = fv?.state?.name ? fv.state.name + ", " : "";
+  const locationCountry = fv?.country?.name ?? "";
+  location.value = locationCity + locationState + locationCountry;
+
+  // location.value = "Salatiga, Jawa Tengah, Indonesia";
+
+  await nextTick();
+  if (mode === "edit") DataForm.value?.resetValidation?.();
+  else DataForm.value?.reset?.();
+
+  tableRef.value?.openPanel?.();
 }
 
-function openToggle(item: Organization) {
-  confirm.title =
-    item.status === "active" ? "Disable organization" : "Enable organization";
-  confirm.message = `UI only — would ${item.status === "active" ? "disable" : "enable"} ${item.name}.`;
-  dialogs.confirm = true;
+function onFormSubmit(_e: SubmitEventPromise) {
+  void handleSave(); // no close here
 }
 
-function openArchive(item: Organization) {
-  confirm.title = "Archive organization";
-  confirm.message = `UI only — would archive ${item.name}.`;
-  dialogs.confirm = true;
+async function handleSave(close?: () => void) {
+  const { valid } = await DataForm.value?.validate?.();
+  if (!valid) return;
+
+  saving.value = true;
+
+  try {
+    const payload: Partial<OrganizationModel> =
+      form.value as Partial<OrganizationModel>;
+
+    if (editorMode.value === "create") {
+      const res = await organizationsStore.create(payload as any);
+      if (!res.success)
+        throw new Error(res.error || "Failed to create organization");
+      snack.open("Organization created", { color: "success" });
+    } else if (editorMode.value === "edit" && selectedId.value) {
+      if (!selectedorganization.value)
+        throw new Error("Selected organization is missing for update.");
+
+      const updatePayload = {
+        ...selectedorganization.value,
+        ...payload,
+      } as any;
+      const res = await organizationsStore.update(
+        selectedId.value,
+        updatePayload,
+      );
+      if (!res.success)
+        throw new Error(res.error || "Failed to update organization");
+      snack.open("Organization updated", { color: "success" });
+    }
+
+    selectedId.value = null;
+    selectedorganization.value = null;
+
+    close?.();
+    tableRef.value?.refresh?.({ reset: true });
+  } catch (e: any) {
+    snack.open(e?.message || "Failed to save organization", { color: "error" });
+  } finally {
+    saving.value = false;
+  }
 }
 
-function reload() {
-  ui.loading = true;
-  ui.error = "";
-  setTimeout(() => {
-    ui.loading = false;
-    ui.error =
-      route.query.error === "1"
-        ? "Failed to load organizations (mock error)."
-        : "";
-  }, 350);
+/** Helpers */
+function setLocation(loc: any) {
+  form.value.countryId = loc?.country?.id ?? null;
+  form.value.stateId = loc?.state?.id ?? null;
+  form.value.cityId = loc?.city?.id ?? null;
+
+  const timezone =
+    loc?.country?.timezone ??
+    loc?.state?.timezone ??
+    loc?.city?.timezone ??
+    null;
+
+  // Ensure settingsJson exists before assigning (avoid optional chaining on LHS)
+  if (!form.value) return;
+
+  if (!form.value.settingsJson) {
+    form.value.settingsJson = {
+      timezone: timezone,
+      latitude: null,
+      longitude: null,
+      notes: null,
+      features: {
+        allowPublicQuestionnaires: false,
+        requireEmailVerification: false,
+      },
+    };
+  } else {
+    form.value.settingsJson.timezone = timezone;
+  }
 }
 
-onMounted(() => reload());
+function updateField(value: any) {
+  location.value = value;
+}
+
+onMounted(() => {
+  // Initialize form or fetch data if needed
+});
 </script>
-
-<style lang="scss" scoped>
-.sb-search {
-  min-width: 320px;
-}
-</style>

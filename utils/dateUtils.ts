@@ -70,7 +70,7 @@ export function formatTimeLabel(
  * - Accepts ISO string or anything new Date(...) can parse.
  * - Falls back to original string if parsing fails.
  */
-export function formatDobLabel(dob: string | Date | null | undefined): string {
+export function formatDateLabel(dob: string | Date | null | undefined): string {
   if (!dob) return "-";
 
   const date = dob instanceof Date ? dob : new Date(dob);
