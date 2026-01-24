@@ -537,7 +537,7 @@ const props = withDefaults(
     // deletion
     deleteAction?: (item: TItem) => Promise<any>;
     deleteTitle?: string;
-    deleteLabelKey?: string;
+    deleteLabel?: string | ((item: TItem) => string);
 
     // optional panel
     enablePanel?: boolean;
@@ -606,7 +606,7 @@ function openPanel() {
 function closePanel() {
   panelOpen.value = false;
 }
-defineExpose({ refresh, openPanel, closePanel });
+defineExpose({ refresh, openPanel, closePanel, openDeleteDialog });
 
 // Filters
 const baseFilters = computed<AnyObj>(() => props.initialFilters ?? {});
@@ -664,7 +664,10 @@ function setDraft(key: string, value: any) {
 function buildQueryString() {
   const fn = props.buildQuery;
   if (fn)
-    return fn({ search: state.search.trim(), filters: { ...filtersApplied } });
+    return fn({
+      search: state.search ? state.search.trim() : "",
+      filters: { ...filtersApplied },
+    });
   return null;
 }
 
@@ -752,10 +755,15 @@ const deleteDialogOpen = ref(false);
 const deleteTarget = ref<any>(null);
 const deleting = ref(false);
 
-function deleteLabel(item: any) {
+function deleteLabel(item: TItem | null | undefined) {
   if (!item) return "";
-  const k = props.deleteLabelKey || "code";
-  return item?.[k] ?? item?.id ?? "item";
+
+  const d = props.deleteLabel;
+
+  if (typeof d === "function") return d(item);
+
+  const key = (d || "code") as string;
+  return (item as any)?.[key] ?? (item as any)?.id ?? "item";
 }
 
 function openDeleteDialog(item: any) {

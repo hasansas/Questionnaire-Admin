@@ -174,7 +174,6 @@ const route = useRoute();
 const navItems: NavItem[] = [
   { title: "Dashboard", to: "/", icon: "lucide:home" },
   { title: "Organizations", to: "/organizations", icon: "lucide:building-2" },
-  { title: "Org Users", to: "/org-users", icon: "lucide:user-round-cog" },
   {
     title: "Questionnaires",
     to: "/questionnaires",

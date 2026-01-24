@@ -231,7 +231,7 @@ import { computed, nextTick, ref, watch, toRaw } from "vue";
 import {
   type EmailTemplateModel,
   type EmailTemplateCode,
-} from "@/models/email-template";
+} from "~/models/emailTemplate";
 
 type BuilderMode = "create" | "edit";
 
@@ -257,7 +257,7 @@ const emit = defineEmits<{
       meta: DraftMeta;
       contentHtml: string;
       contentCode: EmailTemplateCode;
-    }
+    },
   ): void;
   (e: "preview", html: string): void;
   (e: "close"): void;
@@ -391,7 +391,7 @@ async function onPreview() {
       "preview",
       `<div style="padding:16px;font-family:Arial">Preview failed: ${
         e?.message ?? "Unknown error"
-      }</div>`
+      }</div>`,
     );
   }
 }

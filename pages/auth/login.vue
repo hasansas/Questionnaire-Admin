@@ -20,54 +20,46 @@
               rounded="pill"
               class="font-weight-bold px-3 mb-6"
             >
+              <!-- changed: image avatar -> icon -->
               <v-avatar size="20" color="white" class="mr-2">
-                <v-avatar size="18">
-                  <img
-                    src="/images/superbazi-icon.png"
-                    alt="SuperBazi"
-                    height="100%"
-                  />
-                </v-avatar>
+                <v-icon icon="lucide:clipboard-check" size="16" />
               </v-avatar>
-              SuperBazi
+              SB Questioner
             </v-chip>
 
             <h1 class="sb-auth-hero-title text-white mb-6">
-              Master Your Energy,
-              <span class="opacity-60">Transform Your Life</span>
+              Ask Better Questions,
+              <span class="opacity-60">Get Clearer Answers</span>
             </h1>
 
             <div class="sb-auth-hero-points mt-8">
               <div class="d-flex ga-3 align-start mb-4 sb-auth-point">
                 <v-icon
-                  icon="lucide:zap"
+                  icon="lucide:sparkles"
                   size="18"
                   class="text-white opacity-80 mt-1"
                 />
                 <div class="text-white opacity-85">
-                  <div class="font-weight-bold">
-                    Accurate & instant analysis
-                  </div>
+                  <div class="font-weight-bold">Fast setup & publishing</div>
                   <div class="text-caption opacity-80">
-                    Generate charts and insights in seconds—clean, structured,
-                    and reliable.
+                    Create questionnaires quickly with a clean, guided flow.
                   </div>
                 </div>
               </div>
 
               <div class="d-flex ga-3 align-start mb-4 sb-auth-point">
                 <v-icon
-                  icon="lucide:brain-circuit"
+                  icon="lucide:bar-chart-3"
                   size="18"
                   class="text-white opacity-80 mt-1"
                 />
                 <div class="text-white opacity-85">
                   <div class="font-weight-bold">
-                    SuperBazi AI + BaZi Master expertise
+                    Structured scoring & insights
                   </div>
                   <div class="text-caption opacity-80">
-                    Modern intelligence, guided by proven BaZi frameworks and
-                    expert logic.
+                    Track results clearly with consistent rules and
+                    reporting-ready data.
                   </div>
                 </div>
               </div>
@@ -79,12 +71,10 @@
                   class="text-white opacity-80 mt-1"
                 />
                 <div class="text-white opacity-85">
-                  <div class="font-weight-bold">
-                    Secure, profile-based access
-                  </div>
+                  <div class="font-weight-bold">Secure org-based access</div>
                   <div class="text-caption opacity-80">
-                    Protected sessions, clear validation, and safe admin
-                    operations by default.
+                    Protected sessions, role control, and safe admin operations
+                    by default.
                   </div>
                 </div>
               </div>
@@ -125,7 +115,7 @@
           </div>
 
           <p class="text-caption text-white opacity-60 font-weight-medium mb-0">
-            &copy; 2026 SuperBazi Inc. All rights reserved.
+            &copy; 2026 SB Questioner. All rights reserved.
           </p>
         </div>
       </v-col>
@@ -135,17 +125,15 @@
         <div class="sb-auth-panel-inner w-100">
           <!-- Mobile brand header -->
           <div class="d-flex d-md-none align-center justify-center ga-3 mb-8">
+            <!-- changed: image avatar -> icon -->
             <v-avatar size="40" color="primary" class="sb-auth-mobile-logo">
               <v-avatar size="36" color="white">
-                <img
-                  src="/images/superbazi-icon.png"
-                  alt="superbazi icon"
-                  height="100%"
-                />
+                <v-icon icon="lucide:clipboard-check" size="20" />
               </v-avatar>
             </v-avatar>
+
             <div>
-              <div class="text-h6 font-weight-black">SuperBazi</div>
+              <div class="text-h6 font-weight-black">SB Questioner</div>
               <div class="text-caption text-medium-emphasis">Admin Console</div>
             </div>
           </div>
@@ -169,7 +157,7 @@
                       Sign in
                     </h2>
                     <p class="text-body-2 text-medium-emphasis mb-0">
-                      Enter your admin credentials to continue.
+                      Enter your credentials to continue.
                     </p>
                   </div>
                 </div>
@@ -286,7 +274,7 @@
 
             <v-card-text class="py-4 text-center">
               <p class="text-caption text-medium-emphasis mb-0">
-                SuperBazi Admin Console • v1.0
+                SB Questioner Admin Console • v1.0
               </p>
             </v-card-text>
           </v-card>
@@ -407,7 +395,8 @@ async function handleLogin() {
 
 /* Layer A */
 .sb-auth-hero::before {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at 15% 25%,
       rgba(255, 255, 255, 0.32),
       transparent 45%
@@ -426,7 +415,8 @@ async function handleLogin() {
 
 /* Layer B */
 .sb-auth-hero::after {
-  background: radial-gradient(
+  background:
+    radial-gradient(
       circle at 30% 40%,
       rgba(255, 255, 255, 0.22),
       transparent 48%

@@ -150,7 +150,7 @@
           <v-btn
             icon
             variant="text"
-            :to="`/organizations/${item.id}`"
+            @click.stop.prevent="openDetail(item)"
             aria-label="View"
           >
             <v-icon icon="lucide:arrow-right" />
@@ -161,11 +161,11 @@
             <v-menu activator="parent" location="bottom end">
               <v-list density="compact">
                 <v-list-item
-                  :to="`/organizations/${item.id}`"
                   title="View details"
+                  @click.stop.prevent="openDetail(item)"
                 />
-                <v-list-item title="Edit (UI)" />
-                <v-list-item title="Disable (UI)" />
+                <v-list-item title="Edit" />
+                <v-list-item title="Delete" />
               </v-list>
             </v-menu>
           </v-btn>
@@ -492,7 +492,7 @@
 import type { SubmitEventPromise } from "vuetify";
 import {
   createDefaultOrganization as createDefaultDataForm,
-  normalizeOrganization,
+  normalizeOrganization as normalizeData,
   type OrganizationModel,
 } from "~/models/organization";
 import { formatDateLabel } from "~/utils/dateUtils";
@@ -569,6 +569,10 @@ function openCreate() {
 }
 function openEdit(item: OrganizationModel) {
   handleOpenDataForm("edit", item);
+}
+
+function openDetail(item: OrganizationModel) {
+  void navigateTo(`/organizations/${item.id}`);
 }
 
 /** Data form */
@@ -658,7 +662,7 @@ async function handleOpenDataForm(
   selectedorganization.value = item;
 
   const base = item ?? createDefaultDataForm();
-  form.value = normalizeOrganization(base) as any;
+  form.value = normalizeData(base) as any;
 
   // Set location string (safely access optional nested country/state/city if present)
   const fv: any = form.value;
