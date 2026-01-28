@@ -22,7 +22,11 @@
             >
               <!-- changed: image avatar -> icon -->
               <v-avatar size="20" color="white" class="mr-2">
-                <v-icon icon="lucide:clipboard-check" size="16" />
+                <v-icon
+                  icon="lucide:clipboard-check"
+                  color="primary"
+                  size="16"
+                />
               </v-avatar>
               SB Questioner
             </v-chip>
