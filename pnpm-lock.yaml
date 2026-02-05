@@ -71,6 +71,9 @@ importers:
       vue3-apexcharts:
         specifier: ^1.8.0
         version: 1.8.0(apexcharts@5.2.0)(vue@3.5.17(typescript@5.8.3))
+      vuedraggable:
+        specifier: ^4.1.0
+        version: 4.1.0(vue@3.5.17(typescript@5.8.3))
       vuetify:
         specifier: ^3.9.2
         version: 3.9.2(typescript@5.8.3)(vue@3.5.17(typescript@5.8.3))
@@ -4164,6 +4167,9 @@ packages:
     resolution: {integrity: sha512-/GbIKmo8ioc+NIWIhwdecY0ge+qVBSMdgxGygevmdHj24bsfgtCmcUUcQ5ZzcylGFHsN3k4HB4Cgkl96KVnuew==}
     engines: {node: '>=10.0.0'}
 
+  sortablejs@1.14.0:
+    resolution: {integrity: sha512-pBXvQCs5/33fdN1/39pPL0NZF20LeRbLQ5jtnheIPN9JQAaufGjKdWduZn4U7wCtVuzKhmRkI0DFYHYRbB2H1w==}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -4451,8 +4457,8 @@ packages:
     resolution: {integrity: sha512-6bc58dPYhCMHHuwxldQxO3RRNZ4eCogZ/st++0+fcC1nr0jiGUtAdBJ2qzmLQWSxbtz42pWt4QQMiZ9HvZf5cg==}
     engines: {node: '>=0.10.0'}
 
-  unlayer-types@1.339.0:
-    resolution: {integrity: sha512-zrHqtaT2y8wD5Qjn4w+sPmpaHvhdAzG0FF1NyAGlP+NS7rcr00cXEtPtwMB9r9lDsoqu2E3drT4wKd/MXyrTqQ==}
+  unlayer-types@1.367.0:
+    resolution: {integrity: sha512-FieNYyUg8CGTuhiRyzrOhobX+jIpXzVgOS1kvr8E7PescuOIsbDHlpmWV+TdPZ4ZJoFHZz1cFzQ4E28E8FZdtQ==}
 
   unplugin-utils@0.2.4:
     resolution: {integrity: sha512-8U/MtpkPkkk3Atewj1+RcKIjb5WBimZ/WSLhhR3w6SsIj8XJuKTacSP8g+2JhfSGw0Cb125Y+2zA/IzJZDVbhA==}
@@ -4750,6 +4756,11 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  vuedraggable@4.1.0:
+    resolution: {integrity: sha512-FU5HCWBmsf20GpP3eudURW3WdWTKIbEIQxh9/8GE806hydR9qZqRRxRE3RjqX7PkuLuMQG/A7n3cfj9rCEchww==}
+    peerDependencies:
+      vue: ^3.0.1
 
   vuetify@3.9.2:
     resolution: {integrity: sha512-Pax7YCgbE5SArY8CDM0A9dTVHnG1oU79eIBA+FEEg3dDFV7bc+0AppJJLfG2+aoaBlJf2UH7tOCflJ/U23YU1Q==}
@@ -9433,6 +9444,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  sortablejs@1.14.0: {}
+
   source-map-js@1.2.1: {}
 
   source-map-support@0.5.21:
@@ -9709,7 +9722,7 @@ snapshots:
     dependencies:
       normalize-path: 2.1.1
 
-  unlayer-types@1.339.0: {}
+  unlayer-types@1.367.0: {}
 
   unplugin-utils@0.2.4:
     dependencies:
@@ -9967,7 +9980,7 @@ snapshots:
 
   vue-email-editor@2.1.5(typescript@5.8.3):
     dependencies:
-      unlayer-types: 1.339.0
+      unlayer-types: 1.367.0
       vue: 3.5.17(typescript@5.8.3)
     transitivePeerDependencies:
       - typescript
@@ -10007,6 +10020,11 @@ snapshots:
       '@vue/shared': 3.5.17
     optionalDependencies:
       typescript: 5.8.3
+
+  vuedraggable@4.1.0(vue@3.5.17(typescript@5.8.3)):
+    dependencies:
+      sortablejs: 1.14.0
+      vue: 3.5.17(typescript@5.8.3)
 
   vuetify@3.9.2(typescript@5.8.3)(vue@3.5.17(typescript@5.8.3)):
     dependencies:

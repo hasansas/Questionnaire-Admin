@@ -158,139 +158,17 @@
 
       <!-- Panel content (Create/Edit form) -->
       <template #panel>
-        <div class="text-body-2 text-medium-emphasis mb-4">
-          Configure questionnaire setup, scoring rules, and visibility.
-        </div>
-
-        <v-form ref="DataForm" @submit.prevent="onFormSubmit">
-          <v-row dense>
-            <!-- Basic -->
-            <v-col cols="12">
-              <div class="text-subtitle-1 font-weight-bold mb-2">Basic</div>
-            </v-col>
-
-            <v-col cols="12">
-              <v-text-field
-                v-model.trim="form.title"
-                label="Questionnaire Title"
-                variant="outlined"
-                rounded="lg"
-                density="comfortable"
-                :rules="[rules.required, rules.min3]"
-                prepend-inner-icon="lucide:clipboard-list"
-                hide-details="auto"
-                class="mb-2"
-              />
-            </v-col>
-
-            <v-col cols="12">
-              <v-textarea
-                v-model.trim="form.description"
-                label="Description (optional)"
-                variant="outlined"
-                rounded="lg"
-                density="comfortable"
-                auto-grow
-                rows="3"
-                prepend-inner-icon="lucide:align-left"
-                hide-details="auto"
-                class="mb-2"
-              />
-            </v-col>
-
-            <!-- Meta -->
-            <v-col cols="12">
-              <div class="text-subtitle-1 font-weight-bold mb-2 mt-2">Meta</div>
-            </v-col>
-
-            <v-col cols="12" md="6">
-              <v-select
-                v-model="form.language"
-                label="Language"
-                :items="languageOptions"
-                variant="outlined"
-                rounded="lg"
-                density="comfortable"
-                :rules="[rules.required]"
-                prepend-inner-icon="lucide:languages"
-                hide-details="auto"
-                class="mb-2"
-              />
-            </v-col>
-
-            <v-col cols="12" md="6">
-              <v-select
-                v-model="form.status"
-                label="Status"
-                :items="statusOptions"
-                variant="outlined"
-                rounded="lg"
-                density="comfortable"
-                :rules="[rules.required]"
-                prepend-inner-icon="lucide:badge-check"
-                hide-details="auto"
-                class="mb-2"
-              />
-            </v-col>
-
-            <v-col cols="12" md="6">
-              <v-text-field
-                v-model.number="form.version"
-                label="Version"
-                type="number"
-                min="1"
-                variant="outlined"
-                rounded="lg"
-                density="comfortable"
-                :rules="[rules.required]"
-                prepend-inner-icon="lucide:hash"
-                hide-details="auto"
-                class="mb-2"
-              />
-            </v-col>
-
-            <v-col cols="12" md="6">
-              <v-select
-                v-model="form.scoringType"
-                label="Scoring Type"
-                :items="scoringTypeOptions"
-                variant="outlined"
-                rounded="lg"
-                density="comfortable"
-                :rules="[rules.required]"
-                prepend-inner-icon="lucide:layers"
-                hide-details="auto"
-                class="mb-2"
-              />
-            </v-col>
-
-            <!-- Visibility -->
-            <v-col cols="12">
-              <div class="text-subtitle-1 font-weight-bold mb-2 mt-2">
-                Visibility
-              </div>
-            </v-col>
-
-            <v-col cols="12">
-              <v-card variant="outlined" rounded="xl" class="pa-3 h-100">
-                <div class="text-body-2 font-weight-bold mb-2">
-                  User Experience
-                </div>
-
-                <v-switch
-                  v-model="form.showResultToUser"
-                  inset
-                  color="primary"
-                  label="Show Result to User"
-                  hide-details
-                />
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-form>
+        <QuestionnaireForm
+          ref="DataForm"
+          v-model="form"
+          @submit.prevent="onFormSubmit"
+        />
       </template>
 
       <template #panel-actions="{ close }">
+        <!-- <v-btn color="primary" rounded="lg" @click="submit">
+          Create questionnaire
+        </v-btn> -->
         <v-tooltip text="Close" location="bottom">
           <template #activator="{ props }">
             <v-btn
@@ -332,13 +210,14 @@ import {
   normalizeQuestionnaire as normalizeData,
   type QuestionnaireModel,
 } from "~/models/questionnaire";
-
 import { formatDateLabel } from "~/utils/dateUtils";
+import type { QuestionnaireFormModel } from "~/models/questionnaire";
+import QuestionnaireForm from "@/components/questionnaire/QuestionnaireForm.vue";
 
 definePageMeta({
   middleware: ["auth"],
   title: "Questionnaires",
-  breadcrumbs: [{ title: "questionnaires", disabled: true }],
+  breadcrumbs: [{ title: "Questionnaires", disabled: true }],
 });
 
 const snack = useAppSnackbar();
@@ -414,61 +293,23 @@ function openDetail(item: QuestionnaireModel) {
 }
 
 /** Data form */
-const DataForm = ref<any>(null);
-const rules = {
-  required: (v: any) => !!v || v === 0 || "This field is required",
-  min3: (v: any) =>
-    !v || String(v).trim().length >= 3 || "Minimum 3 characters",
-  email: (v: any) =>
-    !v ||
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v)) ||
-    "Invalid email address",
-  int: (v: any) => Number.isInteger(Number(v)) || "Must be an integer",
-  digitsOptional: (v: any) => !v || /^\d+$/.test(String(v)) || "Digits only",
-  numberOptional: (v: any) =>
-    v === null || v === "" || Number.isFinite(Number(v)) || "Must be a number",
-  urlOptional: (v: any) => {
-    if (!v) return true;
-    try {
-      // eslint-disable-next-line no-new
-      new URL(String(v));
-      return true;
-    } catch {
-      return "Invalid URL";
-    }
-  },
-};
-
-// options
-const languageOptions = [
-  { title: "Indonesian", value: "id" },
-  { title: "English", value: "en" },
-];
-
-const statusOptions = [
-  { title: "Draft", value: "draft" },
-  { title: "Published", value: "published" },
-  { title: "Archived", value: "archived" },
-];
-
-const scoringTypeOptions = [
-  { title: "Multi-dimension", value: "multi_dimension" },
-  { title: "Total score", value: "total_score" },
-];
-
-const form = ref({
+const DataForm = ref<InstanceType<typeof QuestionnaireForm> | null>(null);
+const form = ref<QuestionnaireFormModel>({
   id: "",
-  code: "",
 
   title: "",
   description: "",
 
-  language: "id",
-  status: "draft",
-  version: 1,
+  language: "",
+  status: "",
+  version: 0,
 
-  scoringType: "multi_dimension",
+  scoringType: "",
   showResultToUser: true,
+
+  // options setup
+  optionsMode: "fixed",
+  fixedOptions: [],
 });
 
 async function handleOpenDataForm(
@@ -483,7 +324,7 @@ async function handleOpenDataForm(
   form.value = normalizeData(base) as any;
 
   await nextTick();
-  if (mode === "edit") DataForm.value?.resetValidation?.();
+  DataForm.value?.resetValidation?.();
 
   tableRef.value?.openPanel?.();
 }
@@ -493,8 +334,8 @@ function onFormSubmit(_e: SubmitEventPromise) {
 }
 
 async function handleSave(close?: () => void) {
-  const { valid } = await DataForm.value?.validate?.();
-  if (!valid) return;
+  const validateForm = await DataForm.value?.validateAll?.();
+  if (!validateForm?.valid) return;
 
   saving.value = true;
 
@@ -511,13 +352,9 @@ async function handleSave(close?: () => void) {
       if (!selectedItem.value)
         throw new Error("Selected questionnaire is missing for update.");
 
-      const updatePayload = {
-        ...selectedItem.value,
-        ...payload,
-      } as any;
       const res = await qestionnaireStore.update(
         selectedId.value,
-        updatePayload,
+        payload as any,
       );
       if (!res.success)
         throw new Error(res.error || "Failed to update questionnaire");

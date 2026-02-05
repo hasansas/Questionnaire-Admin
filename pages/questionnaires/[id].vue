@@ -1638,7 +1638,6 @@ import {
 } from "~/utils/mockPublicData";
 
 definePageMeta({
-  layout: "admin",
   middleware: ["auth"],
 });
 
