@@ -15,7 +15,6 @@ export interface QuestionnaireFixedOptionModel {
   sortOrder: number
 }
 
-
 // Core Data Model
 export interface QuestionnaireModel {
   id: string
@@ -29,8 +28,8 @@ export interface QuestionnaireModel {
 
   scoringType: QuestionnaireScoringType
   showResultToUser: boolean
-  optionsMode: QuestionnaireOptionsMode
-  fixedOptions: QuestionnaireFixedOptionModel[]
+  optionsMode: QuestionnaireOptionsMode | null
+  fixedOptionsJson: QuestionnaireFixedOptionModel[]
 
   createdAt?: Date
   updatedAt?: Date
@@ -47,11 +46,11 @@ export const createDefaultQuestionnaire = (): QuestionnaireModel => ({
   status: 'draft',
   version: 1,
 
-  scoringType: 'multi_dimension',
+  scoringType: '',
   showResultToUser: true,
 
-  optionsMode: "fixed", // 'fixed' | 'per_question'
-  fixedOptions: [
+  optionsMode: null, // 'fixed' | 'per_question'
+  fixedOptionsJson: [
     { label: "Setuju", scoreValue: 2, sortOrder: 1 },
     { label: "Ragu", scoreValue: 1, sortOrder: 2 },
     { label: "Tidak setuju", scoreValue: 0, sortOrder: 3 },
@@ -61,7 +60,6 @@ export const createDefaultQuestionnaire = (): QuestionnaireModel => ({
   updatedAt: new Date(),
 })
 
-// Helper — normalize partial questionnaire data into full model
 // Helper — normalize partial questionnaire data into full model
 export function normalizeQuestionnaire(
   item?: Partial<QuestionnaireModel>
@@ -73,14 +71,14 @@ export function normalizeQuestionnaire(
   const optionsMode: QuestionnaireOptionsMode =
     rawMode === 'perQuestion' ? 'per_question' : (rawMode as QuestionnaireOptionsMode) ?? fallback.optionsMode
 
-  // fixedOptions normalization (support legacy snake keys just in case)
-  const rawFixedOptions =
-    (item as any)?.fixedOptions ??
+  // fixedOptionsJson normalization (support legacy snake keys just in case)
+  const rawfixedOptionsJson =
+    (item as any)?.fixedOptionsJson ??
     (item as any)?.fixed_options ??
-    fallback.fixedOptions
+    fallback.fixedOptionsJson
 
-  const fixedOptions: QuestionnaireFixedOptionModel[] = Array.isArray(rawFixedOptions)
-    ? rawFixedOptions.map((o: any, idx: number) => ({
+  const fixedOptionsJson: QuestionnaireFixedOptionModel[] = Array.isArray(rawfixedOptionsJson)
+    ? rawfixedOptionsJson.map((o: any, idx: number) => ({
       label: String(o?.label ?? '').trim(),
       scoreValue:
         typeof o?.scoreValue === 'number'
@@ -95,7 +93,7 @@ export function normalizeQuestionnaire(
             ? o.sort_order
             : Number(o?.sortOrder ?? o?.sort_order ?? (idx + 1)),
     }))
-    : fallback.fixedOptions
+    : fallback.fixedOptionsJson
 
   return {
     id: item?.id ?? fallback.id,
@@ -117,7 +115,7 @@ export function normalizeQuestionnaire(
         : Boolean(item?.showResultToUser ?? fallback.showResultToUser),
 
     optionsMode,
-    fixedOptions: optionsMode === 'fixed' ? fixedOptions : [],
+    fixedOptionsJson: fixedOptionsJson,
 
     createdAt: item?.createdAt ? new Date(item.createdAt) : fallback.createdAt,
     updatedAt: item?.updatedAt ? new Date(item.updatedAt) : fallback.updatedAt,
@@ -145,7 +143,65 @@ export type QuestionnaireFormModel = Pick<
   | "scoringType"
   | "showResultToUser"
   | "optionsMode"
-  | "fixedOptions"
+  | "fixedOptionsJson"
 >
 
 export type QuestionnaireCreateFormModel = Omit<QuestionnaireFormModel, "id">
+
+
+export function normalizeQuestionnaireForm(
+  item?: Partial<QuestionnaireFormModel>
+): QuestionnaireFormModel {
+  const fallback = createDefaultQuestionnaire()
+
+  // optionsMode normalization (support legacy camel "perQuestion" just in case)
+  const rawMode = (item as any)?.optionsMode ?? (item as any)?.options_mode
+  const optionsMode: QuestionnaireOptionsMode =
+    rawMode === 'perQuestion' ? 'per_question' : (rawMode as QuestionnaireOptionsMode) ?? fallback.optionsMode
+
+  // fixedOptionsJson normalization (support legacy snake keys just in case)
+  const rawfixedOptionsJson =
+    (item as any)?.fixedOptionsJson ??
+    (item as any)?.fixed_options ??
+    fallback.fixedOptionsJson
+
+  const fixedOptionsJson: QuestionnaireFixedOptionModel[] = Array.isArray(rawfixedOptionsJson)
+    ? rawfixedOptionsJson.map((o: any, idx: number) => ({
+      label: String(o?.label ?? '').trim(),
+      scoreValue:
+        typeof o?.scoreValue === 'number'
+          ? o.scoreValue
+          : typeof o?.score_value === 'number'
+            ? o.score_value
+            : Number(o?.scoreValue ?? o?.score_value ?? 0),
+      sortOrder:
+        typeof o?.sortOrder === 'number'
+          ? o.sortOrder
+          : typeof o?.sort_order === 'number'
+            ? o.sort_order
+            : Number(o?.sortOrder ?? o?.sort_order ?? (idx + 1)),
+    }))
+    : fallback.fixedOptionsJson
+
+  return {
+    id: item?.id ?? fallback.id,
+    title: item?.title ?? fallback.title,
+    description: item?.description ?? fallback.description,
+
+    language: (item?.language as QuestionnaireLanguage) ?? fallback.language,
+    status: (item?.status as QuestionnaireStatus) ?? fallback.status,
+    version:
+      typeof item?.version === 'number'
+        ? item.version
+        : Number(item?.version ?? fallback.version),
+
+    scoringType: (item?.scoringType as QuestionnaireScoringType) ?? fallback.scoringType,
+    showResultToUser:
+      typeof item?.showResultToUser === 'boolean'
+        ? item.showResultToUser
+        : Boolean(item?.showResultToUser ?? fallback.showResultToUser),
+
+    optionsMode,
+    fixedOptionsJson: fixedOptionsJson,
+  }
+}

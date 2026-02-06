@@ -384,47 +384,59 @@
     </ClientOnly>
 
     <!-- Delete confirmation dialog -->
-    <v-dialog v-model="deleteDialogOpen" max-width="520">
+    <v-dialog v-model="deleteDialogOpen" persistent max-width="520">
       <v-card rounded="xl">
-        <v-card-title class="d-flex align-center ga-3">
-          <v-avatar size="38" rounded="lg" color="error" variant="tonal">
-            <v-icon icon="lucide:trash-2" />
-          </v-avatar>
-          <div class="min-w-0">
-            <div class="text-h6 font-weight-black">{{ deleteTitle }}</div>
-            <div class="text-caption text-medium-emphasis">
-              This action can’t be undone.
+        <v-card-title class="pa-5 pb-3">
+          <div class="d-flex align-start ga-4">
+            <v-avatar size="44" rounded="lg" color="error" variant="tonal">
+              <v-icon icon="lucide:trash-2" size="18" />
+            </v-avatar>
+
+            <div class="min-w-0 flex-1">
+              <div class="text-subtitle-1 font-weight-black">
+                {{ deleteTitle }}
+              </div>
+              <div class="text-caption text-medium-emphasis mt-1">
+                This action can’t be undone.
+              </div>
             </div>
           </div>
         </v-card-title>
 
-        <v-card-text class="pt-2">
-          <div class="text-body-2">
+        <v-card-text class="px-5 pt-2 pb-4">
+          <div class="text-body-2 text-medium-emphasis mb-2">
             You’re about to delete:
-            <span class="font-weight-bold">{{
-              deleteLabel(deleteTarget)
-            }}</span>
           </div>
+
+          <v-card rounded="lg" variant="tonal" class="pa-3">
+            <div class="d-flex align-center ga-2">
+              <v-icon icon="lucide:alert-triangle" size="16" />
+              <div class="text-body-2 font-weight-bold text-truncate">
+                {{ deleteItemLabel("label", deleteTarget) }}
+              </div>
+            </div>
+          </v-card>
         </v-card-text>
 
         <v-divider class="sb-divider" />
 
-        <v-card-actions class="pa-4 d-flex justify-end ga-2">
+        <v-card-actions class="px-5 py-4 d-flex justify-end ga-2">
           <v-btn
-            variant="tonal"
+            variant="outlined"
             rounded="lg"
             :disabled="deleting"
             @click="deleteDialogOpen = false"
           >
             Cancel
           </v-btn>
+
           <v-btn
             color="error"
             rounded="lg"
-            prepend-icon="lucide:trash-2"
             :loading="deleting"
             @click="confirmDelete"
           >
+            <v-icon icon="lucide:trash-2" size="16" class="me-2" />
             Delete
           </v-btn>
         </v-card-actions>
@@ -537,7 +549,8 @@ const props = withDefaults(
     // deletion
     deleteAction?: (item: TItem) => Promise<any>;
     deleteTitle?: string;
-    deleteLabel?: string | ((item: TItem) => string);
+    deleteLabel: string | ((item: TItem) => string);
+    deleteLabelKey?: string | ((item: TItem) => string);
 
     // optional panel
     enablePanel?: boolean;
@@ -569,7 +582,8 @@ const props = withDefaults(
     errorTitle: "Couldn’t load data",
 
     deleteTitle: "Delete item?",
-    deleteLabelKey: "code",
+    deleteLabel: "title",
+    deleteLabelKey: "id",
 
     enablePanel: false,
     panelTitle: "",
@@ -755,15 +769,15 @@ const deleteDialogOpen = ref(false);
 const deleteTarget = ref<any>(null);
 const deleting = ref(false);
 
-function deleteLabel(item: TItem | null | undefined) {
+function deleteItemLabel(key: string, item: TItem | null | undefined) {
   if (!item) return "";
 
-  const d = props.deleteLabel;
+  const d = key === "lable" ? props.deleteLabel : props.deleteLabelKey;
 
   if (typeof d === "function") return d(item);
 
-  const key = (d || "code") as string;
-  return (item as any)?.[key] ?? (item as any)?.id ?? "item";
+  const itemKey = (d || "id") as string;
+  return (item as any)?.[itemKey] ?? (item as any)?.id ?? "item";
 }
 
 function openDeleteDialog(item: any) {

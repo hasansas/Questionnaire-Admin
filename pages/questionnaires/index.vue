@@ -18,7 +18,7 @@
       :build-query="buildQuery"
       :delete-action="handleDelete"
       delete-title="Delete questionnaire?"
-      delete-label-key="code"
+      delete-label-key="title"
       enable-panel
       :panel-title="editorTitle"
       @primary="openCreate"
@@ -102,6 +102,21 @@
         </div>
       </template>
 
+      <template #item.optionsMode="{ item }">
+        <div class="d-flex align-center ga-2">
+          <v-icon
+            :icon="
+              item.optionsMode === 'fixed' ? 'lucide:lock' : 'lucide:split'
+            "
+            size="16"
+            class="text-medium-emphasis"
+          />
+          <span class="text-body-2">
+            {{ item.optionsMode === "fixed" ? "Fixed" : "fixeder question" }}
+          </span>
+        </div>
+      </template>
+
       <template #item.showResultToUser="{ item }">
         <v-chip
           size="small"
@@ -126,7 +141,43 @@
 
       <template #actions="{ item }">
         <div class="d-flex justify-end ga-1">
-          <v-btn
+          <v-btn icon variant="text" @click.stop.prevent="openDetail(item)">
+            <v-icon icon="lucide:eye" size="18" />
+          </v-btn>
+          <v-btn icon variant="text" @click.stop.prevent="openEdit(item)">
+            <v-icon icon="lucide:pencil" size="18" />
+          </v-btn>
+
+          <v-menu location="bottom end">
+            <template #activator="{ props }">
+              <v-btn icon variant="text" v-bind="props">
+                <v-icon icon="lucide:more-vertical" size="18" />
+              </v-btn>
+            </template>
+            <v-list density="comfortable" rounded="xl" class="sb-list">
+              <v-list-item @click="openDuplicate(item)">
+                <template #prepend
+                  ><v-icon icon="lucide:copy" size="18"
+                /></template>
+                <v-list-item-title>Duplicate</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="openArchive(item)">
+                <template #prepend
+                  ><v-icon icon="lucide:archive" size="18"
+                /></template>
+                <v-list-item-title>Archive</v-list-item-title>
+              </v-list-item>
+              <v-divider />
+              <v-list-item class="text-error" @click="openDeleteDialog(item)">
+                <template #prepend
+                  ><v-icon icon="lucide:trash-2" size="18"
+                /></template>
+                <v-list-item-title>Delete</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+
+          <!-- <v-btn
             icon
             variant="text"
             @click.stop.prevent="openDetail(item)"
@@ -139,15 +190,12 @@
             <v-icon icon="lucide:more-horizontal" />
             <v-menu activator="parent" location="bottom end">
               <v-list density="compact">
-                <v-list-item
-                  title="View details"
-                  @click.stop.prevent="openDetail(item)"
-                />
-                <v-list-item title="Edit" />
-                <v-list-item title="Delete" />
+                <v-list-item title="View details" @click="openDetail(item)" />
+                <v-list-item title="Edit" @click="openEdit(item)" />
+                <v-list-item title="Delete" @click="openDeleteDialog(item)" />
               </v-list>
             </v-menu>
-          </v-btn>
+          </v-btn> -->
         </div>
       </template>
 
@@ -229,13 +277,14 @@ const tableRef = ref<any>(null);
 /** Table */
 // Questionnaire table columns (match Questionnaire payload)
 const columns: SbTableColumn<QuestionnaireModel>[] = [
-  { title: "Questionnaire", key: "questionnaire", sortable: true }, // title + code
-  { title: "Description", key: "description", sortable: false }, // short preview
-  { title: "Language", key: "language", sortable: true }, // id/en
-  { title: "Status", key: "status", sortable: true }, // draft/published/archived
-  { title: "Version", key: "version", sortable: true }, // numeric
-  { title: "Scoring", key: "scoringType", sortable: true }, // multi_dimension/total_score
-  { title: "Result Visible", key: "showResultToUser", sortable: true }, // boolean chip
+  { title: "Questionnaire", key: "questionnaire", sortable: true },
+  { title: "Description", key: "description", sortable: false },
+  { title: "Language", key: "language", sortable: true },
+  { title: "Scoring", key: "scoringType", sortable: true },
+  { title: "Options Mode", key: "optionsMode", sortable: true },
+  { title: "Result Visible", key: "showResultToUser", sortable: true },
+  { title: "Status", key: "status", sortable: true },
+  { title: "Version", key: "version", sortable: true },
   { title: "Updated", key: "updatedAt", sortable: true },
   { title: "", key: "actions", sortable: false, align: "end" },
 ];
@@ -292,6 +341,16 @@ function openDetail(item: QuestionnaireModel) {
   void navigateTo(`/Questionnaires/${item.id}`);
 }
 
+function openDuplicate(item: QuestionnaireModel) {
+  console.log("openDuplicate");
+}
+function openArchive(item: QuestionnaireModel) {
+  console.log("openArchive");
+}
+function openDeleteDialog(item: QuestionnaireModel) {
+  tableRef.value?.openDeleteDialog(item);
+}
+
 /** Data form */
 const DataForm = ref<InstanceType<typeof QuestionnaireForm> | null>(null);
 const form = ref<QuestionnaireFormModel>({
@@ -308,8 +367,8 @@ const form = ref<QuestionnaireFormModel>({
   showResultToUser: true,
 
   // options setup
-  optionsMode: "fixed",
-  fixedOptions: [],
+  optionsMode: null,
+  fixedOptionsJson: [],
 });
 
 async function handleOpenDataForm(
