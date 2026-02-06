@@ -12,7 +12,9 @@
           <v-avatar color="white" size="40" rounded="lg">
             <v-icon icon="lucide:zap" color="primary" size="24" />
           </v-avatar>
-          <span class="text-h5 font-weight-black text-white">SuperBazi</span>
+          <span class="text-h5 font-weight-black text-white"
+            >SB Questionnaire</span
+          >
         </div>
 
         <div class="auth-visual-content my-auto">
@@ -70,9 +72,9 @@
             </div>
           </div>
           <p class="text-body-2 text-white italic opacity-90 leading-relaxed">
-            "SuperBazi has completely revolutionized how we track organizational
-            energy. The admin console is intuitive, fast, and remarkably
-            powerful."
+            "SB Questionnaire has completely revolutionized how we track
+            organizational energy. The admin console is intuitive, fast, and
+            remarkably powerful."
           </p>
         </v-card>
 
@@ -172,7 +174,7 @@
                 <v-icon icon="lucide:twitter" size="16" class="text-disabled" />
               </div>
               <p class="text-caption text-disabled font-weight-medium">
-                &copy; 2026 SuperBazi Inc. All rights reserved.
+                &copy; 2026 SB Questionnaire Inc. All rights reserved.
               </p>
             </footer>
           </v-card>
@@ -185,7 +187,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-const email = ref("admin@superbazi.com");
+const email = ref("admin@SB Questionnaire.com");
 const password = ref("");
 const remember = ref(true);
 const showPassword = ref(false);

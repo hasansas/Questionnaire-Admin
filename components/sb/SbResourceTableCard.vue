@@ -409,10 +409,19 @@
           </div>
 
           <v-card rounded="lg" variant="tonal" class="pa-3">
-            <div class="d-flex align-center ga-2">
-              <v-icon icon="lucide:alert-triangle" size="16" />
-              <div class="text-body-2 font-weight-bold text-truncate">
-                {{ deleteItemLabel("label", deleteTarget) }}
+            <div class="d-flex align-start ga-3">
+              <v-icon icon="lucide:alert-triangle" size="16" class="mt-1" />
+
+              <div class="min-w-0">
+                <div
+                  class="text-body-2 font-weight-bold text-truncate text-capitalize"
+                >
+                  {{ deleteItemLabel("label", deleteTarget) }}
+                </div>
+
+                <div class="text-caption text-medium-emphasis text-truncate">
+                  {{ deleteItemLabel("key", deleteTarget) }}
+                </div>
               </div>
             </div>
           </v-card>
@@ -549,7 +558,7 @@ const props = withDefaults(
     // deletion
     deleteAction?: (item: TItem) => Promise<any>;
     deleteTitle?: string;
-    deleteLabel: string | ((item: TItem) => string);
+    deleteLabel?: string | ((item: TItem) => string);
     deleteLabelKey?: string | ((item: TItem) => string);
 
     // optional panel
@@ -772,7 +781,7 @@ const deleting = ref(false);
 function deleteItemLabel(key: string, item: TItem | null | undefined) {
   if (!item) return "";
 
-  const d = key === "lable" ? props.deleteLabel : props.deleteLabelKey;
+  const d = key === "label" ? props.deleteLabel : props.deleteLabelKey;
 
   if (typeof d === "function") return d(item);
 

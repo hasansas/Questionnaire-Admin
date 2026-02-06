@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "superbazi-bo",
+      name: "sb-questionnaire-bo",
       exec_mode: "cluster",
       script: "./.output/server/index.mjs",
       env: {

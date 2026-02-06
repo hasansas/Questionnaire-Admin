@@ -759,7 +759,7 @@ const organizations = ref<Organization[]>([
   {
     id: "2bbd7b1a-2d9c-4b86-9a2c-9f1d01b5cdb1",
     code: "SBZ",
-    name: "SuperBazi Internal",
+    name: "SB Questionnaire Internal",
     type: "internal",
     status: "active",
     timezone: "Asia/Jakarta",
@@ -793,7 +793,7 @@ const orgUsers = ref<OrganizationUser[]>([
   {
     id: "ou_002",
     organization_id: "2bbd7b1a-2d9c-4b86-9a2c-9f1d01b5cdb1",
-    email: "ops@superbazi.com",
+    email: "ops@SB Questionnaire.com",
     name: "Ops Viewer",
     role: "org_viewer",
     status: "inactive",

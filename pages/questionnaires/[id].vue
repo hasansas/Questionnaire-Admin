@@ -1,66 +1,59 @@
-<!-- /pages/questionnaires/[id].vue -->
 <template>
   <div class="sb-page">
-    <AdminPageHeader :title="pageTitle" :subtitle="pageSubtitle">
+    <AdminPageHeader
+      :title="questionnaire ? questionnaire.title : 'Questionnaire'"
+      subtitle="Configure overview, questions, scoring, bands, meanings, and user info."
+    >
       <template #action>
         <div class="d-flex align-center ga-2 flex-wrap justify-end">
           <v-btn
             rounded="lg"
-            variant="outlined"
-            prepend-icon="lucide:arrow-left"
+            variant="text"
             to="/questionnaires"
+            prepend-icon="lucide:arrow-left"
           >
             Back
           </v-btn>
-
-          <v-btn rounded="lg" variant="outlined" prepend-icon="lucide:download">
-            Export
-            <v-menu activator="parent" location="bottom end">
-              <v-list density="compact">
-                <v-list-item title="Export CSV (UI only)" />
-                <v-list-item title="Export Excel (UI only)" />
-              </v-list>
-            </v-menu>
+          <v-btn
+            rounded="lg"
+            variant="outlined"
+            prepend-icon="lucide:copy"
+            :disabled="!questionnaire"
+          >
+            Duplicate (UI)
           </v-btn>
-
-          <v-btn rounded="lg" color="primary" prepend-icon="lucide:save">
-            Save changes
+          <v-btn
+            rounded="lg"
+            color="primary"
+            prepend-icon="lucide:save"
+            :disabled="!questionnaire"
+          >
+            Save (UI)
           </v-btn>
         </div>
       </template>
     </AdminPageHeader>
 
-    <!-- 4 states -->
     <template v-if="ui.loading">
-      <v-row>
-        <v-col cols="12">
-          <v-card rounded="xl" class="sb-card pa-4">
-            <v-skeleton-loader type="heading, text, text" />
-          </v-card>
-        </v-col>
-        <v-col cols="12">
-          <v-card rounded="xl" class="sb-card">
-            <div class="pa-4 pb-2">
-              <v-skeleton-loader type="heading, text" />
-            </div>
-            <v-divider />
-            <div class="pa-4">
-              <v-skeleton-loader type="table" />
-            </div>
-          </v-card>
-        </v-col>
-      </v-row>
+      <v-card rounded="xl" class="sb-card pa-6">
+        <v-skeleton-loader type="heading, text, text, actions" />
+      </v-card>
+      <v-card rounded="xl" class="sb-card mt-4">
+        <div class="pa-4">
+          <v-skeleton-loader type="table" />
+        </div>
+      </v-card>
     </template>
 
     <template v-else-if="ui.error">
       <v-card rounded="xl" class="sb-card pa-6">
-        <v-alert type="error" variant="tonal" rounded="lg" class="mb-4">
-          {{ ui.error }}
-        </v-alert>
+        <v-alert type="error" variant="tonal" rounded="lg" class="mb-4">{{
+          ui.error
+        }}</v-alert>
         <div class="d-flex ga-2 flex-wrap">
           <v-btn rounded="lg" color="primary" @click="reload">Retry</v-btn>
           <v-btn rounded="lg" variant="outlined" to="/questionnaires"
-            >Back to list</v-btn
+            >Back</v-btn
           >
         </div>
       </v-card>
@@ -69,14 +62,14 @@
     <template v-else-if="!questionnaire">
       <v-card rounded="xl" class="sb-card pa-10">
         <div class="d-flex flex-column align-center text-center">
-          <v-avatar size="56" color="primary" variant="tonal" class="mb-3">
-            <v-icon icon="lucide:clipboard-list" />
+          <v-avatar size="56" color="warning" variant="tonal" class="mb-3">
+            <v-icon icon="lucide:circle-off" />
           </v-avatar>
           <div class="text-subtitle-1 font-weight-bold">
             Questionnaire not found
           </div>
           <div class="text-body-2 text-medium-emphasis mt-1 mb-5">
-            The requested questionnaire does not exist in mock data.
+            The ID may be invalid, or not present in mock data.
           </div>
           <v-btn
             rounded="lg"
@@ -91,339 +84,95 @@
     </template>
 
     <template v-else>
-      <div class="d-flex flex-column ga-4">
-        <!-- Quick overview -->
-        <v-row>
-          <v-col cols="12" lg="8">
-            <v-card rounded="xl" class="sb-card pa-4">
-              <div class="d-flex align-start justify-space-between ga-3">
-                <div class="min-w-0">
-                  <div class="d-flex align-center ga-2 flex-wrap">
-                    <div class="text-subtitle-1 font-weight-black">
-                      {{ questionnaire.title }}
-                    </div>
-                    <v-chip size="small" variant="tonal" color="success">{{
-                      questionnaire.status
-                    }}</v-chip>
-                    <v-chip size="small" variant="tonal">{{
-                      questionnaire.language.toUpperCase()
-                    }}</v-chip>
-                    <v-chip size="small" variant="tonal" color="primary">
-                      {{
-                        questionnaire.scoring_type === "multi_dimension"
-                          ? "Multi-dimension"
-                          : "Total score"
-                      }}
-                    </v-chip>
-                    <v-chip
-                      size="small"
-                      variant="tonal"
-                      :color="optionsMode === 'fixed' ? 'success' : 'warning'"
-                    >
-                      Options:
-                      {{ optionsMode === "fixed" ? "Fixed" : "Per-question" }}
-                    </v-chip>
-                  </div>
+      <v-card rounded="xl" class="sb-card">
+        <div class="pa-4 pb-0">
+          <div class="d-flex align-center ga-2 flex-wrap mb-3">
+            <v-chip size="small" variant="tonal" color="primary">{{
+              questionnaire.code
+            }}</v-chip>
+            <v-chip
+              size="small"
+              variant="tonal"
+              :color="
+                questionnaire.status === 'published'
+                  ? 'success'
+                  : questionnaire.status === 'draft'
+                    ? 'warning'
+                    : 'secondary'
+              "
+            >
+              {{ questionnaire.status }}
+            </v-chip>
+            <v-chip size="small" variant="tonal"
+              >v{{ questionnaire.version }}</v-chip
+            >
+            <v-chip size="small" variant="tonal">{{
+              questionnaire.scoring_type
+            }}</v-chip>
+            <v-chip
+              size="small"
+              variant="tonal"
+              :color="questionnaire.show_result_to_user ? 'success' : 'warning'"
+            >
+              Show result:
+              {{ questionnaire.show_result_to_user ? "Yes" : "No" }}
+            </v-chip>
+          </div>
 
-                  <div class="text-body-2 text-medium-emphasis mt-2">
-                    {{ questionnaire.description }}
-                  </div>
-
-                  <div class="d-flex align-center ga-2 flex-wrap mt-4">
-                    <v-chip size="small" variant="tonal">
-                      Code:
-                      <span class="ms-1 font-weight-bold">{{
-                        questionnaire.code
-                      }}</span>
-                    </v-chip>
-                    <v-chip size="small" variant="tonal">
-                      Version:
-                      <span class="ms-1 font-weight-bold"
-                        >v{{ questionnaire.version }}</span
-                      >
-                    </v-chip>
-                    <v-chip
-                      size="small"
-                      variant="tonal"
-                      :color="
-                        questionnaire.show_result_to_user
-                          ? 'success'
-                          : 'warning'
-                      "
-                    >
-                      Result:
-                      <span class="ms-1 font-weight-bold">{{
-                        questionnaire.show_result_to_user ? "Shown" : "Hidden"
-                      }}</span>
-                    </v-chip>
-                  </div>
-                </div>
-
-                <div class="d-flex align-center ga-2">
-                  <v-btn
-                    rounded="lg"
-                    variant="outlined"
-                    prepend-icon="lucide:eye"
-                    >Preview</v-btn
-                  >
-                  <v-btn
-                    rounded="lg"
-                    variant="outlined"
-                    prepend-icon="lucide:copy"
-                    >Duplicate</v-btn
-                  >
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" lg="4">
-            <v-card rounded="xl" class="sb-card pa-4">
-              <div class="text-subtitle-1 font-weight-black">Summary</div>
-              <div class="text-caption text-medium-emphasis">
-                Key building blocks
-              </div>
-
-              <v-divider class="my-4" />
-
-              <div class="d-flex flex-column ga-3">
-                <div class="d-flex align-center justify-space-between">
-                  <div class="d-flex align-center ga-2">
-                    <v-avatar
-                      size="34"
-                      rounded="lg"
-                      color="primary"
-                      variant="tonal"
-                    >
-                      <v-icon icon="lucide:list-checks" size="16" />
-                    </v-avatar>
-                    <div class="text-body-2 font-weight-bold">Questions</div>
-                  </div>
-                  <div class="text-body-2 font-weight-bold">
-                    {{ localQuestions.length }}
-                  </div>
-                </div>
-
-                <div
-                  v-if="isMultiDimension"
-                  class="d-flex align-center justify-space-between"
-                >
-                  <div class="d-flex align-center ga-2">
-                    <v-avatar
-                      size="34"
-                      rounded="lg"
-                      color="info"
-                      variant="tonal"
-                    >
-                      <v-icon icon="lucide:layers" size="16" />
-                    </v-avatar>
-                    <div class="text-body-2 font-weight-bold">Dimensions</div>
-                  </div>
-                  <div class="text-body-2 font-weight-bold">
-                    {{ dimensions.length }}
-                  </div>
-                </div>
-
-                <div class="d-flex align-center justify-space-between">
-                  <div class="d-flex align-center ga-2">
-                    <v-avatar
-                      size="34"
-                      rounded="lg"
-                      color="success"
-                      variant="tonal"
-                    >
-                      <v-icon icon="lucide:badge-check" size="16" />
-                    </v-avatar>
-                    <div class="text-body-2 font-weight-bold">Bands</div>
-                  </div>
-                  <div class="text-body-2 font-weight-bold">
-                    {{ bands.length }}
-                  </div>
-                </div>
-
-                <div class="d-flex align-center justify-space-between">
-                  <div class="d-flex align-center ga-2">
-                    <v-avatar
-                      size="34"
-                      rounded="lg"
-                      color="warning"
-                      variant="tonal"
-                    >
-                      <v-icon icon="lucide:sparkles" size="16" />
-                    </v-avatar>
-                    <div class="text-body-2 font-weight-bold">Meanings</div>
-                  </div>
-                  <div class="text-body-2 font-weight-bold">
-                    {{ meanings.length }}
-                  </div>
-                </div>
-
-                <div class="d-flex align-center justify-space-between">
-                  <div class="d-flex align-center ga-2">
-                    <v-avatar
-                      size="34"
-                      rounded="lg"
-                      color="primary"
-                      variant="tonal"
-                    >
-                      <v-icon icon="lucide:form-input" size="16" />
-                    </v-avatar>
-                    <div class="text-body-2 font-weight-bold">User fields</div>
-                  </div>
-                  <div class="text-body-2 font-weight-bold">
-                    {{ userFieldConfigs.length }}
-                  </div>
-                </div>
-
-                <div class="d-flex align-center justify-space-between">
-                  <div class="d-flex align-center ga-2">
-                    <v-avatar
-                      size="34"
-                      rounded="lg"
-                      :color="optionsMode === 'fixed' ? 'success' : 'warning'"
-                      variant="tonal"
-                    >
-                      <v-icon icon="lucide:toggle-left" size="16" />
-                    </v-avatar>
-                    <div class="text-body-2 font-weight-bold">Options mode</div>
-                  </div>
-                  <div class="text-body-2 font-weight-bold">
-                    {{ optionsMode === "fixed" ? "Fixed" : "Per-question" }}
-                  </div>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <!-- Tabs -->
-        <v-card rounded="xl" class="sb-card">
-          <v-tabs v-model="tab" class="px-2">
-            <v-tab value="overview">Overview</v-tab>
-            <v-tab value="questions">Questions</v-tab>
-            <v-tab value="dimensions" v-if="isMultiDimension">Dimensions</v-tab>
-            <v-tab value="bands">Bands</v-tab>
-            <v-tab value="meanings">Meanings</v-tab>
-            <v-tab value="user_info">User Info Config</v-tab>
+          <v-tabs v-model="tab" color="primary">
+            <v-tab value="overview" prepend-icon="lucide:info">Overview</v-tab>
+            <v-tab value="questions" prepend-icon="lucide:list-checks"
+              >Questions</v-tab
+            >
+            <v-tab
+              v-if="questionnaire.scoring_type === 'multi_dimension'"
+              value="dimensions"
+              prepend-icon="lucide:layers"
+            >
+              Dimensions
+            </v-tab>
+            <v-tab value="bands" prepend-icon="lucide:badge-percent"
+              >Bands</v-tab
+            >
+            <v-tab value="meanings" prepend-icon="lucide:sparkles"
+              >Meanings</v-tab
+            >
+            <v-tab value="userInfo" prepend-icon="lucide:form-input"
+              >User Info Config</v-tab
+            >
           </v-tabs>
+        </div>
 
-          <v-divider />
+        <v-divider class="mt-2" />
 
+        <v-card-text class="pa-0">
           <v-window v-model="tab">
             <!-- Overview -->
             <v-window-item value="overview">
               <div class="pa-6">
-                <v-row>
-                  <v-col cols="12" lg="7">
-                    <v-card rounded="xl" variant="tonal" class="pa-4">
+                <v-row class="ga-4" no-gutters>
+                  <v-col cols="12" lg="8">
+                    <v-card
+                      rounded="xl"
+                      variant="flat"
+                      class="sb-inner-card pa-4"
+                    >
                       <div
-                        class="d-flex align-center justify-space-between flex-wrap ga-2"
+                        class="d-flex align-center justify-space-between ga-2 flex-wrap"
                       >
-                        <div>
+                        <div class="min-w-0">
                           <div class="text-subtitle-1 font-weight-black">
-                            Meta
+                            Questionnaire info
                           </div>
                           <div class="text-caption text-medium-emphasis">
-                            Basic questionnaire configuration
+                            Basic metadata and publish settings.
                           </div>
                         </div>
                         <v-btn
                           rounded="lg"
                           variant="outlined"
                           prepend-icon="lucide:pencil"
-                          >Edit meta</v-btn
-                        >
-                      </div>
-
-                      <v-divider class="my-4" />
-
-                      <v-row class="ga-4" no-gutters>
-                        <v-col cols="12" md="6">
-                          <div class="text-caption text-medium-emphasis">
-                            Code
-                          </div>
-                          <div class="text-body-2 font-weight-bold">
-                            {{ questionnaire.code }}
-                          </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                          <div class="text-caption text-medium-emphasis">
-                            Version
-                          </div>
-                          <div class="text-body-2 font-weight-bold">
-                            v{{ questionnaire.version }}
-                          </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                          <div class="text-caption text-medium-emphasis">
-                            Language
-                          </div>
-                          <div class="text-body-2 font-weight-bold">
-                            {{ questionnaire.language.toUpperCase() }}
-                          </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                          <div class="text-caption text-medium-emphasis">
-                            Scoring type
-                          </div>
-                          <div class="text-body-2 font-weight-bold">
-                            {{
-                              questionnaire.scoring_type === "multi_dimension"
-                                ? "Multi-dimension"
-                                : "Total score"
-                            }}
-                          </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                          <div class="text-caption text-medium-emphasis">
-                            Show result
-                          </div>
-                          <div class="text-body-2 font-weight-bold">
-                            {{
-                              questionnaire.show_result_to_user ? "Yes" : "No"
-                            }}
-                          </div>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                          <div class="text-caption text-medium-emphasis">
-                            Options mode
-                          </div>
-                          <div class="text-body-2 font-weight-bold">
-                            {{
-                              optionsMode === "fixed"
-                                ? "Fixed (global)"
-                                : "Per-question"
-                            }}
-                          </div>
-                        </v-col>
-                      </v-row>
-                    </v-card>
-                  </v-col>
-
-                  <v-col cols="12" lg="5">
-                    <v-card rounded="xl" class="pa-4">
-                      <div
-                        class="d-flex align-center justify-space-between flex-wrap ga-2"
-                      >
-                        <div>
-                          <div class="text-subtitle-1 font-weight-black">
-                            Options
-                          </div>
-                          <div class="text-caption text-medium-emphasis">
-                            {{
-                              optionsMode === "fixed"
-                                ? "Global option set used by all questions."
-                                : "Configured per question."
-                            }}
-                          </div>
-                        </div>
-
-                        <v-btn
-                          v-if="optionsMode === 'fixed'"
-                          rounded="lg"
-                          variant="outlined"
-                          prepend-icon="lucide:pencil"
-                          @click="fixedOptionsDialog = true"
+                          @click="openEditOverview"
                         >
                           Edit
                         </v-btn>
@@ -431,605 +180,378 @@
 
                       <v-divider class="my-4" />
 
-                      <template v-if="optionsMode === 'fixed'">
-                        <div class="d-flex flex-column ga-2">
-                          <v-card
-                            v-for="o in fixedOptions"
-                            :key="o.id"
-                            rounded="xl"
-                            variant="tonal"
-                            class="pa-3"
-                          >
-                            <div
-                              class="d-flex align-center justify-space-between"
-                            >
-                              <div class="text-body-2 font-weight-bold">
-                                {{ o.label }}
-                              </div>
-                              <v-chip size="small" variant="tonal"
-                                >Score: {{ o.score_value }}</v-chip
-                              >
-                            </div>
-                          </v-card>
-                        </div>
-                      </template>
+                      <v-row class="ga-4" no-gutters>
+                        <v-col cols="12" md="4">
+                          <div class="text-caption text-medium-emphasis">
+                            Code
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ questionnaire.code }}
+                          </div>
+                        </v-col>
+                        <v-col cols="12" md="8">
+                          <div class="text-caption text-medium-emphasis">
+                            Title
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ questionnaire.title }}
+                          </div>
+                        </v-col>
+                        <v-col cols="12">
+                          <div class="text-caption text-medium-emphasis">
+                            Description
+                          </div>
+                          <div class="text-body-2">
+                            {{ questionnaire.description || "—" }}
+                          </div>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                          <div class="text-caption text-medium-emphasis">
+                            Language
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ questionnaire.language }}
+                          </div>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                          <div class="text-caption text-medium-emphasis">
+                            Scoring type
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ questionnaire.scoring_type }}
+                          </div>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                          <div class="text-caption text-medium-emphasis">
+                            Version
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ questionnaire.version }}
+                          </div>
+                        </v-col>
+                      </v-row>
+                    </v-card>
+                  </v-col>
 
-                      <template v-else>
-                        <v-alert type="info" variant="tonal" rounded="lg">
-                          Open a question to manage its options.
-                        </v-alert>
-                      </template>
+                  <v-col cols="12" lg="4">
+                    <v-card
+                      rounded="xl"
+                      variant="flat"
+                      class="sb-inner-card pa-4"
+                    >
+                      <div class="text-subtitle-1 font-weight-black">
+                        Quick checks
+                      </div>
+                      <div class="text-caption text-medium-emphasis mb-4">
+                        A Phase 1 completeness snapshot.
+                      </div>
+
+                      <div class="d-flex flex-column ga-2">
+                        <div class="d-flex align-center justify-space-between">
+                          <div class="text-body-2">Questions</div>
+                          <v-chip
+                            size="small"
+                            variant="tonal"
+                            color="primary"
+                            >{{ qQuestions.length }}</v-chip
+                          >
+                        </div>
+                        <div class="d-flex align-center justify-space-between">
+                          <div class="text-body-2">Options</div>
+                          <v-chip
+                            size="small"
+                            variant="tonal"
+                            color="primary"
+                            >{{ qOptions.length }}</v-chip
+                          >
+                        </div>
+                        <div
+                          class="d-flex align-center justify-space-between"
+                          v-if="
+                            questionnaire.scoring_type === 'multi_dimension'
+                          "
+                        >
+                          <div class="text-body-2">Dimensions</div>
+                          <v-chip
+                            size="small"
+                            variant="tonal"
+                            color="primary"
+                            >{{ qDimensions.length }}</v-chip
+                          >
+                        </div>
+                        <div class="d-flex align-center justify-space-between">
+                          <div class="text-body-2">Score bands</div>
+                          <v-chip
+                            size="small"
+                            variant="tonal"
+                            color="primary"
+                            >{{ qBands.length }}</v-chip
+                          >
+                        </div>
+                        <div class="d-flex align-center justify-space-between">
+                          <div class="text-body-2">Meanings</div>
+                          <v-chip
+                            size="small"
+                            variant="tonal"
+                            color="primary"
+                            >{{ qMeanings.length }}</v-chip
+                          >
+                        </div>
+                        <div class="d-flex align-center justify-space-between">
+                          <div class="text-body-2">User fields attached</div>
+                          <v-chip
+                            size="small"
+                            variant="tonal"
+                            color="primary"
+                            >{{ qUserFieldConfigs.length }}</v-chip
+                          >
+                        </div>
+                      </div>
+
+                      <v-divider class="my-4" />
+
+                      <v-alert variant="tonal" type="info" rounded="lg">
+                        UI only — this page uses mock data and local edits.
+                      </v-alert>
                     </v-card>
                   </v-col>
                 </v-row>
-
-                <!-- Fixed options dialog -->
-                <v-dialog v-model="fixedOptionsDialog" max-width="820">
-                  <v-card rounded="xl">
-                    <v-card-title
-                      class="d-flex align-center justify-space-between"
-                    >
-                      <div class="text-subtitle-1 font-weight-bold">
-                        Fixed options (global)
-                      </div>
-                      <v-btn
-                        icon
-                        variant="text"
-                        @click="fixedOptionsDialog = false"
-                      >
-                        <v-icon icon="lucide:x" />
-                      </v-btn>
-                    </v-card-title>
-
-                    <v-divider />
-
-                    <v-card-text class="pa-6">
-                      <v-alert
-                        type="info"
-                        variant="tonal"
-                        rounded="lg"
-                        class="mb-4"
-                      >
-                        UI only. Changes are not persisted.
-                      </v-alert>
-
-                      <v-data-table
-                        :headers="fixedOptionHeaders"
-                        :items="fixedOptionsDraft"
-                        item-key="id"
-                        density="comfortable"
-                      >
-                        <template #item.label="{ item }">
-                          <v-text-field
-                            v-model="item.label"
-                            variant="outlined"
-                            rounded="lg"
-                            density="comfortable"
-                            hide-details
-                          />
-                        </template>
-
-                        <template #item.score_value="{ item }">
-                          <v-text-field
-                            v-model.number="item.score_value"
-                            type="number"
-                            variant="outlined"
-                            rounded="lg"
-                            density="comfortable"
-                            hide-details
-                          />
-                        </template>
-
-                        <template #item.sort_order="{ item }">
-                          <v-text-field
-                            v-model.number="item.sort_order"
-                            type="number"
-                            variant="outlined"
-                            rounded="lg"
-                            density="comfortable"
-                            hide-details
-                          />
-                        </template>
-                      </v-data-table>
-                    </v-card-text>
-
-                    <v-divider />
-
-                    <v-card-actions class="pa-4">
-                      <v-btn
-                        rounded="lg"
-                        variant="text"
-                        @click="fixedOptionsDialog = false"
-                        >Close</v-btn
-                      >
-                      <v-spacer />
-                      <v-btn
-                        rounded="lg"
-                        variant="outlined"
-                        prepend-icon="lucide:rotate-ccw"
-                        @click="resetFixedDraft"
-                      >
-                        Reset
-                      </v-btn>
-                      <v-btn
-                        rounded="lg"
-                        color="primary"
-                        prepend-icon="lucide:save"
-                        @click="applyFixedDraft"
-                      >
-                        Apply (UI)
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
               </div>
             </v-window-item>
 
             <!-- Questions -->
             <v-window-item value="questions">
               <div class="pa-6">
-                <div
-                  class="d-flex align-center justify-space-between flex-wrap ga-2 mb-4"
-                >
-                  <div class="min-w-0">
-                    <div class="text-subtitle-1 font-weight-black">
-                      Questions
-                    </div>
-                    <div class="text-caption text-medium-emphasis">
-                      {{
-                        optionsMode === "fixed"
-                          ? "Options are fixed globally for all questions."
-                          : "Options are configured per question."
-                      }}
-                    </div>
-                  </div>
-
-                  <div class="d-flex align-center ga-2 flex-wrap justify-end">
-                    <v-text-field
-                      v-model="questionSearch"
-                      density="comfortable"
-                      variant="outlined"
-                      rounded="lg"
-                      prepend-inner-icon="lucide:search"
-                      placeholder="Search questions..."
-                      hide-details
-                      class="sb-search"
-                    />
-
-                    <v-btn
-                      rounded="lg"
-                      variant="outlined"
-                      prepend-icon="lucide:sliders-horizontal"
-                    >
-                      Filters
-                      <v-menu activator="parent" location="bottom end">
-                        <v-list density="compact" class="pa-2">
-                          <v-list-subheader>Dimension</v-list-subheader>
-                          <v-list-item
-                            v-for="opt in dimensionFilterItems"
-                            :key="opt.value"
-                            @click="filters.dimension_code = opt.value"
-                          >
-                            <v-list-item-title>{{
-                              opt.title
-                            }}</v-list-item-title>
-                          </v-list-item>
-                          <v-divider class="my-2" />
-                          <v-list-item @click="filters.dimension_code = ''">
-                            <v-list-item-title>Clear</v-list-item-title>
-                          </v-list-item>
-                        </v-list>
-                      </v-menu>
-                    </v-btn>
-
-                    <v-btn
-                      rounded="lg"
-                      color="primary"
-                      prepend-icon="lucide:plus"
-                      @click="openQuestionDialog()"
-                    >
-                      Add question
-                    </v-btn>
-                  </div>
-                </div>
-
-                <v-card
-                  v-if="optionsMode === 'fixed'"
-                  rounded="xl"
-                  variant="tonal"
-                  class="pa-4 mb-4"
-                >
-                  <div
-                    class="d-flex align-center justify-space-between flex-wrap ga-2"
-                  >
-                    <div class="text-body-2 font-weight-bold">
-                      Fixed options (global)
-                    </div>
-                    <div class="d-flex align-center ga-2 flex-wrap">
-                      <v-chip
-                        v-for="o in fixedOptionsSorted"
-                        :key="o.id"
-                        size="small"
-                        variant="tonal"
-                      >
-                        {{ o.label }} = {{ o.score_value }}
-                      </v-chip>
-                    </div>
-                  </div>
-                </v-card>
-
-                <v-card rounded="xl" class="sb-card">
+                <v-card rounded="xl" variant="flat" class="sb-inner-card">
                   <div
                     class="d-flex align-center justify-space-between flex-wrap ga-2 pa-4 pb-2"
                   >
-                    <div class="d-flex align-center ga-2 flex-wrap">
-                      <v-chip size="small" variant="tonal"
-                        >Total: {{ localQuestions.length }}</v-chip
-                      >
-                      <v-chip size="small" variant="tonal" color="primary">
-                        Showing: {{ filteredQuestions.length }}
-                      </v-chip>
-                      <v-chip
-                        v-if="filters.dimension_code"
-                        size="small"
-                        variant="tonal"
-                        color="primary"
-                      >
-                        Dimension: {{ filters.dimension_code }}
-                      </v-chip>
+                    <div class="min-w-0">
+                      <div class="text-subtitle-1 font-weight-black">
+                        Questions
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        Single choice questions with options + scores.
+                      </div>
                     </div>
-
-                    <v-btn
-                      rounded="lg"
-                      variant="text"
-                      prepend-icon="lucide:refresh-cw"
-                      @click="resetQuestionFilters"
-                    >
-                      Reset
-                    </v-btn>
+                    <div class="d-flex align-center ga-2 flex-wrap">
+                      <v-text-field
+                        v-model="questionSearch"
+                        density="comfortable"
+                        variant="outlined"
+                        rounded="lg"
+                        prepend-inner-icon="lucide:search"
+                        placeholder="Search questions..."
+                        hide-details
+                        class="sb-search"
+                      />
+                      <v-btn
+                        rounded="lg"
+                        color="primary"
+                        prepend-icon="lucide:plus"
+                        @click="openCreateQuestion"
+                      >
+                        Add question
+                      </v-btn>
+                    </div>
                   </div>
-
                   <v-divider />
 
-                  <v-data-table
-                    :headers="questionHeaders"
-                    :items="filteredQuestions"
-                    item-key="id"
-                    density="comfortable"
-                  >
-                    <template #item.sort_order="{ item }">
-                      <v-chip size="small" variant="tonal">{{
-                        item.sort_order
-                      }}</v-chip>
-                    </template>
-
-                    <template #item.question_text="{ item }">
-                      <div class="min-w-0">
-                        <div class="font-weight-semibold text-truncate">
-                          {{ item.question_text }}
-                        </div>
-                        <div class="text-caption text-medium-emphasis">
-                          {{ getQuestionDimensionLabel(item.id) }}
-                        </div>
-                      </div>
-                    </template>
-
-                    <template #item.is_required="{ item }">
-                      <v-chip
-                        size="small"
-                        :color="item.is_required ? 'success' : 'warning'"
-                        variant="tonal"
-                      >
-                        {{ item.is_required ? "Required" : "Optional" }}
-                      </v-chip>
-                    </template>
-
-                    <template #item.actions="{ item }">
-                      <div class="d-flex justify-end ga-1">
-                        <v-btn
-                          icon
-                          variant="text"
-                          @click="openQuestionDialog(item.id)"
-                          aria-label="Edit question"
+                  <template v-if="filteredQuestions.length === 0">
+                    <div class="pa-10">
+                      <div class="d-flex flex-column align-center text-center">
+                        <v-avatar
+                          size="56"
+                          color="primary"
+                          variant="tonal"
+                          class="mb-3"
                         >
-                          <v-icon icon="lucide:pencil" />
-                        </v-btn>
-                        <v-btn icon variant="text" aria-label="More actions">
-                          <v-icon icon="lucide:more-horizontal" />
-                          <v-menu activator="parent" location="bottom end">
-                            <v-list density="compact">
-                              <v-list-item title="Duplicate (UI)" />
-                              <v-list-item title="Disable (UI)" />
-                            </v-list>
-                          </v-menu>
+                          <v-icon icon="lucide:list-checks" />
+                        </v-avatar>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          No questions
+                        </div>
+                        <div class="text-body-2 text-medium-emphasis mt-1 mb-5">
+                          Add questions to start collecting answers.
+                        </div>
+                        <v-btn
+                          rounded="lg"
+                          color="primary"
+                          prepend-icon="lucide:plus"
+                          @click="openCreateQuestion"
+                        >
+                          Add question
                         </v-btn>
                       </div>
-                    </template>
-                  </v-data-table>
-                </v-card>
+                    </div>
+                  </template>
 
-                <!-- Question dialog -->
-                <v-dialog v-model="questionDialog" max-width="920">
-                  <v-card rounded="xl">
-                    <v-card-title
-                      class="d-flex align-center justify-space-between"
+                  <template v-else>
+                    <v-data-table
+                      :headers="questionHeaders"
+                      :items="filteredQuestions"
+                      item-key="id"
+                      density="comfortable"
                     >
-                      <div class="text-subtitle-1 font-weight-bold">
-                        {{ questionForm.id ? "Edit question" : "Add question" }}
-                      </div>
-                      <v-btn
-                        icon
-                        variant="text"
-                        @click="questionDialog = false"
-                      >
-                        <v-icon icon="lucide:x" />
-                      </v-btn>
-                    </v-card-title>
+                      <template #item.text="{ item }">
+                        <div class="min-w-0">
+                          <div class="font-weight-semibold text-truncate">
+                            {{ item.text }}
+                          </div>
+                          <div
+                            class="text-caption text-medium-emphasis text-truncate"
+                          >
+                            {{ item.code }} · sort {{ item.sort_order }}
+                          </div>
+                        </div>
+                      </template>
 
-                    <v-divider />
+                      <template #item.is_required="{ item }">
+                        <v-chip
+                          size="small"
+                          variant="tonal"
+                          :color="item.is_required ? 'success' : 'warning'"
+                        >
+                          {{ item.is_required ? "Required" : "Optional" }}
+                        </v-chip>
+                      </template>
 
-                    <v-card-text class="pa-6">
-                      <v-row class="ga-4" no-gutters>
-                        <v-col cols="12">
-                          <v-textarea
-                            v-model="questionForm.question_text"
-                            label="Question text"
-                            variant="outlined"
-                            rounded="lg"
-                            rows="3"
-                            auto-grow
-                          />
-                        </v-col>
+                      <template #item.options="{ item }">
+                        <v-chip size="small" variant="tonal" color="primary">
+                          {{ optionsByQuestion(item.id).length }} options
+                        </v-chip>
+                      </template>
 
-                        <v-col cols="12" md="4">
-                          <v-text-field
-                            v-model.number="questionForm.sort_order"
-                            type="number"
-                            label="Sort order"
-                            variant="outlined"
-                            rounded="lg"
-                          />
-                        </v-col>
-
-                        <v-col cols="12" md="4">
-                          <v-select
-                            v-model="questionForm.dimension_code"
-                            :items="dimensionSelectItems"
-                            item-title="title"
-                            item-value="value"
-                            label="Dimension"
-                            variant="outlined"
-                            rounded="lg"
-                            :disabled="!isMultiDimension"
-                            hint="Mapping question → dimension"
-                            persistent-hint
-                          />
-                        </v-col>
-
-                        <v-col cols="12" md="4">
-                          <v-select
-                            v-model="questionForm.is_required"
-                            :items="requiredItems"
-                            item-title="title"
-                            item-value="value"
-                            label="Required"
-                            variant="outlined"
-                            rounded="lg"
-                          />
-                        </v-col>
-
-                        <v-col cols="12">
-                          <template v-if="optionsMode === 'fixed'">
-                            <v-card rounded="xl" variant="tonal" class="pa-4">
-                              <div
-                                class="d-flex align-center justify-space-between flex-wrap ga-2"
-                              >
-                                <div>
-                                  <div class="text-body-2 font-weight-bold">
-                                    Options (fixed)
-                                  </div>
-                                  <div
-                                    class="text-caption text-medium-emphasis"
-                                  >
-                                    This questionnaire uses a global option set.
-                                  </div>
-                                </div>
-                                <div class="d-flex ga-2 flex-wrap">
-                                  <v-chip
-                                    v-for="o in fixedOptionsSorted"
-                                    :key="o.id"
-                                    size="small"
-                                    variant="tonal"
-                                  >
-                                    {{ o.label }} · {{ o.score_value }}
-                                  </v-chip>
-                                </div>
-                              </div>
-                            </v-card>
-                          </template>
-
-                          <template v-else>
-                            <v-card rounded="xl" class="sb-card">
-                              <div
-                                class="d-flex align-center justify-space-between flex-wrap ga-2 pa-4 pb-2"
-                              >
-                                <div>
-                                  <div class="text-body-2 font-weight-bold">
-                                    Options (per question)
-                                  </div>
-                                  <div
-                                    class="text-caption text-medium-emphasis"
-                                  >
-                                    Add answer options and scoring for this
-                                    question.
-                                  </div>
-                                </div>
-                                <v-btn
-                                  rounded="lg"
-                                  color="primary"
-                                  prepend-icon="lucide:plus"
-                                  @click="addOptionRow"
-                                >
-                                  Add option
-                                </v-btn>
-                              </div>
-                              <v-divider />
-                              <div class="pa-4">
-                                <v-data-table
-                                  :headers="optionHeaders"
-                                  :items="questionOptionsDraft"
-                                  item-key="id"
-                                  density="comfortable"
-                                >
-                                  <template #item.label="{ item }">
-                                    <v-text-field
-                                      v-model="item.label"
-                                      variant="outlined"
-                                      rounded="lg"
-                                      density="comfortable"
-                                      hide-details
-                                    />
-                                  </template>
-
-                                  <template #item.score_value="{ item }">
-                                    <v-text-field
-                                      v-model.number="item.score_value"
-                                      type="number"
-                                      variant="outlined"
-                                      rounded="lg"
-                                      density="comfortable"
-                                      hide-details
-                                    />
-                                  </template>
-
-                                  <template #item.sort_order="{ item }">
-                                    <v-text-field
-                                      v-model.number="item.sort_order"
-                                      type="number"
-                                      variant="outlined"
-                                      rounded="lg"
-                                      density="comfortable"
-                                      hide-details
-                                    />
-                                  </template>
-
-                                  <template #item.actions="{ item }">
-                                    <div class="d-flex justify-end">
-                                      <v-btn
-                                        icon
-                                        variant="text"
-                                        :disabled="
-                                          questionOptionsDraft.length <= 2
-                                        "
-                                        @click="removeOptionRow(item.id)"
-                                      >
-                                        <v-icon icon="lucide:trash-2" />
-                                      </v-btn>
-                                    </div>
-                                  </template>
-                                </v-data-table>
-                              </div>
-                            </v-card>
-                          </template>
-                        </v-col>
-                      </v-row>
-                    </v-card-text>
-
-                    <v-divider />
-
-                    <v-card-actions class="pa-4">
-                      <v-btn
-                        rounded="lg"
-                        variant="text"
-                        @click="questionDialog = false"
-                        >Cancel</v-btn
-                      >
-                      <v-spacer />
-                      <v-btn
-                        rounded="lg"
-                        variant="outlined"
-                        prepend-icon="lucide:check"
-                        >Validate</v-btn
-                      >
-                      <v-btn
-                        rounded="lg"
-                        color="primary"
-                        prepend-icon="lucide:save"
-                        @click="saveQuestionUi"
-                      >
-                        Save (UI)
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
+                      <template #item.actions="{ item }">
+                        <div class="d-flex justify-end">
+                          <v-btn
+                            icon
+                            variant="text"
+                            aria-label="Edit"
+                            @click="openEditQuestion(item)"
+                          >
+                            <v-icon icon="lucide:pencil" />
+                          </v-btn>
+                          <v-btn icon variant="text" aria-label="More">
+                            <v-icon icon="lucide:more-vertical" />
+                            <v-menu activator="parent" location="bottom end">
+                              <v-list density="compact">
+                                <v-list-item
+                                  title="Edit (UI)"
+                                  @click="openEditQuestion(item)"
+                                />
+                                <v-list-item
+                                  title="Disable (UI)"
+                                  @click="
+                                    openConfirm(
+                                      'Disable question',
+                                      `UI only — would disable ${item.code}.`,
+                                    )
+                                  "
+                                />
+                              </v-list>
+                            </v-menu>
+                          </v-btn>
+                        </div>
+                      </template>
+                    </v-data-table>
+                  </template>
+                </v-card>
               </div>
             </v-window-item>
 
             <!-- Dimensions -->
-            <v-window-item value="dimensions" v-if="isMultiDimension">
+            <v-window-item
+              value="dimensions"
+              v-if="questionnaire.scoring_type === 'multi_dimension'"
+            >
               <div class="pa-6">
-                <div
-                  class="d-flex align-center justify-space-between flex-wrap ga-2 mb-4"
-                >
-                  <div class="min-w-0">
-                    <div class="text-subtitle-1 font-weight-black">
-                      Dimensions
+                <v-card rounded="xl" variant="flat" class="sb-inner-card">
+                  <div
+                    class="d-flex align-center justify-space-between flex-wrap ga-2 pa-4 pb-2"
+                  >
+                    <div class="min-w-0">
+                      <div class="text-subtitle-1 font-weight-black">
+                        Dimensions
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        Keys used for multi-dimension scoring.
+                      </div>
                     </div>
-                    <div class="text-caption text-medium-emphasis">
-                      Visual, Auditori, Kinestetik (from uploaded xlsx)
-                    </div>
+                    <v-btn
+                      rounded="lg"
+                      color="primary"
+                      prepend-icon="lucide:plus"
+                      @click="openCreateDimension"
+                    >
+                      Add dimension
+                    </v-btn>
                   </div>
-                  <v-btn
-                    rounded="lg"
-                    variant="outlined"
-                    prepend-icon="lucide:plus"
-                    >Add dimension</v-btn
-                  >
-                </div>
+                  <v-divider />
 
-                <v-card rounded="xl" class="sb-card">
-                  <v-data-table
-                    :headers="dimensionHeaders"
-                    :items="dimensions"
-                    item-key="id"
-                    density="comfortable"
-                  >
-                    <template #item.dimension_code="{ item }">
-                      <v-chip size="small" variant="tonal" color="primary">{{
-                        item.dimension_code
-                      }}</v-chip>
-                    </template>
-
-                    <template #item.title="{ item }">
-                      <div class="min-w-0">
-                        <div class="font-weight-semibold text-truncate">
-                          {{ item.title }}
-                        </div>
-                        <div
-                          class="text-caption text-medium-emphasis text-truncate"
+                  <template v-if="qDimensions.length === 0">
+                    <div class="pa-10">
+                      <div class="d-flex flex-column align-center text-center">
+                        <v-avatar
+                          size="56"
+                          color="primary"
+                          variant="tonal"
+                          class="mb-3"
                         >
-                          {{ item.description }}
+                          <v-icon icon="lucide:layers" />
+                        </v-avatar>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          No dimensions
                         </div>
+                        <div class="text-body-2 text-medium-emphasis mt-1 mb-5">
+                          Add dimensions to enable multi_dimension scoring.
+                        </div>
+                        <v-btn
+                          rounded="lg"
+                          color="primary"
+                          prepend-icon="lucide:plus"
+                          @click="openCreateDimension"
+                        >
+                          Add dimension
+                        </v-btn>
                       </div>
-                    </template>
+                    </div>
+                  </template>
 
-                    <template #item.actions>
-                      <div class="d-flex justify-end ga-1">
-                        <v-btn icon variant="text" aria-label="Edit dimension">
-                          <v-icon icon="lucide:pencil" />
-                        </v-btn>
-                        <v-btn icon variant="text" aria-label="More actions">
-                          <v-icon icon="lucide:more-horizontal" />
-                          <v-menu activator="parent" location="bottom end">
-                            <v-list density="compact">
-                              <v-list-item title="Reorder (UI)" />
-                              <v-list-item title="Disable (UI)" />
-                            </v-list>
-                          </v-menu>
-                        </v-btn>
-                      </div>
-                    </template>
-                  </v-data-table>
+                  <template v-else>
+                    <v-data-table
+                      :headers="dimensionHeaders"
+                      :items="qDimensions"
+                      item-key="id"
+                      density="comfortable"
+                    >
+                      <template #item.name="{ item }">
+                        <div class="min-w-0">
+                          <div class="font-weight-semibold text-truncate">
+                            {{ item.name }}
+                          </div>
+                          <div
+                            class="text-caption text-medium-emphasis text-truncate"
+                          >
+                            key: {{ item.key }} · sort {{ item.sort_order }}
+                          </div>
+                        </div>
+                      </template>
+
+                      <template #item.actions="{ item }">
+                        <div class="d-flex justify-end">
+                          <v-btn
+                            icon
+                            variant="text"
+                            aria-label="Edit"
+                            @click="openEditDimension(item)"
+                          >
+                            <v-icon icon="lucide:pencil" />
+                          </v-btn>
+                        </div>
+                      </template>
+                    </v-data-table>
+                  </template>
                 </v-card>
               </div>
             </v-window-item>
@@ -1037,1187 +559,1790 @@
             <!-- Bands -->
             <v-window-item value="bands">
               <div class="pa-6">
-                <div
-                  class="d-flex align-center justify-space-between flex-wrap ga-2 mb-4"
-                >
-                  <div class="min-w-0">
-                    <div class="text-subtitle-1 font-weight-black">
-                      Score bands
+                <v-card rounded="xl" variant="flat" class="sb-inner-card">
+                  <div
+                    class="d-flex align-center justify-space-between flex-wrap ga-2 pa-4 pb-2"
+                  >
+                    <div class="min-w-0">
+                      <div class="text-subtitle-1 font-weight-black">
+                        Score bands
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        Define ranges for total or per-dimension scoring.
+                      </div>
                     </div>
-                    <div class="text-caption text-medium-emphasis">
-                      Thresholds per dimension: Low 0–10, Medium 11–20, High
-                      21–30
-                    </div>
+                    <v-btn
+                      rounded="lg"
+                      color="primary"
+                      prepend-icon="lucide:plus"
+                      @click="openCreateBand"
+                    >
+                      Add band
+                    </v-btn>
                   </div>
-                  <v-btn
-                    rounded="lg"
-                    variant="outlined"
-                    prepend-icon="lucide:pencil"
-                    >Edit bands</v-btn
-                  >
-                </div>
+                  <v-divider />
 
-                <v-row>
-                  <v-col
-                    cols="12"
-                    md="4"
-                    v-for="group in bandsByDimension"
-                    :key="group.key"
-                  >
-                    <v-card rounded="xl" class="sb-card pa-4">
-                      <div class="d-flex align-center justify-space-between">
-                        <div class="d-flex align-center ga-2">
-                          <v-avatar
-                            size="34"
-                            rounded="lg"
-                            color="primary"
-                            variant="tonal"
-                          >
-                            <v-icon icon="lucide:badge-check" size="16" />
-                          </v-avatar>
-                          <div>
-                            <div class="text-body-2 font-weight-bold">
-                              {{ group.title }}
-                            </div>
-                            <div class="text-caption text-medium-emphasis">
-                              {{ group.subtitle }}
-                            </div>
-                          </div>
-                        </div>
-                        <v-chip size="small" variant="tonal"
-                          >{{ group.items.length }} bands</v-chip
+                  <template v-if="qBands.length === 0">
+                    <div class="pa-10">
+                      <div class="d-flex flex-column align-center text-center">
+                        <v-avatar
+                          size="56"
+                          color="primary"
+                          variant="tonal"
+                          class="mb-3"
                         >
-                      </div>
-
-                      <v-divider class="my-4" />
-
-                      <div class="d-flex flex-column ga-3">
-                        <div
-                          v-for="b in group.items"
-                          :key="b.id"
-                          class="d-flex align-center justify-space-between"
-                        >
-                          <v-chip
-                            size="small"
-                            variant="tonal"
-                            color="primary"
-                            >{{ b.band_label }}</v-chip
-                          >
-                          <div class="text-body-2 font-weight-bold">
-                            {{ b.min_score }}–{{ b.max_score }}
-                          </div>
+                          <v-icon icon="lucide:badge-percent" />
+                        </v-avatar>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          No bands
                         </div>
+                        <div class="text-body-2 text-medium-emphasis mt-1 mb-5">
+                          Add bands to map scores to labels and meaning rules.
+                        </div>
+                        <v-btn
+                          rounded="lg"
+                          color="primary"
+                          prepend-icon="lucide:plus"
+                          @click="openCreateBand"
+                        >
+                          Add band
+                        </v-btn>
                       </div>
-                    </v-card>
-                  </v-col>
-                </v-row>
+                    </div>
+                  </template>
+
+                  <template v-else>
+                    <v-data-table
+                      :headers="bandHeaders"
+                      :items="qBands"
+                      item-key="id"
+                      density="comfortable"
+                    >
+                      <template #item.scope="{ item }">
+                        <v-chip
+                          size="small"
+                          variant="tonal"
+                          :color="item.scope === 'total' ? 'primary' : 'info'"
+                        >
+                          {{ item.scope }}
+                        </v-chip>
+                      </template>
+
+                      <template #item.dimension_id="{ item }">
+                        <span class="text-body-2">
+                          {{
+                            item.scope === "dimension"
+                              ? dimensionName(item.dimension_id) || "—"
+                              : "—"
+                          }}
+                        </span>
+                      </template>
+
+                      <template #item.range="{ item }">
+                        <v-chip size="small" variant="tonal">
+                          {{ item.min_score }}–{{ item.max_score }}
+                        </v-chip>
+                      </template>
+
+                      <template #item.actions="{ item }">
+                        <div class="d-flex justify-end">
+                          <v-btn
+                            icon
+                            variant="text"
+                            aria-label="Edit"
+                            @click="openEditBand(item)"
+                          >
+                            <v-icon icon="lucide:pencil" />
+                          </v-btn>
+                        </div>
+                      </template>
+                    </v-data-table>
+                  </template>
+                </v-card>
               </div>
             </v-window-item>
 
             <!-- Meanings -->
             <v-window-item value="meanings">
               <div class="pa-6">
-                <div
-                  class="d-flex align-center justify-space-between flex-wrap ga-2 mb-4"
-                >
-                  <div class="min-w-0">
-                    <div class="text-subtitle-1 font-weight-black">
-                      Meanings
+                <v-card rounded="xl" variant="flat" class="sb-inner-card">
+                  <div
+                    class="d-flex align-center justify-space-between flex-wrap ga-2 pa-4 pb-2"
+                  >
+                    <div class="min-w-0">
+                      <div class="text-subtitle-1 font-weight-black">
+                        Meaning rules
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        Build rules for dominant_dimension, band_combo, or
+                        fallback.
+                      </div>
                     </div>
-                    <div class="text-caption text-medium-emphasis">
-                      Rule type: band_combo + fallback (from uploaded xlsx)
-                    </div>
-                  </div>
-
-                  <div class="d-flex align-center ga-2 flex-wrap justify-end">
-                    <v-text-field
-                      v-model="meaningSearch"
-                      density="comfortable"
-                      variant="outlined"
-                      rounded="lg"
-                      prepend-inner-icon="lucide:search"
-                      placeholder="Search label..."
-                      hide-details
-                      class="sb-search"
-                    />
                     <v-btn
                       rounded="lg"
                       color="primary"
                       prepend-icon="lucide:plus"
-                      >Add meaning</v-btn
+                      @click="openCreateMeaning"
                     >
+                      Add meaning
+                    </v-btn>
                   </div>
-                </div>
+                  <v-divider />
 
-                <v-card rounded="xl" class="sb-card">
-                  <v-data-table
-                    :headers="meaningHeaders"
-                    :items="filteredMeanings"
-                    item-key="id"
-                    density="comfortable"
-                  >
-                    <template #item.rule_type="{ item }">
-                      <v-chip
-                        size="small"
-                        variant="tonal"
-                        :color="
-                          item.rule_type === 'fallback' ? 'warning' : 'primary'
-                        "
-                      >
-                        {{ item.rule_type }}
-                      </v-chip>
-                    </template>
-
-                    <template #item.combo="{ item }">
-                      <div
-                        v-if="
-                          item.rule_type === 'band_combo' && item.bands_json
-                        "
-                        class="d-flex ga-1 flex-wrap"
-                      >
-                        <v-chip size="x-small" variant="tonal"
-                          >V: {{ item.bands_json.visual }}</v-chip
+                  <template v-if="qMeanings.length === 0">
+                    <div class="pa-10">
+                      <div class="d-flex flex-column align-center text-center">
+                        <v-avatar
+                          size="56"
+                          color="primary"
+                          variant="tonal"
+                          class="mb-3"
                         >
-                        <v-chip size="x-small" variant="tonal"
-                          >A: {{ item.bands_json.auditori }}</v-chip
-                        >
-                        <v-chip size="x-small" variant="tonal"
-                          >K: {{ item.bands_json.kinestetik }}</v-chip
-                        >
-                      </div>
-                      <span v-else class="text-caption text-medium-emphasis"
-                        >—</span
-                      >
-                    </template>
-
-                    <template #item.result_label="{ item }">
-                      <div class="min-w-0">
-                        <div class="font-weight-semibold text-truncate">
-                          {{ item.result_label }}
+                          <v-icon icon="lucide:sparkles" />
+                        </v-avatar>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          No meanings
                         </div>
-                        <div
-                          class="text-caption text-medium-emphasis text-truncate"
-                        >
-                          Priority {{ item.priority }}
+                        <div class="text-body-2 text-medium-emphasis mt-1 mb-5">
+                          Add meaning rules to produce a result_label and
+                          recommendations.
                         </div>
-                      </div>
-                    </template>
-
-                    <template #item.actions="{ item }">
-                      <div class="d-flex justify-end ga-1">
                         <v-btn
-                          icon
-                          variant="text"
-                          @click="openMeaningDialog(item.id)"
-                          aria-label="View meaning"
+                          rounded="lg"
+                          color="primary"
+                          prepend-icon="lucide:plus"
+                          @click="openCreateMeaning"
                         >
-                          <v-icon icon="lucide:eye" />
-                        </v-btn>
-                        <v-btn icon variant="text" aria-label="More actions">
-                          <v-icon icon="lucide:more-horizontal" />
-                          <v-menu activator="parent" location="bottom end">
-                            <v-list density="compact">
-                              <v-list-item title="Edit (UI)" />
-                              <v-list-item title="Disable (UI)" />
-                            </v-list>
-                          </v-menu>
+                          Add meaning
                         </v-btn>
                       </div>
-                    </template>
-                  </v-data-table>
-                </v-card>
+                    </div>
+                  </template>
 
-                <v-dialog v-model="meaningDialog" max-width="860">
-                  <v-card rounded="xl">
-                    <v-card-title
-                      class="d-flex align-center justify-space-between"
+                  <template v-else>
+                    <v-data-table
+                      :headers="meaningHeaders"
+                      :items="qMeanings"
+                      item-key="id"
+                      density="comfortable"
                     >
-                      <div class="text-subtitle-1 font-weight-bold">
-                        Meaning detail
-                      </div>
-                      <v-btn icon variant="text" @click="meaningDialog = false">
-                        <v-icon icon="lucide:x" />
-                      </v-btn>
-                    </v-card-title>
-                    <v-divider />
-                    <v-card-text class="pa-6">
-                      <template v-if="activeMeaning">
-                        <div class="d-flex align-center ga-2 flex-wrap mb-3">
-                          <v-chip
-                            size="small"
-                            variant="tonal"
-                            color="primary"
-                            >{{ activeMeaning.result_label }}</v-chip
-                          >
-                          <v-chip size="small" variant="tonal"
-                            >Priority {{ activeMeaning.priority }}</v-chip
-                          >
-                          <v-chip
-                            size="small"
-                            variant="tonal"
-                            :color="
-                              activeMeaning.rule_type === 'fallback'
-                                ? 'warning'
-                                : 'primary'
-                            "
-                          >
-                            {{ activeMeaning.rule_type }}
-                          </v-chip>
-                        </div>
+                      <template #item.rule_type="{ item }">
+                        <v-chip size="small" variant="tonal" color="primary">{{
+                          item.rule_type
+                        }}</v-chip>
+                      </template>
 
-                        <div
-                          v-if="
-                            activeMeaning.rule_type === 'band_combo' &&
-                            activeMeaning.bands_json
-                          "
-                          class="d-flex ga-2 flex-wrap mb-4"
+                      <template #item.is_active="{ item }">
+                        <v-chip
+                          size="small"
+                          variant="tonal"
+                          :color="item.is_active ? 'success' : 'warning'"
                         >
-                          <v-chip size="small" variant="tonal"
-                            >Visual:
-                            {{ activeMeaning.bands_json.visual }}</v-chip
+                          {{ item.is_active ? "Active" : "Inactive" }}
+                        </v-chip>
+                      </template>
+
+                      <template #item.actions="{ item }">
+                        <div class="d-flex justify-end">
+                          <v-btn
+                            icon
+                            variant="text"
+                            aria-label="Edit"
+                            @click="openEditMeaning(item)"
                           >
-                          <v-chip size="small" variant="tonal"
-                            >Auditori:
-                            {{ activeMeaning.bands_json.auditori }}</v-chip
-                          >
-                          <v-chip size="small" variant="tonal"
-                            >Kinestetik:
-                            {{ activeMeaning.bands_json.kinestetik }}</v-chip
-                          >
+                            <v-icon icon="lucide:pencil" />
+                          </v-btn>
                         </div>
-
-                        <v-card rounded="xl" variant="tonal" class="pa-4 mb-4">
-                          <div class="text-body-2 font-weight-bold mb-2">
-                            Description
-                          </div>
-                          <div class="text-body-2 text-medium-emphasis">
-                            {{ activeMeaning.description }}
-                          </div>
-                        </v-card>
-
-                        <v-card rounded="xl" variant="tonal" class="pa-4">
-                          <div class="text-body-2 font-weight-bold mb-2">
-                            Recommendations
-                          </div>
-                          <div class="d-flex flex-column ga-2">
-                            <div
-                              v-for="(r, idx) in activeMeaning.recommendations"
-                              :key="idx"
-                              class="d-flex align-start ga-2"
-                            >
-                              <v-icon icon="lucide:check" class="mt-1" />
-                              <div class="text-body-2 text-medium-emphasis">
-                                {{ r }}
-                              </div>
-                            </div>
-                          </div>
-                        </v-card>
                       </template>
-
-                      <template v-else>
-                        <v-alert type="info" variant="tonal" rounded="lg">
-                          Select a meaning row to view details.
-                        </v-alert>
-                      </template>
-                    </v-card-text>
-                    <v-divider />
-                    <v-card-actions class="pa-4">
-                      <v-btn
-                        rounded="lg"
-                        variant="text"
-                        @click="meaningDialog = false"
-                        >Close</v-btn
-                      >
-                      <v-spacer />
-                      <v-btn
-                        rounded="lg"
-                        variant="outlined"
-                        prepend-icon="lucide:pencil"
-                        >Edit</v-btn
-                      >
-                      <v-btn
-                        rounded="lg"
-                        color="primary"
-                        prepend-icon="lucide:save"
-                        >Save</v-btn
-                      >
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
+                    </v-data-table>
+                  </template>
+                </v-card>
               </div>
             </v-window-item>
 
             <!-- User info config -->
-            <v-window-item value="user_info">
+            <v-window-item value="userInfo">
               <div class="pa-6">
-                <div
-                  class="d-flex align-center justify-space-between flex-wrap ga-2 mb-4"
-                >
-                  <div class="min-w-0">
-                    <div class="text-subtitle-1 font-weight-black">
-                      User Info Config
+                <v-card rounded="xl" variant="flat" class="sb-inner-card">
+                  <div
+                    class="d-flex align-center justify-space-between flex-wrap ga-2 pa-4 pb-2"
+                  >
+                    <div class="min-w-0">
+                      <div class="text-subtitle-1 font-weight-black">
+                        User Info Config
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        Attach user fields and define order + overrides.
+                      </div>
                     </div>
-                    <div class="text-caption text-medium-emphasis">
-                      Attach user fields and control order + required flags
-                    </div>
-                  </div>
-
-                  <div class="d-flex align-center ga-2 flex-wrap justify-end">
-                    <v-btn
-                      rounded="lg"
-                      variant="outlined"
-                      prepend-icon="lucide:plus"
-                      >Attach field</v-btn
-                    >
                     <v-btn
                       rounded="lg"
                       color="primary"
-                      prepend-icon="lucide:save"
-                      >Save config</v-btn
+                      prepend-icon="lucide:plus"
+                      @click="openAttachUserField"
                     >
+                      Attach field
+                    </v-btn>
                   </div>
-                </div>
+                  <v-divider />
 
-                <v-row>
-                  <v-col cols="12" lg="7">
-                    <v-card rounded="xl" class="sb-card">
-                      <div
-                        class="d-flex align-center justify-space-between flex-wrap ga-2 pa-4 pb-2"
-                      >
-                        <div>
-                          <div class="text-subtitle-1 font-weight-black">
-                            Configured fields
-                          </div>
-                          <div class="text-caption text-medium-emphasis">
-                            Order used in public form
-                          </div>
-                        </div>
-                        <v-chip size="small" variant="tonal" color="primary">
-                          {{ userFieldConfigsSorted.length }} fields
-                        </v-chip>
-                      </div>
-
-                      <v-divider />
-
-                      <v-data-table
-                        :headers="userFieldConfigHeaders"
-                        :items="userFieldConfigsSorted"
-                        item-key="id"
-                        density="comfortable"
-                      >
-                        <template #item.sort_order="{ item }">
-                          <v-chip size="small" variant="tonal">{{
-                            item.sort_order
-                          }}</v-chip>
-                        </template>
-
-                        <template #item.field="{ item }">
-                          <div class="min-w-0">
-                            <div class="font-weight-semibold text-truncate">
-                              {{
-                                getUserField(item.user_field_id)?.label || "—"
-                              }}
-                            </div>
-                            <div
-                              class="text-caption text-medium-emphasis text-truncate"
-                            >
-                              {{ getUserField(item.user_field_id)?.field_key }}
-                            </div>
-                          </div>
-                        </template>
-
-                        <template #item.is_required="{ item }">
-                          <v-chip
-                            size="small"
-                            :color="item.is_required ? 'success' : 'warning'"
-                            variant="tonal"
-                          >
-                            {{ item.is_required ? "Required" : "Optional" }}
-                          </v-chip>
-                        </template>
-
-                        <template #item.actions="{ item }">
-                          <div class="d-flex justify-end ga-1">
-                            <v-btn
-                              icon
-                              variant="text"
-                              :disabled="item.sort_order === 1"
-                              aria-label="Move up"
-                            >
-                              <v-icon icon="lucide:chevron-up" />
-                            </v-btn>
-                            <v-btn
-                              icon
-                              variant="text"
-                              :disabled="
-                                item.sort_order ===
-                                userFieldConfigsSorted.length
-                              "
-                              aria-label="Move down"
-                            >
-                              <v-icon icon="lucide:chevron-down" />
-                            </v-btn>
-                            <v-btn icon variant="text" aria-label="Edit config">
-                              <v-icon icon="lucide:pencil" />
-                            </v-btn>
-                          </div>
-                        </template>
-                      </v-data-table>
-                    </v-card>
-                  </v-col>
-
-                  <v-col cols="12" lg="5">
-                    <v-card rounded="xl" class="sb-card pa-4">
-                      <div
-                        class="d-flex align-center justify-space-between flex-wrap ga-2"
-                      >
-                        <div>
-                          <div class="text-subtitle-1 font-weight-black">
-                            Preview
-                          </div>
-                          <div class="text-caption text-medium-emphasis">
-                            Public form mock (UI only)
-                          </div>
-                        </div>
-                        <v-chip size="small" variant="tonal">{{
-                          questionnaire.language.toUpperCase()
-                        }}</v-chip>
-                      </div>
-
-                      <v-divider class="my-4" />
-
-                      <div class="d-flex flex-column ga-3">
-                        <div
-                          v-for="cfg in userFieldConfigsSorted"
-                          :key="cfg.id"
+                  <template v-if="qUserFieldConfigs.length === 0">
+                    <div class="pa-10">
+                      <div class="d-flex flex-column align-center text-center">
+                        <v-avatar
+                          size="56"
+                          color="primary"
+                          variant="tonal"
+                          class="mb-3"
                         >
-                          <template
-                            v-if="
-                              getUserField(cfg.user_field_id)?.field_type ===
-                              'textarea'
-                            "
-                          >
-                            <v-textarea
-                              :label="previewLabel(cfg)"
-                              :placeholder="previewPlaceholder(cfg)"
-                              :hint="previewHelper(cfg)"
-                              persistent-hint
-                              variant="outlined"
-                              rounded="lg"
-                              density="comfortable"
-                              auto-grow
-                              rows="2"
-                            />
-                          </template>
-
-                          <template
-                            v-else-if="
-                              getUserField(cfg.user_field_id)?.field_type ===
-                                'select' &&
-                              getUserField(cfg.user_field_id)?.field_key ===
-                                'organization_id'
-                            "
-                          >
-                            <v-autocomplete
-                              :items="organizationsOptions"
-                              item-title="title"
-                              item-value="value"
-                              :label="previewLabel(cfg)"
-                              :hint="previewHelper(cfg)"
-                              persistent-hint
-                              variant="outlined"
-                              rounded="lg"
-                              density="comfortable"
-                              prepend-inner-icon="lucide:building-2"
-                            />
-                          </template>
-
-                          <template
-                            v-else-if="
-                              getUserField(cfg.user_field_id)?.field_type ===
-                              'select'
-                            "
-                          >
-                            <v-select
-                              :items="[]"
-                              :label="previewLabel(cfg)"
-                              :hint="previewHelper(cfg)"
-                              persistent-hint
-                              variant="outlined"
-                              rounded="lg"
-                              density="comfortable"
-                              prepend-inner-icon="lucide:list"
-                            />
-                          </template>
-
-                          <template
-                            v-else-if="
-                              getUserField(cfg.user_field_id)?.field_type ===
-                              'date'
-                            "
-                          >
-                            <v-text-field
-                              :label="previewLabel(cfg)"
-                              :hint="previewHelper(cfg)"
-                              persistent-hint
-                              variant="outlined"
-                              rounded="lg"
-                              density="comfortable"
-                              prepend-inner-icon="lucide:calendar"
-                              placeholder="YYYY-MM-DD"
-                            />
-                          </template>
-
-                          <template v-else>
-                            <v-text-field
-                              :label="previewLabel(cfg)"
-                              :placeholder="previewPlaceholder(cfg)"
-                              :hint="previewHelper(cfg)"
-                              persistent-hint
-                              variant="outlined"
-                              rounded="lg"
-                              density="comfortable"
-                              :prepend-inner-icon="
-                                fieldIcon(
-                                  getUserField(cfg.user_field_id)?.field_type,
-                                )
-                              "
-                            />
-                          </template>
+                          <v-icon icon="lucide:form-input" />
+                        </v-avatar>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          No user fields attached
                         </div>
-
-                        <v-card rounded="xl" variant="tonal" class="pa-4 mt-2">
-                          <div class="text-body-2 font-weight-bold mb-2">
-                            Note
-                          </div>
-                          <div class="text-caption text-medium-emphasis">
-                            This is a UI preview only. Validation and
-                            persistence are handled later.
-                          </div>
-                        </v-card>
+                        <div class="text-body-2 text-medium-emphasis mt-1 mb-5">
+                          Attach fields to collect respondent info alongside
+                          attempts.
+                        </div>
+                        <v-btn
+                          rounded="lg"
+                          color="primary"
+                          prepend-icon="lucide:plus"
+                          @click="openAttachUserField"
+                        >
+                          Attach field
+                        </v-btn>
                       </div>
-                    </v-card>
-                  </v-col>
-                </v-row>
+                    </div>
+                  </template>
+
+                  <template v-else>
+                    <v-data-table
+                      :headers="userFieldCfgHeaders"
+                      :items="qUserFieldConfigs"
+                      item-key="id"
+                      density="comfortable"
+                    >
+                      <template #item.user_field_id="{ item }">
+                        <div class="min-w-0">
+                          <div class="font-weight-semibold text-truncate">
+                            {{ userFieldLabel(item.user_field_id) || "—" }}
+                          </div>
+                          <div
+                            class="text-caption text-medium-emphasis text-truncate"
+                          >
+                            key: {{ userFieldKey(item.user_field_id) || "—" }}
+                          </div>
+                        </div>
+                      </template>
+
+                      <template #item.is_required="{ item }">
+                        <v-chip
+                          size="small"
+                          variant="tonal"
+                          :color="item.is_required ? 'success' : 'warning'"
+                        >
+                          {{ item.is_required ? "Required" : "Optional" }}
+                        </v-chip>
+                      </template>
+
+                      <template #item.overrides_json="{ item }">
+                        <v-chip size="small" variant="tonal">
+                          {{
+                            hasOverrides(item.overrides_json)
+                              ? "Overrides"
+                              : "—"
+                          }}
+                        </v-chip>
+                      </template>
+
+                      <template #item.actions="{ item }">
+                        <div class="d-flex justify-end">
+                          <v-btn
+                            icon
+                            variant="text"
+                            aria-label="Edit"
+                            @click="openEditUserFieldCfg(item)"
+                          >
+                            <v-icon icon="lucide:pencil" />
+                          </v-btn>
+                          <v-btn
+                            icon
+                            variant="text"
+                            aria-label="Detach"
+                            @click="
+                              openConfirm(
+                                'Detach field',
+                                'UI only — would detach field from questionnaire.',
+                              )
+                            "
+                          >
+                            <v-icon icon="lucide:unlink" />
+                          </v-btn>
+                        </div>
+                      </template>
+                    </v-data-table>
+                  </template>
+                </v-card>
               </div>
             </v-window-item>
           </v-window>
+        </v-card-text>
+      </v-card>
+
+      <!-- Overview edit -->
+      <v-dialog v-model="dialogs.overview" max-width="840">
+        <v-card rounded="xl">
+          <v-card-title class="d-flex align-center justify-space-between">
+            <div class="text-subtitle-1 font-weight-bold">Edit overview</div>
+            <v-btn icon variant="text" @click="dialogs.overview = false">
+              <v-icon icon="lucide:x" />
+            </v-btn>
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-6">
+            <v-row class="ga-4" no-gutters>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  v-model="overviewForm.code"
+                  label="Code"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="8">
+                <v-text-field
+                  v-model="overviewForm.title"
+                  label="Title"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12">
+                <v-textarea
+                  v-model="overviewForm.description"
+                  label="Description"
+                  variant="outlined"
+                  rounded="lg"
+                  rows="3"
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-select
+                  v-model="overviewForm.language"
+                  :items="['en', 'id']"
+                  label="Language"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-select
+                  v-model="overviewForm.status"
+                  :items="['draft', 'published', 'archived']"
+                  label="Status"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  v-model.number="overviewForm.version"
+                  type="number"
+                  label="Version"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="overviewForm.scoring_type"
+                  :items="['multi_dimension', 'total_score']"
+                  label="Scoring type"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-switch
+                  v-model="overviewForm.show_result_to_user"
+                  color="primary"
+                  inset
+                  label="Show result to user"
+                />
+              </v-col>
+            </v-row>
+
+            <v-alert class="mt-4" variant="tonal" type="info" rounded="lg">
+              UI only — changes are local to this page.
+            </v-alert>
+          </v-card-text>
+          <v-divider />
+          <v-card-actions class="pa-4">
+            <v-btn rounded="lg" variant="text" @click="dialogs.overview = false"
+              >Cancel</v-btn
+            >
+            <v-spacer />
+            <v-btn
+              rounded="lg"
+              color="primary"
+              @click="dialogs.overview = false"
+              >Save (UI)</v-btn
+            >
+          </v-card-actions>
         </v-card>
-      </div>
+      </v-dialog>
+
+      <!-- Question editor -->
+      <v-dialog v-model="dialogs.question" max-width="980">
+        <v-card rounded="xl">
+          <v-card-title class="d-flex align-center justify-space-between">
+            <div class="text-subtitle-1 font-weight-bold">
+              {{
+                questionFormMode === "create" ? "Add question" : "Edit question"
+              }}
+            </div>
+            <v-btn icon variant="text" @click="dialogs.question = false">
+              <v-icon icon="lucide:x" />
+            </v-btn>
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-6">
+            <v-row class="ga-4" no-gutters>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  v-model="questionForm.code"
+                  label="Code"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="8">
+                <v-text-field
+                  v-model="questionForm.text"
+                  label="Text"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+
+              <v-col cols="12" md="4">
+                <v-select
+                  v-model="questionForm.question_type"
+                  :items="['single_choice']"
+                  label="Question type"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-switch
+                  v-model="questionForm.is_required"
+                  color="primary"
+                  inset
+                  label="Required"
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  v-model.number="questionForm.sort_order"
+                  type="number"
+                  label="Sort order"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+
+              <v-col cols="12">
+                <v-textarea
+                  v-model="questionForm.meta"
+                  label="Meta (JSON)"
+                  variant="outlined"
+                  rounded="lg"
+                  rows="3"
+                  hint="Store extra config as JSON string (UI only)."
+                  persistent-hint
+                />
+              </v-col>
+            </v-row>
+
+            <v-divider class="my-4" />
+
+            <div
+              class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
+            >
+              <div class="min-w-0">
+                <div class="text-subtitle-2 font-weight-black">Options</div>
+                <div class="text-caption text-medium-emphasis">
+                  Label + score_value + sort_order.
+                </div>
+              </div>
+              <v-btn
+                rounded="lg"
+                variant="outlined"
+                prepend-icon="lucide:plus"
+                @click="addOptionRow"
+              >
+                Add option
+              </v-btn>
+            </div>
+
+            <v-row
+              class="ga-3"
+              no-gutters
+              v-for="(opt, idx) in questionForm.options"
+              :key="idx"
+            >
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="opt.label"
+                  label="Label"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="3">
+                <v-text-field
+                  v-model.number="opt.score_value"
+                  type="number"
+                  label="Score value"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="10" md="2">
+                <v-text-field
+                  v-model.number="opt.sort_order"
+                  type="number"
+                  label="Sort"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="2" md="1" class="d-flex align-center justify-end">
+                <v-btn
+                  icon
+                  variant="text"
+                  aria-label="Remove option"
+                  @click="removeOptionRow(idx)"
+                >
+                  <v-icon icon="lucide:trash-2" />
+                </v-btn>
+              </v-col>
+            </v-row>
+
+            <v-alert class="mt-4" variant="tonal" type="info" rounded="lg">
+              UI only — saving does not persist.
+            </v-alert>
+          </v-card-text>
+          <v-divider />
+          <v-card-actions class="pa-4">
+            <v-btn rounded="lg" variant="text" @click="dialogs.question = false"
+              >Cancel</v-btn
+            >
+            <v-spacer />
+            <v-btn
+              rounded="lg"
+              color="primary"
+              @click="dialogs.question = false"
+              >Save (UI)</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Dimension editor -->
+      <v-dialog v-model="dialogs.dimension" max-width="760">
+        <v-card rounded="xl">
+          <v-card-title class="d-flex align-center justify-space-between">
+            <div class="text-subtitle-1 font-weight-bold">
+              {{
+                dimensionFormMode === "create"
+                  ? "Add dimension"
+                  : "Edit dimension"
+              }}
+            </div>
+            <v-btn icon variant="text" @click="dialogs.dimension = false">
+              <v-icon icon="lucide:x" />
+            </v-btn>
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-6">
+            <v-row class="ga-4" no-gutters>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  v-model="dimensionForm.key"
+                  label="Key"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="dimensionForm.name"
+                  label="Name"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="2">
+                <v-text-field
+                  v-model.number="dimensionForm.sort_order"
+                  type="number"
+                  label="Sort"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+            </v-row>
+
+            <v-alert class="mt-4" variant="tonal" type="info" rounded="lg">
+              UI only — saving does not persist.
+            </v-alert>
+          </v-card-text>
+          <v-divider />
+          <v-card-actions class="pa-4">
+            <v-btn
+              rounded="lg"
+              variant="text"
+              @click="dialogs.dimension = false"
+              >Cancel</v-btn
+            >
+            <v-spacer />
+            <v-btn
+              rounded="lg"
+              color="primary"
+              @click="dialogs.dimension = false"
+              >Save (UI)</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Band editor -->
+      <v-dialog v-model="dialogs.band" max-width="860">
+        <v-card rounded="xl">
+          <v-card-title class="d-flex align-center justify-space-between">
+            <div class="text-subtitle-1 font-weight-bold">
+              {{
+                bandFormMode === "create" ? "Add score band" : "Edit score band"
+              }}
+            </div>
+            <v-btn icon variant="text" @click="dialogs.band = false">
+              <v-icon icon="lucide:x" />
+            </v-btn>
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-6">
+            <v-row class="ga-4" no-gutters>
+              <v-col cols="12" md="4">
+                <v-select
+                  v-model="bandForm.scope"
+                  :items="['total', 'dimension']"
+                  label="Scope"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="8" v-if="bandForm.scope === 'dimension'">
+                <v-select
+                  v-model="bandForm.dimension_id"
+                  :items="dimensionSelectItems"
+                  item-title="title"
+                  item-value="value"
+                  label="Dimension"
+                  variant="outlined"
+                  rounded="lg"
+                  clearable
+                />
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="bandForm.label"
+                  label="Label"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="2">
+                <v-text-field
+                  v-model.number="bandForm.min_score"
+                  type="number"
+                  label="Min score"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="2">
+                <v-text-field
+                  v-model.number="bandForm.max_score"
+                  type="number"
+                  label="Max score"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="2">
+                <v-text-field
+                  v-model.number="bandForm.sort_order"
+                  type="number"
+                  label="Sort"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+            </v-row>
+
+            <v-alert class="mt-4" variant="tonal" type="info" rounded="lg">
+              UI only — saving does not persist.
+            </v-alert>
+          </v-card-text>
+          <v-divider />
+          <v-card-actions class="pa-4">
+            <v-btn rounded="lg" variant="text" @click="dialogs.band = false"
+              >Cancel</v-btn
+            >
+            <v-spacer />
+            <v-btn rounded="lg" color="primary" @click="dialogs.band = false"
+              >Save (UI)</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Meaning editor -->
+      <v-dialog v-model="dialogs.meaning" max-width="980">
+        <v-card rounded="xl">
+          <v-card-title class="d-flex align-center justify-space-between">
+            <div class="text-subtitle-1 font-weight-bold">
+              {{
+                meaningFormMode === "create"
+                  ? "Add meaning rule"
+                  : "Edit meaning rule"
+              }}
+            </div>
+            <v-btn icon variant="text" @click="dialogs.meaning = false">
+              <v-icon icon="lucide:x" />
+            </v-btn>
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-6">
+            <v-row class="ga-4" no-gutters>
+              <v-col cols="12" md="4">
+                <v-select
+                  v-model="meaningForm.rule_type"
+                  :items="['dominant_dimension', 'band_combo', 'fallback']"
+                  label="Rule type"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  v-model.number="meaningForm.priority"
+                  type="number"
+                  label="Priority"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-switch
+                  v-model="meaningForm.is_active"
+                  color="primary"
+                  inset
+                  label="Active"
+                />
+              </v-col>
+
+              <v-col cols="12">
+                <v-textarea
+                  v-model="meaningForm.rule_json"
+                  label="Rule JSON"
+                  variant="outlined"
+                  rounded="lg"
+                  rows="4"
+                  hint="Store rule_json as a JSON string (UI only)."
+                  persistent-hint
+                />
+              </v-col>
+
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="meaningForm.result_label"
+                  label="Result label"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12">
+                <v-textarea
+                  v-model="meaningForm.description"
+                  label="Description"
+                  variant="outlined"
+                  rounded="lg"
+                  rows="3"
+                />
+              </v-col>
+              <v-col cols="12">
+                <v-textarea
+                  v-model="meaningForm.recommendations"
+                  label="Recommendations"
+                  variant="outlined"
+                  rounded="lg"
+                  rows="3"
+                />
+              </v-col>
+            </v-row>
+
+            <v-alert class="mt-4" variant="tonal" type="info" rounded="lg">
+              UI only — saving does not persist.
+            </v-alert>
+          </v-card-text>
+          <v-divider />
+          <v-card-actions class="pa-4">
+            <v-btn rounded="lg" variant="text" @click="dialogs.meaning = false"
+              >Cancel</v-btn
+            >
+            <v-spacer />
+            <v-btn rounded="lg" color="primary" @click="dialogs.meaning = false"
+              >Save (UI)</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Attach/edit user field config -->
+      <v-dialog v-model="dialogs.userFieldCfg" max-width="920">
+        <v-card rounded="xl">
+          <v-card-title class="d-flex align-center justify-space-between">
+            <div class="text-subtitle-1 font-weight-bold">
+              {{
+                userFieldCfgFormMode === "create"
+                  ? "Attach user field"
+                  : "Edit user field config"
+              }}
+            </div>
+            <v-btn icon variant="text" @click="dialogs.userFieldCfg = false">
+              <v-icon icon="lucide:x" />
+            </v-btn>
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-6">
+            <v-row class="ga-4" no-gutters>
+              <v-col cols="12" md="8">
+                <v-select
+                  v-model="userFieldCfgForm.user_field_id"
+                  :items="userFieldSelectItems"
+                  item-title="title"
+                  item-value="value"
+                  label="User field"
+                  variant="outlined"
+                  rounded="lg"
+                  density="comfortable"
+                  clearable
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  v-model.number="userFieldCfgForm.sort_order"
+                  type="number"
+                  label="Sort order"
+                  variant="outlined"
+                  rounded="lg"
+                />
+              </v-col>
+              <v-col cols="12" md="4">
+                <v-switch
+                  v-model="userFieldCfgForm.is_required"
+                  color="primary"
+                  inset
+                  label="Required"
+                />
+              </v-col>
+              <v-col cols="12">
+                <v-textarea
+                  v-model="userFieldCfgForm.overrides_json"
+                  label="Overrides JSON"
+                  variant="outlined"
+                  rounded="lg"
+                  rows="4"
+                  hint="Store overrides_json as JSON string (UI only)."
+                  persistent-hint
+                />
+              </v-col>
+            </v-row>
+
+            <v-alert class="mt-4" variant="tonal" type="info" rounded="lg">
+              UI only — saving does not persist.
+            </v-alert>
+          </v-card-text>
+          <v-divider />
+          <v-card-actions class="pa-4">
+            <v-btn
+              rounded="lg"
+              variant="text"
+              @click="dialogs.userFieldCfg = false"
+              >Cancel</v-btn
+            >
+            <v-spacer />
+            <v-btn
+              rounded="lg"
+              color="primary"
+              @click="dialogs.userFieldCfg = false"
+              >Save (UI)</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Confirm dialog -->
+      <v-dialog v-model="dialogs.confirm" max-width="560">
+        <v-card rounded="xl">
+          <v-card-title class="d-flex align-center ga-2">
+            <v-avatar size="36" color="warning" variant="tonal">
+              <v-icon icon="lucide:alert-triangle" />
+            </v-avatar>
+            <div class="text-subtitle-1 font-weight-bold">
+              {{ confirm.title }}
+            </div>
+          </v-card-title>
+          <v-divider />
+          <v-card-text class="pa-6">
+            <div class="text-body-2 text-medium-emphasis">
+              {{ confirm.message }}
+            </div>
+          </v-card-text>
+          <v-divider />
+          <v-card-actions class="pa-4">
+            <v-btn rounded="lg" variant="text" @click="dialogs.confirm = false"
+              >Cancel</v-btn
+            >
+            <v-spacer />
+            <v-btn rounded="lg" color="primary" @click="dialogs.confirm = false"
+              >Confirm (UI)</v-btn
+            >
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
-import { useRoute } from "vue-router";
-
-import type {
-  Questionnaire,
-  QuestionnaireDimension,
-  QuestionnaireMeaning,
-  QuestionnaireQuestion,
-  QuestionnaireQuestionDimensionMap,
-  QuestionnaireScoreBand,
-  QuestionnaireOption,
-  QuestionnaireUserField,
-  QuestionnaireUserFieldConfig,
-} from "~/utils/mockPublicData";
-
-import {
-  organizations,
-  questionnaires,
-  questionnaire_dimensions,
-  questionnaire_meanings,
-  questionnaire_question_dimension_maps,
-  questionnaire_questions,
-  questionnaire_score_bands,
-  questionnaire_options,
-  questionnaire_user_fields,
-  questionnaire_user_field_configs,
-} from "~/utils/mockPublicData";
 
 definePageMeta({
+  layout: "admin",
   middleware: ["auth"],
 });
 
-// -----------------------
-// UI state (4 states)
-// -----------------------
+type QuestionnaireStatus = "draft" | "published" | "archived";
+type ScoringType = "multi_dimension" | "total_score";
+
+interface Questionnaire {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  language: string;
+  status: QuestionnaireStatus;
+  version: number;
+  scoring_type: ScoringType;
+  show_result_to_user: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface QuestionnaireDimension {
+  id: string;
+  questionnaire_id: string;
+  key: string;
+  name: string;
+  sort_order: number;
+  created_at: string;
+}
+
+type QuestionType = "single_choice";
+
+interface QuestionnaireQuestion {
+  id: string;
+  questionnaire_id: string;
+  code: string;
+  text: string;
+  question_type: QuestionType;
+  is_required: boolean;
+  sort_order: number;
+  meta: string; // UI: JSON string
+  created_at: string;
+  updated_at: string;
+}
+
+interface QuestionnaireOption {
+  id: string;
+  question_id: string;
+  label: string;
+  score_value: number;
+  sort_order: number;
+  created_at: string;
+}
+
+type BandScope = "dimension" | "total";
+
+interface QuestionnaireScoreBand {
+  id: string;
+  questionnaire_id: string;
+  scope: BandScope;
+  dimension_id?: string;
+  label: string;
+  min_score: number;
+  max_score: number;
+  sort_order: number;
+  created_at: string;
+}
+
+type MeaningRuleType = "dominant_dimension" | "band_combo" | "fallback";
+
+interface QuestionnaireMeaning {
+  id: string;
+  questionnaire_id: string;
+  rule_type: MeaningRuleType;
+  rule_json: string; // UI: JSON string
+  result_label: string;
+  description: string;
+  recommendations: string;
+  priority: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+type UserFieldType = "text" | "email" | "select" | "number" | "date";
+
+interface QuestionnaireUserField {
+  id: string;
+  key: string;
+  label: string;
+  field_type: UserFieldType;
+  validation_json: string; // UI: JSON string
+  options_json: string; // UI: JSON string
+  is_active: boolean;
+  created_at: string;
+}
+
+interface QuestionnaireUserFieldConfig {
+  id: string;
+  questionnaire_id: string;
+  user_field_id: string;
+  is_required: boolean;
+  sort_order: number;
+  overrides_json: string; // UI: JSON string
+}
+
+const route = useRoute();
+
 const ui = reactive({
   loading: true,
   error: "" as string | "",
 });
+
+const tab = ref<string>("overview");
+
+const questionnaires = ref<Questionnaire[]>([
+  {
+    id: "123",
+    code: "Q-HEALTH-01",
+    title: "Health Readiness Check",
+    description: "A quick screening for readiness and support needs.",
+    language: "en",
+    status: "published",
+    version: 3,
+    scoring_type: "multi_dimension",
+    show_result_to_user: true,
+    created_at: "2025-12-10T08:00:00Z",
+    updated_at: "2026-01-05T10:00:00Z",
+  },
+  {
+    id: "0a2f5d60-3d32-4d58-94b0-3a23f62f7b25",
+    code: "Q-STRESS-01",
+    title: "Stress Snapshot",
+    description: "Self-reported stress signals and patterns.",
+    language: "en",
+    status: "published",
+    version: 1,
+    scoring_type: "total_score",
+    show_result_to_user: true,
+    created_at: "2026-01-02T08:00:00Z",
+    updated_at: "2026-01-02T08:00:00Z",
+  },
+  {
+    id: "f4a7a73e-7e8f-4bdb-8d95-2cbdfb5f7d8a",
+    code: "Q-ONBOARD-01",
+    title: "Onboarding Baseline",
+    description: "Collect basic context + readiness baseline.",
+    language: "en",
+    status: "draft",
+    version: 0,
+    scoring_type: "total_score",
+    show_result_to_user: false,
+    created_at: "2026-01-14T08:00:00Z",
+    updated_at: "2026-01-14T08:00:00Z",
+  },
+]);
+
+const dimensions = ref<QuestionnaireDimension[]>([
+  {
+    id: "dim_001",
+    questionnaire_id: "c4caa2f7-43c8-4ed2-99dc-2d72c9c2f0ef",
+    key: "energy",
+    name: "Energy",
+    sort_order: 1,
+    created_at: "2025-12-10T08:10:00Z",
+  },
+  {
+    id: "dim_002",
+    questionnaire_id: "c4caa2f7-43c8-4ed2-99dc-2d72c9c2f0ef",
+    key: "sleep",
+    name: "Sleep",
+    sort_order: 2,
+    created_at: "2025-12-10T08:10:00Z",
+  },
+]);
+
+const questions = ref<QuestionnaireQuestion[]>([
+  {
+    id: "qq_001",
+    questionnaire_id: "c4caa2f7-43c8-4ed2-99dc-2d72c9c2f0ef",
+    code: "Q1",
+    text: "How often do you feel energetic during the day?",
+    question_type: "single_choice",
+    is_required: true,
+    sort_order: 1,
+    meta: '{"dimension_key":"energy"}',
+    created_at: "2025-12-10T09:00:00Z",
+    updated_at: "2025-12-10T09:00:00Z",
+  },
+  {
+    id: "qq_002",
+    questionnaire_id: "c4caa2f7-43c8-4ed2-99dc-2d72c9c2f0ef",
+    code: "Q2",
+    text: "How restful is your sleep most nights?",
+    question_type: "single_choice",
+    is_required: true,
+    sort_order: 2,
+    meta: '{"dimension_key":"sleep"}',
+    created_at: "2025-12-10T09:10:00Z",
+    updated_at: "2025-12-10T09:10:00Z",
+  },
+  {
+    id: "qq_010",
+    questionnaire_id: "0a2f5d60-3d32-4d58-94b0-3a23f62f7b25",
+    code: "Q1",
+    text: "How stressed do you feel today?",
+    question_type: "single_choice",
+    is_required: true,
+    sort_order: 1,
+    meta: "{}",
+    created_at: "2026-01-02T10:00:00Z",
+    updated_at: "2026-01-02T10:00:00Z",
+  },
+]);
+
+const options = ref<QuestionnaireOption[]>([
+  {
+    id: "opt_001",
+    question_id: "qq_001",
+    label: "Rarely",
+    score_value: 1,
+    sort_order: 1,
+    created_at: "2025-12-10T09:00:00Z",
+  },
+  {
+    id: "opt_002",
+    question_id: "qq_001",
+    label: "Sometimes",
+    score_value: 2,
+    sort_order: 2,
+    created_at: "2025-12-10T09:00:00Z",
+  },
+  {
+    id: "opt_003",
+    question_id: "qq_001",
+    label: "Often",
+    score_value: 3,
+    sort_order: 3,
+    created_at: "2025-12-10T09:00:00Z",
+  },
+
+  {
+    id: "opt_004",
+    question_id: "qq_002",
+    label: "Poor",
+    score_value: 1,
+    sort_order: 1,
+    created_at: "2025-12-10T09:10:00Z",
+  },
+  {
+    id: "opt_005",
+    question_id: "qq_002",
+    label: "Okay",
+    score_value: 2,
+    sort_order: 2,
+    created_at: "2025-12-10T09:10:00Z",
+  },
+  {
+    id: "opt_006",
+    question_id: "qq_002",
+    label: "Great",
+    score_value: 3,
+    sort_order: 3,
+    created_at: "2025-12-10T09:10:00Z",
+  },
+
+  {
+    id: "opt_020",
+    question_id: "qq_010",
+    label: "Low",
+    score_value: 1,
+    sort_order: 1,
+    created_at: "2026-01-02T10:00:00Z",
+  },
+  {
+    id: "opt_021",
+    question_id: "qq_010",
+    label: "Medium",
+    score_value: 2,
+    sort_order: 2,
+    created_at: "2026-01-02T10:00:00Z",
+  },
+  {
+    id: "opt_022",
+    question_id: "qq_010",
+    label: "High",
+    score_value: 3,
+    sort_order: 3,
+    created_at: "2026-01-02T10:00:00Z",
+  },
+]);
+
+const bands = ref<QuestionnaireScoreBand[]>([
+  {
+    id: "band_001",
+    questionnaire_id: "0a2f5d60-3d32-4d58-94b0-3a23f62f7b25",
+    scope: "total",
+    label: "Calm",
+    min_score: 1,
+    max_score: 1,
+    sort_order: 1,
+    created_at: "2026-01-02T12:00:00Z",
+  },
+  {
+    id: "band_002",
+    questionnaire_id: "0a2f5d60-3d32-4d58-94b0-3a23f62f7b25",
+    scope: "total",
+    label: "Alert",
+    min_score: 2,
+    max_score: 2,
+    sort_order: 2,
+    created_at: "2026-01-02T12:00:00Z",
+  },
+  {
+    id: "band_003",
+    questionnaire_id: "0a2f5d60-3d32-4d58-94b0-3a23f62f7b25",
+    scope: "total",
+    label: "High Alert",
+    min_score: 3,
+    max_score: 3,
+    sort_order: 3,
+    created_at: "2026-01-02T12:00:00Z",
+  },
+
+  {
+    id: "band_010",
+    questionnaire_id: "c4caa2f7-43c8-4ed2-99dc-2d72c9c2f0ef",
+    scope: "dimension",
+    dimension_id: "dim_001",
+    label: "Low Energy",
+    min_score: 1,
+    max_score: 1,
+    sort_order: 1,
+    created_at: "2025-12-11T08:00:00Z",
+  },
+  {
+    id: "band_011",
+    questionnaire_id: "c4caa2f7-43c8-4ed2-99dc-2d72c9c2f0ef",
+    scope: "dimension",
+    dimension_id: "dim_001",
+    label: "Balanced Energy",
+    min_score: 2,
+    max_score: 2,
+    sort_order: 2,
+    created_at: "2025-12-11T08:00:00Z",
+  },
+  {
+    id: "band_012",
+    questionnaire_id: "c4caa2f7-43c8-4ed2-99dc-2d72c9c2f0ef",
+    scope: "dimension",
+    dimension_id: "dim_001",
+    label: "High Energy",
+    min_score: 3,
+    max_score: 3,
+    sort_order: 3,
+    created_at: "2025-12-11T08:00:00Z",
+  },
+]);
+
+const meanings = ref<QuestionnaireMeaning[]>([
+  {
+    id: "mean_001",
+    questionnaire_id: "0a2f5d60-3d32-4d58-94b0-3a23f62f7b25",
+    rule_type: "band_combo",
+    rule_json: '{"scope":"total","band_label":"High Alert"}',
+    result_label: "High Alert",
+    description: "You may be experiencing elevated stress.",
+    recommendations: "Reduce load, improve sleep, and seek support.",
+    priority: 10,
+    is_active: true,
+    created_at: "2026-01-02T13:00:00Z",
+  },
+  {
+    id: "mean_002",
+    questionnaire_id: "0a2f5d60-3d32-4d58-94b0-3a23f62f7b25",
+    rule_type: "fallback",
+    rule_json: "{}",
+    result_label: "Balanced",
+    description: "Your stress signals appear stable.",
+    recommendations: "Keep routines consistent and monitor weekly.",
+    priority: 1,
+    is_active: true,
+    created_at: "2026-01-02T13:10:00Z",
+  },
+]);
+
+const userFields = ref<QuestionnaireUserField[]>([
+  {
+    id: "uf_001",
+    key: "full_name",
+    label: "Full name",
+    field_type: "text",
+    validation_json: '{"min":2}',
+    options_json: "{}",
+    is_active: true,
+    created_at: "2025-12-01T08:00:00Z",
+  },
+  {
+    id: "uf_002",
+    key: "email",
+    label: "Email",
+    field_type: "email",
+    validation_json: '{"required":true}',
+    options_json: "{}",
+    is_active: true,
+    created_at: "2025-12-01T08:00:00Z",
+  },
+  {
+    id: "uf_003",
+    key: "age",
+    label: "Age",
+    field_type: "number",
+    validation_json: '{"min":0,"max":120}',
+    options_json: "{}",
+    is_active: true,
+    created_at: "2025-12-01T08:00:00Z",
+  },
+]);
+
+const userFieldConfigs = ref<QuestionnaireUserFieldConfig[]>([
+  {
+    id: "ufc_001",
+    questionnaire_id: "0a2f5d60-3d32-4d58-94b0-3a23f62f7b25",
+    user_field_id: "uf_001",
+    is_required: true,
+    sort_order: 1,
+    overrides_json: "{}",
+  },
+  {
+    id: "ufc_002",
+    questionnaire_id: "0a2f5d60-3d32-4d58-94b0-3a23f62f7b25",
+    user_field_id: "uf_002",
+    is_required: true,
+    sort_order: 2,
+    overrides_json: "{}",
+  },
+]);
+
+const qId = computed(() => String(route.params.id || ""));
+const questionnaire = computed(() =>
+  questionnaires.value.find((q) => q.id === qId.value),
+);
+
+const qDimensions = computed(() =>
+  dimensions.value.filter((d) => d.questionnaire_id === qId.value),
+);
+const qQuestions = computed(() =>
+  questions.value.filter((q) => q.questionnaire_id === qId.value),
+);
+const qOptions = computed(() => {
+  const qids = new Set(qQuestions.value.map((q) => q.id));
+  return options.value.filter((o) => qids.has(o.question_id));
+});
+const qBands = computed(() =>
+  bands.value.filter((b) => b.questionnaire_id === qId.value),
+);
+const qMeanings = computed(() =>
+  meanings.value.filter((m) => m.questionnaire_id === qId.value),
+);
+const qUserFieldConfigs = computed(() =>
+  userFieldConfigs.value.filter((c) => c.questionnaire_id === qId.value),
+);
+
+function optionsByQuestion(questionId: string) {
+  return options.value
+    .filter((o) => o.question_id === questionId)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
+
+function dimensionName(id?: string) {
+  if (!id) return "";
+  return qDimensions.value.find((d) => d.id === id)?.name || "";
+}
+
+const dimensionSelectItems = computed(() =>
+  qDimensions.value.map((d) => ({
+    title: `${d.name} (${d.key})`,
+    value: d.id,
+  })),
+);
+
+const userFieldSelectItems = computed(() =>
+  userFields.value
+    .filter((f) => f.is_active)
+    .map((f) => ({ title: `${f.label} (${f.key})`, value: f.id })),
+);
+
+function userFieldLabel(id: string) {
+  return userFields.value.find((f) => f.id === id)?.label || "";
+}
+function userFieldKey(id: string) {
+  return userFields.value.find((f) => f.id === id)?.key || "";
+}
+function hasOverrides(v: string) {
+  const s = (v || "").trim();
+  return s && s !== "{}";
+}
+
+// -----------------------
+// Tables
+// -----------------------
+const questionSearch = ref("");
+const filteredQuestions = computed(() => {
+  const q = questionSearch.value.trim().toLowerCase();
+  return qQuestions.value
+    .slice()
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .filter((it) => {
+      if (!q) return true;
+      return `${it.code} ${it.text}`.toLowerCase().includes(q);
+    });
+});
+
+const questionHeaders = [
+  { title: "Question", key: "text", sortable: false },
+  { title: "Required", key: "is_required", sortable: false },
+  { title: "Options", key: "options", sortable: false },
+  { title: "", key: "actions", sortable: false, align: "end" as const },
+];
+
+const dimensionHeaders = [
+  { title: "Dimension", key: "name", sortable: false },
+  { title: "", key: "actions", sortable: false, align: "end" as const },
+];
+
+const bandHeaders = [
+  { title: "Scope", key: "scope", sortable: false },
+  { title: "Dimension", key: "dimension_id", sortable: false },
+  { title: "Label", key: "label", sortable: true },
+  { title: "Range", key: "range", sortable: false },
+  { title: "Sort", key: "sort_order", sortable: true },
+  { title: "", key: "actions", sortable: false, align: "end" as const },
+];
+
+const meaningHeaders = [
+  { title: "Rule type", key: "rule_type", sortable: false },
+  { title: "Result label", key: "result_label", sortable: true },
+  { title: "Priority", key: "priority", sortable: true },
+  { title: "Active", key: "is_active", sortable: false },
+  { title: "", key: "actions", sortable: false, align: "end" as const },
+];
+
+const userFieldCfgHeaders = [
+  { title: "Field", key: "user_field_id", sortable: false },
+  { title: "Required", key: "is_required", sortable: false },
+  { title: "Sort", key: "sort_order", sortable: true },
+  { title: "Overrides", key: "overrides_json", sortable: false },
+  { title: "", key: "actions", sortable: false, align: "end" as const },
+];
+
+// -----------------------
+// Dialogs + forms (UI only)
+// -----------------------
+const dialogs = reactive({
+  overview: false,
+  question: false,
+  dimension: false,
+  band: false,
+  meaning: false,
+  userFieldCfg: false,
+  confirm: false,
+});
+
+const confirm = reactive({
+  title: "Confirm action",
+  message: "UI only.",
+});
+
+function openConfirm(title: string, message: string) {
+  confirm.title = title;
+  confirm.message = message;
+  dialogs.confirm = true;
+}
+
+const overviewForm = reactive({
+  code: "",
+  title: "",
+  description: "",
+  language: "en",
+  status: "draft" as QuestionnaireStatus,
+  version: 0,
+  scoring_type: "total_score" as ScoringType,
+  show_result_to_user: false,
+});
+
+function openEditOverview() {
+  if (!questionnaire.value) return;
+  overviewForm.code = questionnaire.value.code;
+  overviewForm.title = questionnaire.value.title;
+  overviewForm.description = questionnaire.value.description;
+  overviewForm.language = questionnaire.value.language;
+  overviewForm.status = questionnaire.value.status;
+  overviewForm.version = questionnaire.value.version;
+  overviewForm.scoring_type = questionnaire.value.scoring_type;
+  overviewForm.show_result_to_user = questionnaire.value.show_result_to_user;
+  dialogs.overview = true;
+}
+
+type QuestionFormMode = "create" | "edit";
+const questionFormMode = ref<QuestionFormMode>("create");
+
+const questionForm = reactive({
+  id: "",
+  code: "",
+  text: "",
+  question_type: "single_choice" as QuestionType,
+  is_required: true,
+  sort_order: 1,
+  meta: "{}",
+  options: [] as Array<{
+    label: string;
+    score_value: number;
+    sort_order: number;
+  }>,
+});
+
+function addOptionRow() {
+  questionForm.options.push({
+    label: "",
+    score_value: 0,
+    sort_order: questionForm.options.length + 1,
+  });
+}
+function removeOptionRow(i: number) {
+  questionForm.options.splice(i, 1);
+}
+
+function openCreateQuestion() {
+  questionFormMode.value = "create";
+  questionForm.id = "";
+  questionForm.code = `Q${qQuestions.value.length + 1}`;
+  questionForm.text = "";
+  questionForm.question_type = "single_choice";
+  questionForm.is_required = true;
+  questionForm.sort_order = qQuestions.value.length + 1;
+  questionForm.meta = "{}";
+  questionForm.options = [
+    { label: "Option A", score_value: 1, sort_order: 1 },
+    { label: "Option B", score_value: 2, sort_order: 2 },
+  ];
+  dialogs.question = true;
+}
+
+function openEditQuestion(item: QuestionnaireQuestion) {
+  questionFormMode.value = "edit";
+  questionForm.id = item.id;
+  questionForm.code = item.code;
+  questionForm.text = item.text;
+  questionForm.question_type = item.question_type;
+  questionForm.is_required = item.is_required;
+  questionForm.sort_order = item.sort_order;
+  questionForm.meta = item.meta || "{}";
+  questionForm.options = optionsByQuestion(item.id).map((o) => ({
+    label: o.label,
+    score_value: o.score_value,
+    sort_order: o.sort_order,
+  }));
+  dialogs.question = true;
+}
+
+type DimensionFormMode = "create" | "edit";
+const dimensionFormMode = ref<DimensionFormMode>("create");
+const dimensionForm = reactive({
+  id: "",
+  key: "",
+  name: "",
+  sort_order: 1,
+});
+
+function openCreateDimension() {
+  dimensionFormMode.value = "create";
+  dimensionForm.id = "";
+  dimensionForm.key = "";
+  dimensionForm.name = "";
+  dimensionForm.sort_order = qDimensions.value.length + 1;
+  dialogs.dimension = true;
+}
+
+function openEditDimension(item: QuestionnaireDimension) {
+  dimensionFormMode.value = "edit";
+  dimensionForm.id = item.id;
+  dimensionForm.key = item.key;
+  dimensionForm.name = item.name;
+  dimensionForm.sort_order = item.sort_order;
+  dialogs.dimension = true;
+}
+
+type BandFormMode = "create" | "edit";
+const bandFormMode = ref<BandFormMode>("create");
+const bandForm = reactive({
+  id: "",
+  scope: "total" as BandScope,
+  dimension_id: "" as string | "",
+  label: "",
+  min_score: 0,
+  max_score: 0,
+  sort_order: 1,
+});
+
+function openCreateBand() {
+  bandFormMode.value = "create";
+  bandForm.id = "";
+  bandForm.scope = "total";
+  bandForm.dimension_id = "";
+  bandForm.label = "";
+  bandForm.min_score = 0;
+  bandForm.max_score = 0;
+  bandForm.sort_order = qBands.value.length + 1;
+  dialogs.band = true;
+}
+
+function openEditBand(item: QuestionnaireScoreBand) {
+  bandFormMode.value = "edit";
+  bandForm.id = item.id;
+  bandForm.scope = item.scope;
+  bandForm.dimension_id = item.dimension_id || "";
+  bandForm.label = item.label;
+  bandForm.min_score = item.min_score;
+  bandForm.max_score = item.max_score;
+  bandForm.sort_order = item.sort_order;
+  dialogs.band = true;
+}
+
+type MeaningFormMode = "create" | "edit";
+const meaningFormMode = ref<MeaningFormMode>("create");
+const meaningForm = reactive({
+  id: "",
+  rule_type: "fallback" as MeaningRuleType,
+  rule_json: "{}",
+  result_label: "",
+  description: "",
+  recommendations: "",
+  priority: 1,
+  is_active: true,
+});
+
+function openCreateMeaning() {
+  meaningFormMode.value = "create";
+  meaningForm.id = "";
+  meaningForm.rule_type = "fallback";
+  meaningForm.rule_json = "{}";
+  meaningForm.result_label = "";
+  meaningForm.description = "";
+  meaningForm.recommendations = "";
+  meaningForm.priority = 1;
+  meaningForm.is_active = true;
+  dialogs.meaning = true;
+}
+
+function openEditMeaning(item: QuestionnaireMeaning) {
+  meaningFormMode.value = "edit";
+  meaningForm.id = item.id;
+  meaningForm.rule_type = item.rule_type;
+  meaningForm.rule_json = item.rule_json || "{}";
+  meaningForm.result_label = item.result_label;
+  meaningForm.description = item.description;
+  meaningForm.recommendations = item.recommendations;
+  meaningForm.priority = item.priority;
+  meaningForm.is_active = item.is_active;
+  dialogs.meaning = true;
+}
+
+type UserFieldCfgFormMode = "create" | "edit";
+const userFieldCfgFormMode = ref<UserFieldCfgFormMode>("create");
+const userFieldCfgForm = reactive({
+  id: "",
+  user_field_id: "" as string | "",
+  is_required: true,
+  sort_order: 1,
+  overrides_json: "{}",
+});
+
+function openAttachUserField() {
+  userFieldCfgFormMode.value = "create";
+  userFieldCfgForm.id = "";
+  userFieldCfgForm.user_field_id = userFieldSelectItems.value[0]?.value || "";
+  userFieldCfgForm.is_required = true;
+  userFieldCfgForm.sort_order = qUserFieldConfigs.value.length + 1;
+  userFieldCfgForm.overrides_json = "{}";
+  dialogs.userFieldCfg = true;
+}
+
+function openEditUserFieldCfg(item: QuestionnaireUserFieldConfig) {
+  userFieldCfgFormMode.value = "edit";
+  userFieldCfgForm.id = item.id;
+  userFieldCfgForm.user_field_id = item.user_field_id;
+  userFieldCfgForm.is_required = item.is_required;
+  userFieldCfgForm.sort_order = item.sort_order;
+  userFieldCfgForm.overrides_json = item.overrides_json || "{}";
+  dialogs.userFieldCfg = true;
+}
 
 function reload() {
   ui.loading = true;
   ui.error = "";
   setTimeout(() => {
     ui.loading = false;
-  }, 220);
+    tab.value = String(route.query.tab || "overview");
+  }, 250);
 }
 
 onMounted(() => reload());
-
-// -----------------------
-// Route & base data
-// -----------------------
-const route = useRoute();
-const id = computed(() => (route.params.id ?? "").toString());
-
-const questionnaire = computed<Questionnaire | undefined>(() =>
-  questionnaires.find((q) => q.id === id.value),
-);
-const isMultiDimension = computed(
-  () => questionnaire.value?.scoring_type === "multi_dimension",
-);
-
-// local editable copies (UI only)
-const localQuestions = ref<QuestionnaireQuestion[]>(
-  questionnaire_questions
-    .filter((q) => q.questionnaire_id === id.value)
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((x) => ({ ...x })),
-);
-
-const localOptions = ref<QuestionnaireOption[]>(
-  questionnaire_options
-    .filter((o) => localQuestions.value.some((q) => q.id === o.question_id))
-    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-    .map((x) => ({ ...x })),
-);
-
-const dimensions = computed<QuestionnaireDimension[]>(() =>
-  questionnaire_dimensions
-    .filter((d) => d.questionnaire_id === id.value)
-    .sort((a, b) => a.sort_order - b.sort_order),
-);
-
-const maps = computed<QuestionnaireQuestionDimensionMap[]>(() =>
-  questionnaire_question_dimension_maps.filter(
-    (m) => m.questionnaire_id === id.value,
-  ),
-);
-
-const bands = computed<QuestionnaireScoreBand[]>(() =>
-  questionnaire_score_bands
-    .filter((b) => b.questionnaire_id === id.value)
-    .sort((a, b) => a.sort_order - b.sort_order),
-);
-
-const meanings = computed<QuestionnaireMeaning[]>(() =>
-  questionnaire_meanings
-    .filter((m) => m.questionnaire_id === id.value)
-    .sort((a, b) => a.priority - b.priority),
-);
-
-const userFields = computed<QuestionnaireUserField[]>(
-  () => questionnaire_user_fields,
-);
-
-const userFieldConfigs = computed<QuestionnaireUserFieldConfig[]>(() =>
-  questionnaire_user_field_configs.filter(
-    (c) => c.questionnaire_id === id.value,
-  ),
-);
-
-// -----------------------
-// Options mode detection
-// -----------------------
-type OptionsMode = "fixed" | "per_question";
-
-function normalizeSetForQuestion(questionId: string) {
-  return localOptions.value
-    .filter((o) => o.question_id === questionId)
-    .slice()
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((o) => `${o.label}::${o.score_value}`);
-}
-
-const optionsMode = computed<OptionsMode>(() => {
-  const qs = localQuestions.value
-    .slice()
-    .sort((a, b) => a.sort_order - b.sort_order);
-  if (qs.length === 0) return "per_question";
-  const base = normalizeSetForQuestion(qs[0].id).join("|");
-  if (!base) return "per_question";
-  for (const q of qs.slice(1)) {
-    const current = normalizeSetForQuestion(q.id).join("|");
-    if (current !== base) return "per_question";
-  }
-  return "fixed";
-});
-
-const fixedOptions = computed<QuestionnaireOption[]>(() => {
-  const first = localQuestions.value
-    .slice()
-    .sort((a, b) => a.sort_order - b.sort_order)[0];
-  if (!first) return [];
-  return localOptions.value
-    .filter((o) => o.question_id === first.id)
-    .slice()
-    .sort((a, b) => a.sort_order - b.sort_order);
-});
-
-const fixedOptionsSorted = computed(() => fixedOptions.value);
-
-// fixed options dialog draft
-const fixedOptionsDialog = ref(false);
-const fixedOptionsDraft = ref<QuestionnaireOption[]>([]);
-const fixedOptionHeaders = [
-  { title: "Label", key: "label", sortable: false },
-  { title: "Score", key: "score_value", sortable: false, width: 160 },
-  { title: "Order", key: "sort_order", sortable: false, width: 160 },
-];
-
-function openFixedDraft() {
-  fixedOptionsDraft.value = fixedOptions.value.map((x) => ({ ...x }));
-}
-function resetFixedDraft() {
-  openFixedDraft();
-}
-function applyFixedDraft() {
-  // apply to ALL questions when fixed mode (UI only)
-  const draft = fixedOptionsDraft.value
-    .slice()
-    .sort((a, b) => a.sort_order - b.sort_order);
-  const qs = localQuestions.value.slice();
-
-  // remove existing options for these questions
-  const qIds = new Set(qs.map((q) => q.id));
-  localOptions.value = localOptions.value.filter(
-    (o) => !qIds.has(o.question_id),
-  );
-
-  // re-create options per question based on draft
-  const newOptions: QuestionnaireOption[] = [];
-  for (const q of qs) {
-    for (const row of draft) {
-      newOptions.push({
-        id: `opt-${q.id}-${row.sort_order}`,
-        question_id: q.id,
-        label: row.label,
-        score_value: row.score_value,
-        sort_order: row.sort_order,
-        created_at: row.created_at,
-      } as any);
-    }
-  }
-  localOptions.value = [...localOptions.value, ...newOptions];
-  fixedOptionsDialog.value = false;
-}
-
-// keep draft in sync when opening
-watchEffect(() => {
-  if (fixedOptionsDialog.value) openFixedDraft();
-});
-
-// -----------------------
-// Page header text
-// -----------------------
-const pageTitle = computed(() => questionnaire.value?.title || "Questionnaire");
-const pageSubtitle = computed(() =>
-  questionnaire.value
-    ? `${questionnaire.value.code} · v${questionnaire.value.version} · ${questionnaire.value.scoring_type}`
-    : "Questionnaire detail",
-);
-
-// -----------------------
-// Tabs
-// -----------------------
-type TabKey =
-  | "overview"
-  | "questions"
-  | "dimensions"
-  | "bands"
-  | "meanings"
-  | "user_info";
-const tab = ref<TabKey>("overview");
-
-// -----------------------
-// Questions: search + dimension filter + dialog
-// -----------------------
-const questionSearch = ref("");
-const filters = reactive<{
-  dimension_code: "visual" | "auditori" | "kinestetik" | "";
-}>({ dimension_code: "" });
-
-const dimensionSelectItems = computed(() =>
-  dimensions.value.map((d) => ({
-    title: `${d.title} (${d.dimension_code})`,
-    value: d.dimension_code,
-  })),
-);
-
-const dimensionFilterItems = computed(() => [
-  { title: "Visual", value: "visual" as const },
-  { title: "Auditori", value: "auditori" as const },
-  { title: "Kinestetik", value: "kinestetik" as const },
-]);
-
-const questionHeaders = [
-  { title: "#", key: "sort_order", sortable: false, width: 80 },
-  { title: "Question", key: "question_text", sortable: false },
-  { title: "Required", key: "is_required", sortable: false, width: 140 },
-  {
-    title: "",
-    key: "actions",
-    sortable: false,
-    align: "end" as const,
-    width: 120,
-  },
-];
-
-const filteredQuestions = computed(() => {
-  const q = questionSearch.value.trim().toLowerCase();
-  return localQuestions.value
-    .slice()
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .filter((it) => {
-      if (filters.dimension_code) {
-        const dc = getQuestionDimensionCode(it.id);
-        if (dc !== filters.dimension_code) return false;
-      }
-      if (!q) return true;
-      return it.question_text.toLowerCase().includes(q);
-    });
-});
-
-function getQuestionDimensionCode(questionId: string) {
-  return (
-    maps.value.find((m) => m.question_id === questionId)?.dimension_code || ""
-  );
-}
-
-function getQuestionDimensionLabel(questionId: string) {
-  const dc = getQuestionDimensionCode(questionId);
-  if (!dc) return "No dimension mapping";
-  const dim = dimensions.value.find((d) => d.dimension_code === dc);
-  return dim ? `Dimension: ${dim.title}` : `Dimension: ${dc}`;
-}
-
-function resetQuestionFilters() {
-  questionSearch.value = "";
-  filters.dimension_code = "";
-}
-
-// dialog state
-const questionDialog = ref(false);
-const requiredItems = [
-  { title: "Required", value: true },
-  { title: "Optional", value: false },
-];
-
-const questionForm = reactive<{
-  id: string;
-  question_text: string;
-  sort_order: number;
-  is_required: boolean;
-  dimension_code: "visual" | "auditori" | "kinestetik" | "";
-}>({
-  id: "",
-  question_text: "",
-  sort_order: 1,
-  is_required: true,
-  dimension_code: "",
-});
-
-// per-question options draft (used only when optionsMode === per_question)
-const optionHeaders = [
-  { title: "Label", key: "label", sortable: false },
-  { title: "Score", key: "score_value", sortable: false, width: 160 },
-  { title: "Order", key: "sort_order", sortable: false, width: 160 },
-  {
-    title: "",
-    key: "actions",
-    sortable: false,
-    align: "end" as const,
-    width: 80,
-  },
-];
-
-type DraftOpt = {
-  id: string;
-  label: string;
-  score_value: number;
-  sort_order: number;
-};
-const questionOptionsDraft = ref<DraftOpt[]>([]);
-
-function loadDraftOptions(questionId: string) {
-  const opts = localOptions.value
-    .filter((o) => o.question_id === questionId)
-    .slice()
-    .sort((a, b) => a.sort_order - b.sort_order);
-
-  questionOptionsDraft.value = opts.map((o) => ({
-    id: o.id,
-    label: o.label,
-    score_value: o.score_value,
-    sort_order: o.sort_order,
-  }));
-}
-
-function defaultDraftOptions() {
-  questionOptionsDraft.value = [
-    {
-      id: `tmp-${cryptoId()}`,
-      label: "Option A",
-      score_value: 2,
-      sort_order: 1,
-    },
-    {
-      id: `tmp-${cryptoId()}`,
-      label: "Option B",
-      score_value: 1,
-      sort_order: 2,
-    },
-    {
-      id: `tmp-${cryptoId()}`,
-      label: "Option C",
-      score_value: 0,
-      sort_order: 3,
-    },
-  ];
-}
-
-function addOptionRow() {
-  const maxOrder = Math.max(
-    0,
-    ...questionOptionsDraft.value.map((x) => x.sort_order),
-  );
-  questionOptionsDraft.value.push({
-    id: `tmp-${cryptoId()}`,
-    label: "",
-    score_value: 0,
-    sort_order: maxOrder + 1,
-  });
-}
-
-function removeOptionRow(optId: string) {
-  questionOptionsDraft.value = questionOptionsDraft.value.filter(
-    (x) => x.id !== optId,
-  );
-}
-
-function openQuestionDialog(questionId?: string) {
-  if (!questionId) {
-    questionForm.id = "";
-    questionForm.question_text = "";
-    questionForm.sort_order = localQuestions.value.length + 1;
-    questionForm.is_required = true;
-    questionForm.dimension_code = isMultiDimension.value ? "visual" : "";
-    if (optionsMode.value === "per_question") defaultDraftOptions();
-    questionDialog.value = true;
-    return;
-  }
-
-  const q = localQuestions.value.find((x) => x.id === questionId);
-  questionForm.id = q?.id || "";
-  questionForm.question_text = q?.question_text || "";
-  questionForm.sort_order = q?.sort_order || 1;
-  questionForm.is_required = q?.is_required ?? true;
-  questionForm.dimension_code =
-    (getQuestionDimensionCode(questionId) as any) || "";
-
-  if (optionsMode.value === "per_question") loadDraftOptions(questionId);
-  questionDialog.value = true;
-}
-
-function saveQuestionUi() {
-  // UI-only: apply to localQuestions + localOptions if per_question
-  const isEdit = !!questionForm.id;
-  const newId = isEdit
-    ? questionForm.id
-    : `q-${id.value}-${String(Date.now())}`;
-
-  const row: QuestionnaireQuestion = {
-    id: newId,
-    questionnaire_id: id.value,
-    question_type: "single_choice" as any,
-    question_text: questionForm.question_text,
-    sort_order: questionForm.sort_order,
-    is_required: questionForm.is_required,
-  } as any;
-
-  if (!isEdit) {
-    localQuestions.value.push(row);
-  } else {
-    const idx = localQuestions.value.findIndex((x) => x.id === newId);
-    if (idx >= 0)
-      localQuestions.value[idx] = { ...localQuestions.value[idx], ...row };
-  }
-
-  if (optionsMode.value === "per_question") {
-    // remove existing options for this question
-    localOptions.value = localOptions.value.filter(
-      (o) => o.question_id !== newId,
-    );
-
-    // add draft options
-    const opts: QuestionnaireOption[] = questionOptionsDraft.value
-      .slice()
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map((o) => ({
-        id: `opt-${newId}-${o.sort_order}`,
-        question_id: newId,
-        label: o.label || `Option ${o.sort_order}`,
-        score_value: o.score_value,
-        sort_order: o.sort_order,
-      })) as any;
-
-    localOptions.value = [...localOptions.value, ...opts];
-  }
-
-  questionDialog.value = false;
-}
-
-// helpers
-function cryptoId() {
-  return Math.random().toString(16).slice(2);
-}
-
-// -----------------------
-// Bands grouping
-// -----------------------
-const bandsByDimension = computed(() => {
-  const groups = [
-    {
-      key: "visual",
-      title: "Visual",
-      subtitle: "Score 0–30",
-      items: [] as QuestionnaireScoreBand[],
-    },
-    {
-      key: "auditori",
-      title: "Auditori",
-      subtitle: "Score 0–30",
-      items: [] as QuestionnaireScoreBand[],
-    },
-    {
-      key: "kinestetik",
-      title: "Kinestetik",
-      subtitle: "Score 0–30",
-      items: [] as QuestionnaireScoreBand[],
-    },
-  ];
-
-  bands.value.forEach((b) => {
-    const g = groups.find((x) => x.key === b.dimension_code);
-    if (g) g.items.push(b);
-  });
-
-  groups.forEach((g) => g.items.sort((a, b) => a.sort_order - b.sort_order));
-  return groups;
-});
-
-// -----------------------
-// Meanings: search + dialog
-// -----------------------
-const meaningSearch = ref("");
-const meaningDialog = ref(false);
-const activeMeaningId = ref<string>("");
-
-const meaningHeaders = [
-  { title: "Rule", key: "rule_type", sortable: false, width: 140 },
-  { title: "Bands", key: "combo", sortable: false },
-  { title: "Result label", key: "result_label", sortable: false },
-  {
-    title: "",
-    key: "actions",
-    sortable: false,
-    align: "end" as const,
-    width: 120,
-  },
-];
-
-const filteredMeanings = computed(() => {
-  const q = meaningSearch.value.trim().toLowerCase();
-  return meanings.value.filter((m) =>
-    !q ? true : `${m.result_label} ${m.rule_type}`.toLowerCase().includes(q),
-  );
-});
-
-const activeMeaning = computed(() =>
-  meanings.value.find((m) => m.id === activeMeaningId.value),
-);
-
-function openMeaningDialog(meaningId: string) {
-  activeMeaningId.value = meaningId;
-  meaningDialog.value = true;
-}
-
-// -----------------------
-// User info config
-// -----------------------
-const userFieldConfigsSorted = computed(() =>
-  userFieldConfigs.value.slice().sort((a, b) => a.sort_order - b.sort_order),
-);
-
-const userFieldConfigHeaders = [
-  { title: "Order", key: "sort_order", sortable: false, width: 90 },
-  { title: "Field", key: "field", sortable: false },
-  { title: "Required", key: "is_required", sortable: false, width: 140 },
-  {
-    title: "",
-    key: "actions",
-    sortable: false,
-    align: "end" as const,
-    width: 180,
-  },
-];
-
-function getUserField(fieldId: string) {
-  return userFields.value.find((f) => f.id === fieldId);
-}
-
-const organizationsOptions = computed(() =>
-  organizations.map((o) => ({ title: `${o.name} (${o.code})`, value: o.id })),
-);
-
-function previewLabel(cfg: QuestionnaireUserFieldConfig) {
-  const f = getUserField(cfg.user_field_id);
-  return cfg.overrides_json?.label || f?.label || "Field";
-}
-
-function previewPlaceholder(cfg: QuestionnaireUserFieldConfig) {
-  const f = getUserField(cfg.user_field_id);
-  return cfg.overrides_json?.placeholder || f?.placeholder || "";
-}
-
-function previewHelper(cfg: QuestionnaireUserFieldConfig) {
-  const f = getUserField(cfg.user_field_id);
-  return cfg.overrides_json?.helper_text || f?.helper_text || "";
-}
-
-function fieldIcon(type?: QuestionnaireUserField["field_type"]) {
-  if (type === "email") return "lucide:mail";
-  if (type === "phone") return "lucide:phone";
-  if (type === "number") return "lucide:hash";
-  if (type === "date") return "lucide:calendar";
-  return "lucide:text-cursor";
-}
-
-// -----------------------
-// Dimensions table headers
-// -----------------------
-const dimensionHeaders = [
-  { title: "#", key: "sort_order", sortable: false, width: 80 },
-  { title: "Code", key: "dimension_code", sortable: false, width: 150 },
-  { title: "Title", key: "title", sortable: false },
-  {
-    title: "",
-    key: "actions",
-    sortable: false,
-    align: "end" as const,
-    width: 120,
-  },
-];
 </script>
 
 <style lang="scss" scoped>
 .sb-card {
   border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.sb-inner-card {
+  background: rgba(var(--v-theme-surface), 1);
 }
 
 .sb-search {

@@ -18,7 +18,8 @@
       :build-query="buildQuery"
       :delete-action="handleDelete"
       delete-title="Delete questionnaire?"
-      delete-label-key="title"
+      delete-label="title"
+      delete-label-key="code"
       enable-panel
       :panel-title="editorTitle"
       @primary="openCreate"

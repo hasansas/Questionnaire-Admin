@@ -5,8 +5,8 @@
         <v-avatar :size="rail ? 26 : 34" color="#0cad43">
           <v-avatar :size="rail ? 24 : 32">
             <img
-              src="/images/superbazi-icon.png"
-              alt="superbazi icon"
+              src="/images/SB Questionnaire-icon.png"
+              alt="SB Questionnaire icon"
               height="100%"
             />
           </v-avatar>
@@ -14,7 +14,7 @@
       </div>
 
       <div v-if="!rail" class="min-w-0">
-        <div class="font-weight-black text-body-1">SuperBazi</div>
+        <div class="font-weight-black text-body-1">SB Questionnaire</div>
         <div class="text-caption text-medium-emphasis">Org Console</div>
       </div>
     </div>

@@ -112,7 +112,7 @@
                     density="comfortable"
                     rounded="lg"
                     :disabled="saving"
-                    placeholder="SuperBazi"
+                    placeholder="SB Questionnaire"
                   >
                     <template #prepend-inner>
                       <v-icon icon="lucide:id-card" size="18" class="mx-2" />
@@ -128,7 +128,7 @@
                     density="comfortable"
                     rounded="lg"
                     :disabled="saving"
-                    placeholder="no-reply@superbazi.com"
+                    placeholder="no-reply@SB Questionnaire.com"
                   >
                     <template #prepend-inner>
                       <v-icon icon="lucide:at-sign" size="18" class="mx-2" />
