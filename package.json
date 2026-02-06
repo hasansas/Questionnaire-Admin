@@ -10,9 +10,9 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "pm2:start": "pm2 start ecosystem.config.cjs",
-    "pm2:stop": "pm2 stop superbazi-bo && pm2 delete superbazi-bo",
-    "pm2:restart": "pm2 restart superbazi-bo --update-env",
-    "pm2:logs": "pm2 logs superbazi-bo"
+    "pm2:stop": "pm2 stop sb-questionnaire-bo && pm2 delete sb-questionnaire-bo",
+    "pm2:restart": "pm2 restart sb-questionnaire-bo --update-env",
+    "pm2:logs": "pm2 logs sb-questionnaire-bo"
   },
   "dependencies": {
     "@iconify/vue": "^5.0.0",

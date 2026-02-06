@@ -732,7 +732,7 @@ const organizations = ref<Organization[]>([
   {
     id: "2bbd7b1a-2d9c-4b86-9a2c-9f1d01b5cdb1",
     code: "SBZ",
-    name: "SuperBazi Internal",
+    name: "SB Questionnaire Internal",
     type: "internal",
     status: "active",
     timezone: "Asia/Jakarta",
@@ -825,7 +825,7 @@ const attempts = ref<AttemptRow[]>([
     questionnaire_version: 1,
     organization_id: "2bbd7b1a-2d9c-4b86-9a2c-9f1d01b5cdb1",
     organization_code: "SBZ",
-    organization_name: "SuperBazi Internal",
+    organization_name: "SB Questionnaire Internal",
     status: "submitted",
     started_at: "2026-01-16T09:10:00Z",
     submitted_at: "2026-01-16T09:22:00Z",

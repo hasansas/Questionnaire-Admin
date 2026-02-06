@@ -55,7 +55,7 @@ export function useEmailTemplatesX() {
               id: uid(),
               key: 'order-success',
               name: 'Order Success',
-              subject: 'Your SuperBazi Order is Confirmed',
+              subject: 'Your SB Questionnaire Order is Confirmed',
               locale: 'en',
               status: 'active',
               updatedAt: nowISO(),
