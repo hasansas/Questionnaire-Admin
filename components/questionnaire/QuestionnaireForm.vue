@@ -257,153 +257,160 @@
                       </div>
 
                       <v-divider />
-
                       <div class="pa-4">
                         <template v-if="form.optionsMode === 'fixed'">
                           <div class="d-flex flex-column ga-3">
-                            <Draggable
-                              v-model="form.fixedOptions"
-                              item-key="sortOrder"
-                              handle=".drag-handle"
-                              :animation="180"
-                              class="d-flex flex-column ga-3"
-                              @end="syncFixedOptionsSortOrder"
-                            >
-                              <template #item="{ element: item, index: idx }">
-                                <v-card
-                                  rounded="xl"
-                                  variant="outlined"
-                                  class="pa-4 drag-handle"
-                                >
-                                  <div
-                                    class="d-flex align-start justify-space-between ga-3"
+                            <client-only>
+                              <Draggable
+                                v-model="form.fixedOptionsJson"
+                                item-key="sortOrder"
+                                handle=".drag-handle"
+                                :animation="180"
+                                class="d-flex flex-column ga-3"
+                                @end="syncFixedOptionsSortOrder"
+                              >
+                                <template #item="{ element: item, index: idx }">
+                                  <v-card
+                                    rounded="xl"
+                                    variant="outlined"
+                                    class="pa-4 drag-handle"
                                   >
-                                    <!-- left: drag handle + title -->
                                     <div
-                                      class="d-flex align-start ga-3 min-w-0"
+                                      class="d-flex align-start justify-space-between ga-3"
                                     >
-                                      <v-icon
-                                        icon="lucide:grip-vertical"
-                                        class="mt-2"
-                                      />
+                                      <!-- left: drag handle + title -->
+                                      <div
+                                        class="d-flex align-start ga-3 min-w-0"
+                                      >
+                                        <v-icon
+                                          icon="lucide:grip-vertical"
+                                          class="mt-2"
+                                        />
 
-                                      <div class="min-w-0">
-                                        <div
-                                          class="text-body-2 font-weight-bold"
-                                        >
-                                          Option {{ idx + 1 }}
-                                        </div>
-                                        <div
-                                          class="text-caption text-medium-emphasis"
-                                        >
-                                          Configure label and score.
+                                        <div class="min-w-0">
+                                          <div
+                                            class="text-body-2 font-weight-bold"
+                                          >
+                                            Option {{ idx + 1 }}
+                                          </div>
+                                          <div
+                                            class="text-caption text-medium-emphasis"
+                                          >
+                                            Configure label and score.
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
 
-                                    <!-- right: delete confirm via menu -->
-                                    <v-menu
-                                      location="bottom end"
-                                      :close-on-content-click="true"
-                                    >
-                                      <template
-                                        #activator="{ props: menuProps }"
+                                      <!-- right: delete confirm via menu -->
+                                      <v-menu
+                                        location="bottom end"
+                                        :close-on-content-click="true"
                                       >
-                                        <v-btn
-                                          v-bind="menuProps"
-                                          icon
-                                          variant="text"
-                                          :disabled="
-                                            form.fixedOptions.length <= 2
-                                          "
-                                          aria-label="Option actions"
+                                        <template
+                                          #activator="{ props: menuProps }"
                                         >
-                                          <v-icon
-                                            icon="lucide:trash-2"
-                                            size="20"
-                                          />
-                                        </v-btn>
-                                      </template>
-
-                                      <v-list density="compact" min-width="180">
-                                        <v-list-item
-                                          title="Delete option"
-                                          class="text-error"
-                                          :disabled="
-                                            form.fixedOptions.length <= 2
-                                          "
-                                          @click="
-                                            removeFixedOption(item.sortOrder)
-                                          "
-                                        >
-                                          <template #prepend>
+                                          <v-btn
+                                            v-bind="menuProps"
+                                            icon
+                                            variant="text"
+                                            :disabled="
+                                              form.fixedOptionsJson.length <= 2
+                                            "
+                                            aria-label="Option actions"
+                                          >
                                             <v-icon
                                               icon="lucide:trash-2"
-                                              class="text-error"
+                                              size="20"
                                             />
-                                          </template>
-                                        </v-list-item>
-                                        <v-divider />
-                                        <v-list-item title="Cancel" @click.stop>
-                                          <template #prepend>
-                                            <v-icon icon="lucide:x" />
-                                          </template>
-                                        </v-list-item>
-                                      </v-list>
-                                    </v-menu>
-                                  </div>
+                                          </v-btn>
+                                        </template>
 
-                                  <v-divider class="my-3" />
+                                        <v-list
+                                          density="compact"
+                                          min-width="180"
+                                        >
+                                          <v-list-item
+                                            title="Delete option"
+                                            class="text-error"
+                                            :disabled="
+                                              form.fixedOptionsJson.length <= 2
+                                            "
+                                            @click="
+                                              removeFixedOption(item.sortOrder)
+                                            "
+                                          >
+                                            <template #prepend>
+                                              <v-icon
+                                                icon="lucide:trash-2"
+                                                class="text-error"
+                                              />
+                                            </template>
+                                          </v-list-item>
+                                          <v-divider />
+                                          <v-list-item
+                                            title="Cancel"
+                                            @click.stop
+                                          >
+                                            <template #prepend>
+                                              <v-icon icon="lucide:x" />
+                                            </template>
+                                          </v-list-item>
+                                        </v-list>
+                                      </v-menu>
+                                    </div>
 
-                                  <v-row dense>
-                                    <v-col cols="8">
-                                      <v-text-field
-                                        v-model.trim="item.label"
-                                        label="Label"
-                                        variant="outlined"
-                                        rounded="lg"
-                                        density="comfortable"
-                                        hide-details="auto"
-                                        placeholder="Example: Setuju"
-                                        :error="
-                                          validationAttempted &&
-                                          !String(item.label || '').trim()
-                                        "
-                                        :error-messages="
-                                          validationAttempted &&
-                                          !String(item.label || '').trim()
-                                            ? 'Label is required'
-                                            : ''
-                                        "
-                                      />
-                                    </v-col>
+                                    <v-divider class="my-3" />
 
-                                    <v-col cols="4">
-                                      <v-text-field
-                                        v-model.number="item.scoreValue"
-                                        label="Score"
-                                        type="number"
-                                        variant="outlined"
-                                        rounded="lg"
-                                        density="comfortable"
-                                        hide-details="auto"
-                                        placeholder="0"
-                                        :error="
-                                          validationAttempted &&
-                                          !isFiniteNumber(item.scoreValue)
-                                        "
-                                        :error-messages="
-                                          validationAttempted &&
-                                          !isFiniteNumber(item.scoreValue)
-                                            ? 'Score must be a number'
-                                            : ''
-                                        "
-                                      />
-                                    </v-col>
-                                  </v-row>
-                                </v-card>
-                              </template>
-                            </Draggable>
+                                    <v-row dense>
+                                      <v-col cols="8">
+                                        <v-text-field
+                                          v-model.trim="item.label"
+                                          label="Label"
+                                          variant="outlined"
+                                          rounded="lg"
+                                          density="comfortable"
+                                          hide-details="auto"
+                                          placeholder="Example: Setuju"
+                                          :error="
+                                            validationAttempted &&
+                                            !String(item.label || '').trim()
+                                          "
+                                          :error-messages="
+                                            validationAttempted &&
+                                            !String(item.label || '').trim()
+                                              ? 'Label is required'
+                                              : ''
+                                          "
+                                        />
+                                      </v-col>
+
+                                      <v-col cols="4">
+                                        <v-text-field
+                                          v-model.number="item.scoreValue"
+                                          label="Score"
+                                          type="number"
+                                          variant="outlined"
+                                          rounded="lg"
+                                          density="comfortable"
+                                          hide-details="auto"
+                                          placeholder="0"
+                                          :error="
+                                            validationAttempted &&
+                                            !isFiniteNumber(item.scoreValue)
+                                          "
+                                          :error-messages="
+                                            validationAttempted &&
+                                            !isFiniteNumber(item.scoreValue)
+                                              ? 'Score must be a number'
+                                              : ''
+                                          "
+                                        />
+                                      </v-col>
+                                    </v-row>
+                                  </v-card>
+                                </template>
+                              </Draggable>
+                            </client-only>
 
                             <div class="pa-4">
                               <v-row>
@@ -414,7 +421,7 @@
                                     prepend-icon="lucide:rotate-ccw"
                                     block
                                     :disabled="form.optionsMode !== 'fixed'"
-                                    @click="resetFixedOptions"
+                                    @click="resetfixedOptionsJson"
                                   >
                                     Reset
                                   </v-btn>
@@ -437,13 +444,15 @@
 
                             <!-- helper footer -->
                             <v-alert
-                              v-if="validationAttempted && fixedOptionsIssue"
+                              v-if="
+                                validationAttempted && fixedOptionsJsonIssue
+                              "
                               type="warning"
                               variant="tonal"
                               rounded="lg"
                               class="mt-1"
                             >
-                              {{ fixedOptionsIssue }}
+                              {{ fixedOptionsJsonIssue }}
                             </v-alert>
                           </div>
                         </template>
@@ -622,7 +631,7 @@
                         <v-chip size="small" variant="tonal" color="primary">
                           {{
                             form.optionsMode === "fixed"
-                              ? `${fixedOptionsSorted.length} options`
+                              ? `${fixedOptionsJsonSorted.length} options`
                               : "—"
                           }}
                         </v-chip>
@@ -633,7 +642,7 @@
                       <template v-if="form.optionsMode === 'fixed'">
                         <div class="d-flex flex-column ga-2">
                           <v-card
-                            v-for="o in fixedOptionsSorted"
+                            v-for="o in fixedOptionsJsonSorted"
                             :key="o.sortOrder"
                             rounded="xl"
                             variant="tonal"
@@ -687,10 +696,12 @@ import Draggable from "vuedraggable";
 
 function syncFixedOptionsSortOrder() {
   // keep sortOrder consistent with visual order (1..n)
-  form.value.fixedOptions = (form.value.fixedOptions || []).map((o, i) => ({
-    ...o,
-    sortOrder: i + 1,
-  }));
+  form.value.fixedOptionsJson = (form.value.fixedOptionsJson || []).map(
+    (o, i) => ({
+      ...o,
+      sortOrder: i + 1,
+    }),
+  );
 }
 
 type RuleFn = (v: any) => true | string;
@@ -755,17 +766,17 @@ function isFiniteNumber(v: any) {
   return typeof v === "number" && Number.isFinite(v);
 }
 
-const fixedOptionsSorted = computed(() => {
-  const arr = Array.isArray(form.value.fixedOptions)
-    ? form.value.fixedOptions
+const fixedOptionsJsonSorted = computed(() => {
+  const arr = Array.isArray(form.value.fixedOptionsJson)
+    ? form.value.fixedOptionsJson
     : [];
   return [...arr].sort((a, b) => Number(a.sortOrder) - Number(b.sortOrder));
 });
 
-const fixedOptionsIssue = computed(() => {
+const fixedOptionsJsonIssue = computed(() => {
   if (form.value.optionsMode !== "fixed") return "";
 
-  const opts = fixedOptionsSorted.value;
+  const opts = fixedOptionsJsonSorted.value;
   if (opts.length < 2) return "Fixed options must have at least 2 items.";
 
   const orders = opts.map((o) => Number(o.sortOrder));
@@ -801,7 +812,7 @@ const isOptionsComplete = computed(() => {
   if (!f.optionsMode) return false;
   if (f.optionsMode === "per_question") return true;
   // fixed mode => must pass issue checks
-  return fixedOptionsIssue.value === "";
+  return fixedOptionsJsonIssue.value === "";
 });
 
 const canSubmit = computed(
@@ -845,8 +856,8 @@ function focusFirstInvalidPanel() {
 }
 
 // --- fixed options helpers ---
-function resetFixedOptions() {
-  form.value.fixedOptions = [
+function resetfixedOptionsJson() {
+  form.value.fixedOptionsJson = [
     { label: "Setuju", scoreValue: 2, sortOrder: 1 },
     { label: "Ragu", scoreValue: 1, sortOrder: 2 },
     { label: "Tidak setuju", scoreValue: 0, sortOrder: 3 },
@@ -854,17 +865,17 @@ function resetFixedOptions() {
 }
 
 function addFixedOption() {
-  const arr = Array.isArray(form.value.fixedOptions)
-    ? form.value.fixedOptions
+  const arr = Array.isArray(form.value.fixedOptionsJson)
+    ? form.value.fixedOptionsJson
     : [];
   const nextOrder =
     (arr.reduce((m, o) => Math.max(m, Number(o.sortOrder || 0)), 0) || 0) + 1;
   arr.push({ label: "", scoreValue: 0, sortOrder: nextOrder });
-  form.value.fixedOptions = arr;
+  form.value.fixedOptionsJson = arr;
 }
 
 function removeFixedOption(sortOrder: number) {
-  form.value.fixedOptions = (form.value.fixedOptions || []).filter(
+  form.value.fixedOptionsJson = (form.value.fixedOptionsJson || []).filter(
     (o) => Number(o.sortOrder) !== Number(sortOrder),
   );
 }
