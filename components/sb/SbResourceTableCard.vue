@@ -60,7 +60,7 @@
 
         <!-- Loading (first load) -->
         <div v-else-if="state.loading && !state.loaded" class="pa-4">
-          <v-skeleton-loader type="table" />
+          <SbSkeletonTable />
         </div>
 
         <!-- Empty -->
@@ -387,7 +387,7 @@
     <v-dialog v-model="deleteDialogOpen" persistent max-width="520">
       <v-card rounded="xl">
         <v-card-title class="pa-5 pb-3">
-          <div class="d-flex align-start ga-4">
+          <div class="d-flex align-center ga-4">
             <v-avatar size="44" rounded="lg" color="error" variant="tonal">
               <v-icon icon="lucide:trash-2" size="18" />
             </v-avatar>
@@ -396,7 +396,7 @@
               <div class="text-subtitle-1 font-weight-black">
                 {{ deleteTitle }}
               </div>
-              <div class="text-caption text-medium-emphasis mt-1">
+              <div class="text-caption text-medium-emphasis">
                 This action can’t be undone.
               </div>
             </div>
@@ -408,7 +408,7 @@
             You’re about to delete:
           </div>
 
-          <v-card rounded="lg" variant="tonal" class="pa-3">
+          <v-card rounded="lg" variant="tonal" class="pa-3" color="grey">
             <div class="d-flex align-start ga-3">
               <v-icon icon="lucide:alert-triangle" size="16" class="mt-1" />
 
@@ -429,9 +429,9 @@
 
         <v-divider class="sb-divider" />
 
-        <v-card-actions class="px-5 py-4 d-flex justify-end ga-2">
+        <div class="px-5 py-4 d-flex justify-end ga-2">
           <v-btn
-            variant="outlined"
+            variant="tonal"
             rounded="lg"
             :disabled="deleting"
             @click="deleteDialogOpen = false"
@@ -448,7 +448,7 @@
             <v-icon icon="lucide:trash-2" size="16" class="me-2" />
             Delete
           </v-btn>
-        </v-card-actions>
+        </div>
       </v-card>
     </v-dialog>
   </div>

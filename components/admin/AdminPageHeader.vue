@@ -15,7 +15,9 @@
           >
             <v-icon icon="lucide:arrow-left" />
           </v-btn>
-          <h1 class="text-h5 font-weight-black ma-0">{{ title }}</h1>
+          <h1 class="text-h5 font-weight-black ma-0 text-capitalize">
+            {{ title }}
+          </h1>
 
           <v-chip
             v-if="badge"
