@@ -150,13 +150,25 @@ export function usePaginatedStore<T>(perPage = 10) {
     return null;
   }
 
+  const items = computed<T[]>(() => {
+    const pages = data.rows ?? []
+    return Array.isArray(pages) ? (pages as T[][]).flat() : []
+  })
+
+  const currentItems = computed<T[]>(() => {
+    const idx = (data.pagination.currentPage || 1) - 1
+    return (data.rows?.[idx] ?? []) as T[]
+  })
+
   const hasMore = computed(() => {
-    const { currentPage, lastPage } = data.pagination;
-    return lastPage ? currentPage < lastPage : false;
-  });
+    const { currentPage, lastPage } = data.pagination
+    return lastPage ? currentPage < lastPage : false
+  })
 
   return {
     data,
+    items,
+    currentItems,
     resetData,
     putData,
     updatePagination,
@@ -165,5 +177,5 @@ export function usePaginatedStore<T>(perPage = 10) {
     deleteItem,
     getItem,
     hasMore,
-  };
+  }
 }

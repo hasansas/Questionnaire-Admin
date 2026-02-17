@@ -58,29 +58,45 @@
               {{ questionnaire.code }}
             </div>
           </div>
-          <v-chip variant="tonal" class="px-2">
-            <v-icon
-              :icon="
-                questionnaire.optionsMode === 'fixed'
-                  ? 'lucide:toggle-left'
-                  : 'lucide:list-tree'
-              "
-              size="16"
-              class="me-1"
-            />
-            {{
-              questionnaire.optionsMode === "fixed"
-                ? "Fixed options"
-                : "Per-question options"
-            }}
+          <v-chip variant="tonal" class="px-3" :color="statusColor">
+            <v-icon :icon="statusIcon" size="16" class="me-1" />
+            {{ statusLabel }}
           </v-chip>
 
           <v-spacer />
 
           <div class="d-flex align-center ga-2 flex-wrap">
-            <v-chip variant="tonal" class="px-2" :color="statusColor">
-              <v-icon :icon="statusIcon" size="16" class="me-1" />
-              {{ statusLabel }}
+            <v-chip variant="tonal" class="px-3">
+              <v-icon
+                :icon="
+                  questionnaire.scoringType === 'multi_dimension'
+                    ? 'lucide:layers'
+                    : 'lucide:sigma'
+                "
+                size="16"
+                class="me-1"
+              />
+              {{
+                questionnaire.scoringType === "multi_dimension"
+                  ? "Multi dimension"
+                  : "Total score"
+              }}
+            </v-chip>
+            <v-chip variant="tonal" class="px-3">
+              <v-icon
+                :icon="
+                  questionnaire.optionsMode === 'fixed'
+                    ? 'lucide:toggle-left'
+                    : 'lucide:list-tree'
+                "
+                size="16"
+                class="me-1"
+              />
+              {{
+                questionnaire.optionsMode === "fixed"
+                  ? "Fixed options"
+                  : "Per-question options"
+              }}
             </v-chip>
           </div>
         </div>
@@ -89,64 +105,7 @@
 
         <!-- Stats -->
         <v-row>
-          <v-col cols="12" sm="6" md="2">
-            <v-card rounded="xl" variant="outlined" class="pa-4 h-100">
-              <div class="d-flex align-center justify-space-between">
-                <div>
-                  <div class="text-caption text-medium-emphasis">
-                    Scoring type
-                  </div>
-                  <div class="text-caption">
-                    {{ questionnaire.scoringType }}
-                    {{
-                      questionnaire.scoringType === "multi_dimension"
-                        ? "Multi dimension"
-                        : questionnaire.scoringType === "Total score"
-                          ? "Multi dimension"
-                          : ""
-                    }}
-                  </div>
-                </div>
-                <v-avatar
-                  size="40"
-                  rounded="lg"
-                  color="primary"
-                  variant="tonal"
-                >
-                  <v-icon icon="lucide:list-checks" size="18" />
-                </v-avatar>
-              </div>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="2">
-            <v-card rounded="xl" variant="outlined" class="pa-4 h-100">
-              <div class="d-flex align-center justify-space-between">
-                <div>
-                  <div class="text-caption text-medium-emphasis">
-                    Oprions mode
-                  </div>
-                  <div class="text-caption">
-                    {{
-                      questionnaire.optionsMode === "fixed"
-                        ? "Fixed options"
-                        : "Per-question options"
-                    }}
-                  </div>
-                </div>
-                <v-avatar
-                  size="40"
-                  rounded="lg"
-                  color="primary"
-                  variant="tonal"
-                >
-                  <v-icon icon="lucide:list-checks" size="18" />
-                </v-avatar>
-              </div>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" sm="6" md="3">
             <v-card rounded="xl" variant="outlined" class="pa-4 h-100">
               <div class="d-flex align-center justify-space-between">
                 <div>
@@ -165,7 +124,7 @@
             </v-card>
           </v-col>
 
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" sm="6" md="3">
             <v-card rounded="xl" variant="outlined" class="pa-4 h-100">
               <div class="d-flex align-center justify-space-between">
                 <div>
@@ -181,7 +140,7 @@
             </v-card>
           </v-col>
 
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" sm="6" md="3">
             <v-card rounded="xl" variant="outlined" class="pa-4 h-100">
               <div class="d-flex align-center justify-space-between">
                 <div>
@@ -200,7 +159,7 @@
             </v-card>
           </v-col>
 
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" sm="6" md="3">
             <v-card rounded="xl" variant="outlined" class="pa-4 h-100">
               <div class="d-flex align-center justify-space-between">
                 <div>
@@ -267,12 +226,7 @@
             <!-- Questions -->
             <v-window-item value="questions">
               <div class="pa-4">
-                <v-card rounded="xl" variant="outlined" class="sb-card pa-4">
-                  <div class="text-subtitle-1 font-weight-black">Questions</div>
-                  <div class="text-body-2 text-medium-emphasis mt-1">
-                    Manage questions, ordering, and per-question configurations.
-                  </div>
-                </v-card>
+                <QuestionnaireQuestions :model="questionnaire" />
               </div>
             </v-window-item>
 
@@ -284,13 +238,6 @@
               <div class="pa-4">
                 <QuestionnaireDimensions :model="questionnaire" />
               </div>
-
-              <!-- <v-card rounded="xl" variant="outlined" class="sb-card pa-4">
-                <div class="text-subtitle-1 font-weight-black">Dimensions</div>
-                <div class="text-body-2 text-medium-emphasis mt-1">
-                  Define scoring dimensions (for multi-dimension scoring).
-                </div>
-              </v-card> -->
             </v-window-item>
 
             <!-- Bands -->
@@ -401,5 +348,5 @@ onMounted(() => fetchDatahDetail());
 // Tabs
 // -----------------------
 type TabKey = "overview" | "questions" | "dimensions" | "bands" | "meanings";
-const tab = ref<TabKey>("dimensions");
+const tab = ref<TabKey>("overview");
 </script>
