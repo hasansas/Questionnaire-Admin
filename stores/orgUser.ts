@@ -15,14 +15,6 @@ export function useOrgUserStore(organizationId: string) {
         normalizedJson: normalizeOrgUser,
       })
 
-    // async function invitel(
-    //   payload: Partial<OrgUserInputModel>
-    // ) {
-    //   const res: ApiResult<null> = await api.post(`${endpoint}/invite`, payload)
-    //   return res
-    // }
-
-
     async function invite(payload: Partial<OrgUserInputModel>) {
       try {
         const res = await api.post<OrgUserModel>(`${endpoint}/invite`, payload)

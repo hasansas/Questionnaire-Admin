@@ -113,7 +113,7 @@
             class="text-medium-emphasis"
           />
           <span class="text-body-2">
-            {{ item.optionsMode === "fixed" ? "Fixed" : "fixeder question" }}
+            {{ item.optionsMode === "fixed" ? "Fixed" : "Per-question" }}
           </span>
         </div>
       </template>
@@ -152,7 +152,7 @@
           <v-menu location="bottom end">
             <template #activator="{ props }">
               <v-btn icon variant="text" v-bind="props">
-                <v-icon icon="lucide:more-vertical" size="18" />
+                <v-icon icon="lucide:more-horizontal" size="18" />
               </v-btn>
             </template>
             <v-list density="comfortable" rounded="xl" class="sb-list">

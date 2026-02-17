@@ -44,10 +44,14 @@ export function useResourceStore<TModel, TInput = TModel>({
 
       if (res.success) {
         let { rows, pagination } = res.data
-        if (normalizedArray) rows = normalizedArray(rows)
-        if (normalizedJson) rows = rows.map(normalizedJson)
 
-        paginated.putData(rows, pagination)
+        if (normalizedArray) {
+          rows = normalizedArray(rows as any) as any
+        } else if (normalizedJson) {
+          rows = (rows as any[]).map(normalizedJson as any) as any
+        }
+
+        paginated.putData(rows as any, pagination)
         return { success: true, statusCode: 200, data: rows, pagination }
       } else {
         throw new Error(res.error || 'Failed to fetch data')

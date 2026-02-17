@@ -77,7 +77,7 @@
     <template v-else>
       <div class="d-flex flex-column ga-4">
         <!-- Tabs -->
-        <v-card rounded="xl" class="sb-card">
+        <v-card rounded="xl" variant="outlined" class="sb-card">
           <v-tabs v-model="tab" class="px-2">
             <v-tab value="overview">
               <v-icon icon="lucide:layout-dashboard" size="18" class="me-2" />
