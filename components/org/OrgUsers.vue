@@ -1,4 +1,3 @@
-<
 <template>
   <div class="sb-Organization">
     <!-- @vue-generic {import('~/models/orgUser').OrgUserModel} -->

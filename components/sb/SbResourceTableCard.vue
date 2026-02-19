@@ -211,28 +211,19 @@
                   <div class="d-flex justify-end ga-2">
                     <v-btn
                       icon
-                      variant="tonal"
-                      rounded="lg"
-                      width="28"
-                      height="28"
-                      class="pa-0"
+                      variant="text"
                       @click.stop="$emit('edit', slotProps.item)"
                     >
-                      <v-icon icon="lucide:pencil" size="14" />
+                      <v-icon icon="lucide:pencil" size="18" />
                     </v-btn>
 
                     <v-btn
                       v-if="canDelete"
                       icon
-                      variant="tonal"
-                      rounded="lg"
-                      width="28"
-                      height="28"
-                      class="pa-0"
-                      color="error"
+                      variant="text"
                       @click.stop="openDeleteDialog(slotProps.item)"
                     >
-                      <v-icon icon="lucide:trash-2" size="14" />
+                      <v-icon icon="lucide:trash-2" size="18" />
                     </v-btn>
                   </div>
                 </slot>
@@ -405,11 +396,11 @@
 
         <v-card-text class="px-5 pt-2 pb-4">
           <div class="text-body-2 text-medium-emphasis mb-2">
-            You’re about to delete:
+            {{ deleteInfo }}
           </div>
 
           <v-card rounded="lg" variant="tonal" class="pa-3" color="grey">
-            <div class="d-flex align-start ga-3">
+            <div class="d-flex align-start ga-3 text-medium-emphasis">
               <v-icon icon="lucide:alert-triangle" size="16" class="mt-1" />
 
               <div class="min-w-0">
@@ -446,7 +437,7 @@
             @click="confirmDelete"
           >
             <v-icon icon="lucide:trash-2" size="16" class="me-2" />
-            Delete
+            {{ deleteText }}
           </v-btn>
         </div>
       </v-card>
@@ -466,7 +457,7 @@ import {
 } from "vue";
 
 type AnyObj = Record<string, any>;
-
+type Accessor<T> = string | ((item: T) => string);
 type ResourceStore<T> = {
   data: {
     rows: T[][];
@@ -558,8 +549,10 @@ const props = withDefaults(
     // deletion
     deleteAction?: (item: TItem) => Promise<any>;
     deleteTitle?: string;
-    deleteLabel?: string | ((item: TItem) => string);
-    deleteLabelKey?: string | ((item: TItem) => string);
+    deleteInfo?: string;
+    deleteLabel?: Accessor<TItem>;
+    deleteLabelKey?: Accessor<TItem>;
+    deleteText?: string;
 
     // optional panel
     enablePanel?: boolean;
@@ -591,8 +584,10 @@ const props = withDefaults(
     errorTitle: "Couldn’t load data",
 
     deleteTitle: "Delete item?",
+    deleteInfo: "You’re about to delete:",
     deleteLabel: "title",
     deleteLabelKey: "id",
+    deleteText: "Delete",
 
     enablePanel: false,
     panelTitle: "",
@@ -778,15 +773,38 @@ const deleteDialogOpen = ref(false);
 const deleteTarget = ref<any>(null);
 const deleting = ref(false);
 
-function deleteItemLabel(key: string, item: TItem | null | undefined) {
+function getByPath(obj: any, path: string) {
+  if (!obj || !path) return undefined;
+
+  // supports: a.b.c and a[0].b and a["x"]
+  const parts = path
+    .replace(/\[(\d+)\]/g, ".$1")
+    .replace(/\["([^"]+)"\]/g, ".$1")
+    .replace(/\['([^']+)'\]/g, ".$1")
+    .split(".")
+    .filter(Boolean);
+
+  let cur = obj;
+  for (const p of parts) {
+    if (cur == null) return undefined;
+    cur = cur[p];
+  }
+  return cur;
+}
+
+function deleteItemLabel(key: "label" | "key", item: TItem | null | undefined) {
   if (!item) return "";
 
   const d = key === "label" ? props.deleteLabel : props.deleteLabelKey;
 
+  // function accessor
   if (typeof d === "function") return d(item);
 
-  const itemKey = (d || "id") as string;
-  return (item as any)?.[itemKey] ?? (item as any)?.id ?? "item";
+  // string path accessor (supports nested)
+  const path = (d || "id") as string;
+  const val = getByPath(item, path);
+
+  return val ?? (item as any)?.id ?? "item";
 }
 
 function openDeleteDialog(item: any) {

@@ -115,7 +115,9 @@
 
             <!-- Questionnaires assignments -->
             <v-window-item value="questionnaires">
-              Questionnaires
+              <div class="pa-6">
+                <OrgQuestionnaires :organizationId="organizationId" />
+              </div>
             </v-window-item>
 
             <!-- Users -->
@@ -180,5 +182,5 @@ const route = useRoute();
 // Tabs
 // -----------------------
 type TabKey = "overview" | "users" | "reports" | "questionnaires";
-const tab = ref<TabKey>("users");
+const tab = ref<TabKey>("questionnaires");
 </script>

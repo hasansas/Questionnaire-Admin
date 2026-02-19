@@ -18,6 +18,7 @@
       :build-query="buildQuery"
       :delete-action="handleDelete"
       delete-title="Delete organization?"
+      delete-label="name"
       delete-label-key="code"
       enable-panel
       :panel-title="editorTitle"
@@ -39,7 +40,7 @@
               {{ item.name }}
             </div>
             <div class="text-caption text-medium-emphasis text-truncate">
-              {{ item.website || item.email }}
+              {{ item.code || item.email }}
             </div>
           </div>
         </div>
@@ -147,27 +148,18 @@
 
       <template #actions="{ item }">
         <div class="d-flex justify-end ga-1">
+          <v-btn icon variant="text" @click.stop.prevent="openDetail(item)">
+            <v-icon icon="lucide:eye" size="18" />
+          </v-btn>
+          <v-btn icon variant="text" @click.stop.prevent="openEdit(item)">
+            <v-icon icon="lucide:pencil" size="18" />
+          </v-btn>
           <v-btn
             icon
             variant="text"
-            @click.stop.prevent="openDetail(item)"
-            aria-label="View"
+            @click.stop.prevent="openDeleteDialog(item)"
           >
-            <v-icon icon="lucide:arrow-right" />
-          </v-btn>
-
-          <v-btn icon variant="text" aria-label="More actions">
-            <v-icon icon="lucide:more-horizontal" />
-            <v-menu activator="parent" location="bottom end">
-              <v-list density="compact">
-                <v-list-item
-                  title="View details"
-                  @click.stop.prevent="openDetail(item)"
-                />
-                <v-list-item title="Edit" />
-                <v-list-item title="Delete" />
-              </v-list>
-            </v-menu>
+            <v-icon icon="lucide:trash-2" size="18" />
           </v-btn>
         </div>
       </template>
@@ -574,6 +566,9 @@ function openEdit(item: OrganizationModel) {
 function openDetail(item: OrganizationModel) {
   void navigateTo(`/organizations/${item.id}`);
 }
+function openDeleteDialog(item: OrganizationModel) {
+  tableRef.value?.openDeleteDialog(item);
+}
 
 /** Data form */
 const DataForm = ref<any>(null);
@@ -720,7 +715,6 @@ async function handleSave(close?: () => void) {
     selectedorganization.value = null;
 
     close?.();
-    tableRef.value?.refresh?.({ reset: true });
   } catch (e: any) {
     snack.open(e?.message || "Failed to save organization", { color: "error" });
   } finally {
