@@ -279,9 +279,9 @@ import { type QuestionnaireModel } from "~/models/questionnaire";
 
 definePageMeta({
   middleware: ["auth"],
-  title: "questionnaires",
+  title: "Questionnaires",
   breadcrumbs: [
-    { title: "questionnaires", disabled: false, to: "/questionnaires" },
+    { title: "Questionnaires", disabled: false, to: "/questionnaires" },
     { title: "Manage", disabled: true },
   ],
 });

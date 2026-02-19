@@ -177,26 +177,6 @@
               </v-list-item>
             </v-list>
           </v-menu>
-
-          <!-- <v-btn
-            icon
-            variant="text"
-            @click.stop.prevent="openDetail(item)"
-            aria-label="View"
-          >
-            <v-icon icon="lucide:arrow-right" />
-          </v-btn>
-
-          <v-btn icon variant="text" aria-label="More actions">
-            <v-icon icon="lucide:more-horizontal" />
-            <v-menu activator="parent" location="bottom end">
-              <v-list density="compact">
-                <v-list-item title="View details" @click="openDetail(item)" />
-                <v-list-item title="Edit" @click="openEdit(item)" />
-                <v-list-item title="Delete" @click="openDeleteDialog(item)" />
-              </v-list>
-            </v-menu>
-          </v-btn> -->
         </div>
       </template>
 
