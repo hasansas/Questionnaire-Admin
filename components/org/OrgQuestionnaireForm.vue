@@ -28,7 +28,7 @@ Edit mode: pass assignment-id + initial payload (questionnaireId optional if you
 
         <div class="min-w-0">
           <div class="text-h6 font-weight-black">
-            {{ isEdit ? "Edit Questionnaire" : "Assign Questionnaire" }}
+            {{ isEdit ? "Edit Questionnaire" : "Add Questionnaire" }}
           </div>
           <div class="text-caption text-medium-emphasis">
             Configure question text, requirement, and scoring behavior.
@@ -239,7 +239,7 @@ Edit mode: pass assignment-id + initial payload (questionnaireId optional if you
             class="px-4"
           >
             <v-icon start :icon="isEdit ? 'lucide:save' : 'lucide:plus'" />
-            {{ isEdit ? "Save changes" : "Assign" }}
+            {{ isEdit ? "Save changes" : "Add" }}
           </v-btn>
         </v-card-actions>
       </v-form>
@@ -511,7 +511,7 @@ async function handleSave() {
       );
 
       if (!res.success) {
-        const message = res.error || "Failed to assign questionnaire";
+        const message = res.error || "Failed to add questionnaire";
         snack.open(message, { color: "error" });
         return;
       }
@@ -520,7 +520,7 @@ async function handleSave() {
         normalizeOrganizationQuestionnaire(res.data);
       orgQuestionnairesStore.addItem(item);
 
-      snack.open("Questionnaire assigned.", { color: "success" });
+      snack.open("Questionnaire added.", { color: "success" });
     }
 
     handleClose();

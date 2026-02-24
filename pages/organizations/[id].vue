@@ -83,20 +83,19 @@
               <v-icon icon="lucide:layout-dashboard" size="18" class="me-2" />
               Overview
             </v-tab>
+            <!-- <v-tab value="user_fields">
+              <v-icon icon="lucide:form-input" size="18" class="me-2" />
+              User Fields
+            </v-tab> -->
 
             <v-tab value="questionnaires">
               <v-icon icon="lucide:clipboard-list" size="18" class="me-2" />
               Questionnaires
             </v-tab>
 
-            <v-tab value="reports">
-              <v-icon icon="lucide:file-text" size="18" class="me-2" />
-              Reports
-            </v-tab>
-
             <v-tab value="users">
               <v-icon icon="lucide:users" size="18" class="me-2" />
-              Org Users
+              Admin / Staff
             </v-tab>
           </v-tabs>
 
@@ -105,25 +104,40 @@
           <v-window v-model="tab">
             <!-- Overview -->
             <v-window-item value="overview">
-              <div class="pa-6">
-                <OrgDetail :org="org" />
-              </div>
+              <OrgDetail :org="org" />
             </v-window-item>
 
-            <!-- Reports -->
-            <v-window-item value="reports"> Reports </v-window-item>
+            <!-- User fields -->
+            <v-window-item value="user_fields">
+              <!-- <OrgUserFields :organizationId="organizationId" /> -->
+              <v-btn
+                color="primary"
+                variant="flat"
+                rounded="lg"
+                @click="userFieldsDialog = true"
+              >
+                <v-icon start icon="lucide:form-input" />
+                User Fields
+              </v-btn>
 
-            <!-- Questionnaires assignments -->
-            <v-window-item value="questionnaires">
-              <div class="pa-6">
-                <OrgQuestionnaires :organizationId="organizationId" />
-              </div>
+              <OrgUserFields
+                v-model="userFieldsDialog"
+                :organization-id="organizationId"
+                @saved="onSaved"
+              />
             </v-window-item>
 
             <!-- Users -->
             <v-window-item value="users">
               <div class="pa-6">
                 <OrgUsers :organizationId="organizationId" />
+              </div>
+            </v-window-item>
+
+            <!-- Questionnaires assignments -->
+            <v-window-item value="questionnaires">
+              <div class="pa-6">
+                <OrgQuestionnaires :organizationId="organizationId" />
               </div>
             </v-window-item>
           </v-window>
@@ -181,6 +195,12 @@ const route = useRoute();
 // -----------------------
 // Tabs
 // -----------------------
-type TabKey = "overview" | "users" | "reports" | "questionnaires";
+type TabKey = "overview" | "users" | "user_fields" | "questionnaires";
 const tab = ref<TabKey>("overview");
+
+const userFieldsDialog = ref(false);
+
+function onSaved() {
+  // optional: refresh parent lists / show toast / refetch org settings etc.
+}
 </script>

@@ -32,19 +32,9 @@
       <AdminPageHeader
         :title="pageTitle"
         :subtitle="' Configure overview, questions, scoring, bands, meanings.'"
+        show-back
+        back-to="/questionnaires"
       >
-        <template #actions>
-          <div class="d-flex align-center ga-2 flex-wrap justify-end">
-            <v-btn
-              rounded="lg"
-              variant="outlined"
-              prepend-icon="lucide:arrow-left"
-              to="/questionnaires"
-            >
-              Back
-            </v-btn>
-          </div>
-        </template>
       </AdminPageHeader>
 
       <!-- Questionnaire Header + Stats -->

@@ -6,8 +6,6 @@
       ref="tableRef"
       page-title="Questionnaires"
       page-subtitle="Manage assigned questionnaires, share links, and visibility."
-      primary-text="Add questionnaire"
-      primary-icon="lucide:plus"
       :store="orgQuestionnairesStore"
       :columns="columns"
       search-placeholder="Search code, name"
@@ -24,10 +22,31 @@
       delete-text="Remove"
       enable-panel
       :panel-title="editorTitle"
-      @primary="openCreate"
       @edit="openEdit"
       @empty:primary="openCreate"
     >
+      <template #page-action>
+        <div class="d-flex align-center ga-2 flex-wrap justify-end">
+          <v-btn
+            variant="outlined"
+            rounded="lg"
+            prepend-icon="lucide:form-input"
+            @click="userFieldsDialog = true"
+          >
+            User Fields
+          </v-btn>
+
+          <v-btn
+            color="primary"
+            rounded="lg"
+            prepend-icon="lucide:plus"
+            @click="openCreate"
+          >
+            Add questionnaire
+          </v-btn>
+        </div>
+      </template>
+
       <!-- Columns -->
       <template #item.title="{ item }">
         <div class="d-flex align-center ga-3">
@@ -128,6 +147,11 @@
       :organization-id="organizationId"
       :selectedItem="selectedItem"
     />
+
+    <OrgUserFields
+      v-model="userFieldsDialog"
+      :organization-id="organizationId"
+    />
   </div>
 </template>
 
@@ -148,6 +172,7 @@ const orgQuestionnairesStore = useOrganizationQuestionnairesStore(
 
 const tableKey = ref<number>(0);
 const tableRef = ref<any>(null);
+const userFieldsDialog = ref(false);
 
 /** Table */
 // Organization table columns (match Organization payload)
@@ -199,7 +224,7 @@ const selectedItem = ref<OrganizationQuestionnaireModel | null>(null);
 const editorTitle = computed(() =>
   editorMode.value === "create"
     ? "Edit Organization Questionnaire"
-    : "Assign Questionnaire to Organization",
+    : "Add Questionnaire to Organization",
 );
 
 function openCreate() {
