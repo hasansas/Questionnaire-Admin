@@ -1,7 +1,7 @@
 <!-- /components/admin/organizations/OrgDetail.vue -->
 <template>
   <div class="pa-6">
-    <v-row class="ga-6" align="stretch">
+    <v-row>
       <!-- LEFT: Profile + status -->
       <v-col cols="12" lg="4">
         <v-card variant="flat" class="sb-card">

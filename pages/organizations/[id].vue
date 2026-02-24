@@ -182,5 +182,5 @@ const route = useRoute();
 // Tabs
 // -----------------------
 type TabKey = "overview" | "users" | "reports" | "questionnaires";
-const tab = ref<TabKey>("questionnaires");
+const tab = ref<TabKey>("overview");
 </script>
