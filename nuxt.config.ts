@@ -56,7 +56,6 @@ export default defineNuxtConfig({
         // { name: "twitter:image", content: "/sb-questionnaire-og.png" },
       ],
     },
-
   },
   modules: ["@nuxtjs/google-fonts", "@pinia/nuxt", "@nuxtjs/i18n"],
   runtimeConfig: {
