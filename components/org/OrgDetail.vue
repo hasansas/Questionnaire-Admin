@@ -2,14 +2,15 @@
 <template>
   <div class="pa-6">
     <v-row>
-      <!-- LEFT: Profile + status -->
+      <!-- Compact Profile + quick facts -->
       <v-col cols="12" lg="4">
-        <v-card variant="flat" class="sb-card">
-          <v-card-text class="pa-6">
-            <div class="d-flex align-start justify-space-between ga-4">
-              <div class="d-flex align-center ga-4 min-w-0">
+        <v-card variant="outlined" class="sb-card fill-height">
+          <v-card-text class="pa-5">
+            <!-- header row -->
+            <div class="d-flex align-start justify-space-between ga-3">
+              <div class="d-flex align-center ga-3 min-w-0">
                 <v-avatar
-                  size="56"
+                  size="52"
                   rounded="lg"
                   color="primary"
                   variant="tonal"
@@ -20,34 +21,40 @@
                     :alt="org.name"
                     cover
                   />
-                  <v-icon v-else icon="lucide:building-2" size="22" />
+                  <v-icon v-else icon="lucide:building-2" size="20" />
                 </v-avatar>
 
                 <div class="min-w-0">
-                  <div class="text-h6 font-weight-black text-truncate">
+                  <div
+                    class="text-subtitle-1 font-weight-black text-truncate text-capitalize"
+                  >
                     {{ org?.name || "-" }}
                   </div>
-                  <div class="text-body-2 text-medium-emphasis text-truncate">
-                    {{ org?.code || "-" }}
+
+                  <div class="d-flex align-center flex-wrap ga-2 mt-1">
+                    <div
+                      class="text-caption text-medium-emphasis text-truncate"
+                    >
+                      {{ org?.code || "-" }}
+                    </div>
+
+                    <v-chip
+                      v-if="org?.status"
+                      size="x-small"
+                      variant="tonal"
+                      :color="statusColor"
+                      class="sb-chip"
+                    >
+                      <v-icon :icon="statusIcon" size="14" class="me-1" />
+                      {{ org.status }}
+                    </v-chip>
                   </div>
                 </div>
               </div>
-
-              <v-chip
-                v-if="org?.status"
-                size="small"
-                variant="tonal"
-                :color="statusColor"
-                class="sb-chip"
-              >
-                <v-icon :icon="statusIcon" size="16" class="me-1" />
-                {{ org.status }}
-              </v-chip>
             </div>
 
-            <v-divider class="my-5" />
-
-            <div class="d-flex flex-wrap ga-2">
+            <!-- quick chips -->
+            <div class="d-flex flex-wrap ga-2 mt-4">
               <v-chip size="small" variant="tonal" class="sb-chip">
                 <v-icon icon="lucide:briefcase" size="16" class="me-1" />
                 {{ org?.type || "-" }}
@@ -67,8 +74,14 @@
                 <v-icon icon="lucide:hash" size="16" class="me-1" />
                 {{ org.subCategory }}
               </v-chip>
+
+              <v-chip size="small" variant="tonal" class="sb-chip">
+                <v-icon icon="lucide:clock" size="16" class="me-1" />
+                {{ org?.settingsJson?.timezone || "-" }}
+              </v-chip>
             </div>
 
+            <!-- description -->
             <p
               v-if="org?.description"
               class="text-body-2 text-medium-emphasis mt-4 mb-0"
@@ -76,15 +89,20 @@
               {{ org.description }}
             </p>
 
-            <v-divider class="my-5" />
+            <v-divider class="my-4" />
 
+            <!-- contact compact list -->
             <div class="d-flex flex-column ga-3">
               <div class="d-flex align-start ga-3">
-                <v-icon
-                  icon="lucide:mail"
-                  size="18"
-                  class="mt-1 text-medium-emphasis"
-                />
+                <v-avatar
+                  size="28"
+                  rounded="lg"
+                  color="primary"
+                  variant="tonal"
+                >
+                  <v-icon icon="lucide:mail" size="15" />
+                </v-avatar>
+
                 <div class="min-w-0">
                   <div class="text-caption text-medium-emphasis">Email</div>
                   <div class="text-body-2 text-truncate">
@@ -101,11 +119,15 @@
               </div>
 
               <div class="d-flex align-start ga-3">
-                <v-icon
-                  icon="lucide:phone"
-                  size="18"
-                  class="mt-1 text-medium-emphasis"
-                />
+                <v-avatar
+                  size="28"
+                  rounded="lg"
+                  color="primary"
+                  variant="tonal"
+                >
+                  <v-icon icon="lucide:phone" size="15" />
+                </v-avatar>
+
                 <div class="min-w-0">
                   <div class="text-caption text-medium-emphasis">Phone</div>
                   <div class="text-body-2 text-truncate">
@@ -122,11 +144,15 @@
               </div>
 
               <div class="d-flex align-start ga-3">
-                <v-icon
-                  icon="lucide:globe"
-                  size="18"
-                  class="mt-1 text-medium-emphasis"
-                />
+                <v-avatar
+                  size="28"
+                  rounded="lg"
+                  color="primary"
+                  variant="tonal"
+                >
+                  <v-icon icon="lucide:globe" size="15" />
+                </v-avatar>
+
                 <div class="min-w-0">
                   <div class="text-caption text-medium-emphasis">Website</div>
                   <div class="text-body-2 text-truncate">
@@ -144,257 +170,219 @@
                 </div>
               </div>
             </div>
+
+            <v-divider class="my-4" />
+
+            <!-- metadata compact -->
+            <div class="d-flex flex-column ga-2">
+              <div class="d-flex align-center justify-space-between">
+                <div class="text-caption text-medium-emphasis">Created</div>
+                <div class="text-caption font-weight-medium">
+                  {{ formatDate(org?.createdAt) }}
+                </div>
+              </div>
+              <div class="d-flex align-center justify-space-between">
+                <div class="text-caption text-medium-emphasis">Updated</div>
+                <div class="text-caption font-weight-medium">
+                  {{ formatDate(org?.updatedAt) }}
+                </div>
+              </div>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
 
-      <!-- RIGHT: Details -->
-      <v-col cols="12" lg="8">
-        <v-row class="ga-6">
-          <!-- Location -->
-          <v-col cols="12">
-            <v-card variant="flat" class="sb-card">
-              <v-card-text class="pa-6">
-                <div
-                  class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
-                >
-                  <div class="d-flex align-center ga-2">
-                    <v-avatar
-                      size="28"
-                      rounded="lg"
-                      color="primary"
-                      variant="tonal"
-                    >
-                      <v-icon icon="lucide:map-pin" size="16" />
-                    </v-avatar>
-                    <div class="text-subtitle-1 font-weight-bold">Location</div>
+      <!-- Location -->
+      <v-col cols="12" md="4">
+        <v-card variant="outlined" class="sb-card fill-height">
+          <v-card-text class="pa-5">
+            <div class="d-flex align-center ga-3 mb-3">
+              <v-avatar rounded="lg" variant="tonal">
+                <v-icon icon="lucide:map-pin" size="16" />
+              </v-avatar>
+
+              <div class="min-w-0">
+                <div class="text-subtitle-1 font-weight-bold">Location</div>
+                <div class="text-body-2 text-medium-emphasis mt-1">
+                  Official address and regional information
+                </div>
+              </div>
+            </div>
+
+            <v-divider class="my-4" />
+
+            <!-- use list rows instead of many cols (less empty space) -->
+            <div class="d-flex flex-column ga-3">
+              <div class="d-flex align-center justify-space-between ga-3">
+                <div class="text-caption text-medium-emphasis">Country</div>
+                <div class="text-body-2 font-weight-medium text-truncate">
+                  {{ org?.country?.name || "-" }}
+                </div>
+              </div>
+
+              <div class="d-flex align-center justify-space-between ga-3">
+                <div class="text-caption text-medium-emphasis">State</div>
+                <div class="text-body-2 font-weight-medium text-truncate">
+                  {{ org?.state?.name || "-" }}
+                </div>
+              </div>
+
+              <div class="d-flex align-center justify-space-between ga-3">
+                <div class="text-caption text-medium-emphasis">City</div>
+                <div class="text-body-2 font-weight-medium text-truncate">
+                  {{ org?.city?.name || "-" }}
+                </div>
+              </div>
+
+              <div class="d-flex align-center justify-space-between ga-3">
+                <div class="text-caption text-medium-emphasis">Subdistrict</div>
+                <div class="text-body-2 font-weight-medium text-truncate">
+                  {{ org?.subdistrict || "-" }}
+                </div>
+              </div>
+
+              <div class="d-flex align-start justify-space-between ga-3">
+                <div class="text-caption text-medium-emphasis pt-1">
+                  Address
+                </div>
+                <div class="text-body-2 font-weight-medium text-right">
+                  {{ org?.address || "-" }}
+                  <div class="text-caption text-medium-emphasis mt-1">
+                    Postal code: <b>{{ org?.postalCode || "-" }}</b>
                   </div>
+                </div>
+              </div>
+            </div>
 
-                  <v-chip size="small" variant="tonal" class="sb-chip">
-                    <v-icon icon="lucide:clock" size="16" class="me-1" />
-                    {{ org?.settingsJson?.timezone || "-" }}
-                  </v-chip>
+            <v-divider class="my-4" />
+
+            <div class="d-flex flex-wrap align-center ga-2">
+              <v-chip size="small" variant="tonal" class="sb-chip">
+                <v-icon icon="lucide:locate-fixed" size="16" class="me-1" />
+                {{ org?.settingsJson?.latitude ?? "-" }},
+                {{ org?.settingsJson?.longitude ?? "-" }}
+              </v-chip>
+
+              <v-chip size="small" variant="tonal" class="sb-chip">
+                <v-icon icon="lucide:hash" size="16" class="me-1" />
+                countryId: {{ org?.countryId ?? "-" }} · stateId:
+                {{ org?.stateId ?? "-" }} · cityId: {{ org?.cityId ?? "-" }}
+              </v-chip>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <!-- Settings -->
+      <v-col cols="12" md="4">
+        <v-card variant="outlined" class="sb-card fill-height">
+          <v-card-text class="pa-5">
+            <div class="d-flex align-center ga-3 mb-3">
+              <v-avatar rounded="lg" variant="tonal">
+                <v-icon icon="lucide:sliders-horizontal" size="16" />
+              </v-avatar>
+
+              <div class="min-w-0">
+                <div class="text-subtitle-1 font-weight-bold">Settings</div>
+                <div class="text-body-2 text-medium-emphasis mt-1">
+                  Official address and regional information
+                </div>
+              </div>
+            </div>
+
+            <v-divider class="my-4" />
+
+            <!-- compact “setting rows” -->
+            <div class="d-flex flex-column ga-3">
+              <div class="d-flex align-center justify-space-between ga-3">
+                <div class="min-w-0">
+                  <div class="text-body-2 font-weight-bold">
+                    Require email verification
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    Users must verify email to proceed.
+                  </div>
                 </div>
 
-                <v-row class="ga-4">
-                  <v-col cols="12" md="6">
-                    <div class="text-caption text-medium-emphasis">Country</div>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ org?.country?.name || "-" }}
-                    </div>
-                  </v-col>
+                <v-chip
+                  size="small"
+                  variant="tonal"
+                  :color="
+                    org?.settingsJson?.features?.requireEmailVerification
+                      ? 'success'
+                      : 'grey'
+                  "
+                  class="sb-chip"
+                >
+                  <v-icon
+                    :icon="
+                      org?.settingsJson?.features?.requireEmailVerification
+                        ? 'lucide:check'
+                        : 'lucide:x'
+                    "
+                    size="16"
+                    class="me-1"
+                  />
+                  {{
+                    org?.settingsJson?.features?.requireEmailVerification
+                      ? "Enabled"
+                      : "Disabled"
+                  }}
+                </v-chip>
+              </div>
 
-                  <v-col cols="12" md="6">
-                    <div class="text-caption text-medium-emphasis">State</div>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ org?.state?.name || "-" }}
-                    </div>
-                  </v-col>
+              <v-divider />
 
-                  <v-col cols="12" md="6">
-                    <div class="text-caption text-medium-emphasis">City</div>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ org?.city?.name || "-" }}
-                    </div>
-                  </v-col>
-
-                  <v-col cols="12" md="6">
-                    <div class="text-caption text-medium-emphasis">
-                      Subdistrict
-                    </div>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ org?.subdistrict || "-" }}
-                    </div>
-                  </v-col>
-
-                  <v-col cols="12" md="8">
-                    <div class="text-caption text-medium-emphasis">Address</div>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ org?.address || "-" }}
-                    </div>
-                  </v-col>
-
-                  <v-col cols="12" md="4">
-                    <div class="text-caption text-medium-emphasis">
-                      Postal code
-                    </div>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ org?.postalCode || "-" }}
-                    </div>
-                  </v-col>
-
-                  <v-col cols="12">
-                    <div class="d-flex flex-wrap align-center ga-2">
-                      <v-chip size="small" variant="tonal" class="sb-chip">
-                        <v-icon
-                          icon="lucide:locate-fixed"
-                          size="16"
-                          class="me-1"
-                        />
-                        {{ org?.settingsJson?.latitude ?? "-" }},
-                        {{ org?.settingsJson?.longitude ?? "-" }}
-                      </v-chip>
-
-                      <v-chip size="small" variant="tonal" class="sb-chip">
-                        <v-icon icon="lucide:hash" size="16" class="me-1" />
-                        countryId: {{ org?.countryId ?? "-" }} · stateId:
-                        {{ org?.stateId ?? "-" }} · cityId:
-                        {{ org?.cityId ?? "-" }}
-                      </v-chip>
-                    </div>
-                  </v-col>
-                </v-row>
-              </v-card-text>
-            </v-card>
-          </v-col>
-
-          <!-- Settings -->
-          <v-col cols="12">
-            <v-card variant="flat" class="sb-card">
-              <v-card-text class="pa-6">
-                <div class="d-flex align-center ga-2 mb-4">
-                  <v-avatar
-                    size="28"
-                    rounded="lg"
-                    color="primary"
-                    variant="tonal"
-                  >
-                    <v-icon icon="lucide:sliders-horizontal" size="16" />
-                  </v-avatar>
-                  <div class="text-subtitle-1 font-weight-bold">Settings</div>
+              <div class="d-flex align-center justify-space-between ga-3">
+                <div class="min-w-0">
+                  <div class="text-body-2 font-weight-bold">
+                    Allow public questionnaires
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    Allow questionnaires to be accessed publicly.
+                  </div>
                 </div>
 
-                <v-row class="ga-4">
-                  <v-col cols="12" md="6">
-                    <div class="d-flex align-center justify-space-between">
-                      <div>
-                        <div class="text-body-2 font-weight-bold">
-                          Require email verification
-                        </div>
-                        <div class="text-caption text-medium-emphasis">
-                          Users must verify email to proceed.
-                        </div>
-                      </div>
+                <v-chip
+                  size="small"
+                  variant="tonal"
+                  :color="
+                    org?.settingsJson?.features?.allowPublicQuestionnaires
+                      ? 'success'
+                      : 'grey'
+                  "
+                  class="sb-chip"
+                >
+                  <v-icon
+                    :icon="
+                      org?.settingsJson?.features?.allowPublicQuestionnaires
+                        ? 'lucide:check'
+                        : 'lucide:x'
+                    "
+                    size="16"
+                    class="me-1"
+                  />
+                  {{
+                    org?.settingsJson?.features?.allowPublicQuestionnaires
+                      ? "Enabled"
+                      : "Disabled"
+                  }}
+                </v-chip>
+              </div>
 
-                      <v-chip
-                        size="small"
-                        variant="tonal"
-                        :color="
-                          org?.settingsJson?.features?.requireEmailVerification
-                            ? 'success'
-                            : 'grey'
-                        "
-                        class="sb-chip"
-                      >
-                        <v-icon
-                          :icon="
-                            org?.settingsJson?.features
-                              ?.requireEmailVerification
-                              ? 'lucide:check'
-                              : 'lucide:x'
-                          "
-                          size="16"
-                          class="me-1"
-                        />
-                        {{
-                          org?.settingsJson?.features?.requireEmailVerification
-                            ? "Enabled"
-                            : "Disabled"
-                        }}
-                      </v-chip>
-                    </div>
-                  </v-col>
+              <v-divider />
 
-                  <v-col cols="12" md="6">
-                    <div class="d-flex align-center justify-space-between">
-                      <div>
-                        <div class="text-body-2 font-weight-bold">
-                          Allow public questionnaires
-                        </div>
-                        <div class="text-caption text-medium-emphasis">
-                          Allow questionnaires to be accessed publicly.
-                        </div>
-                      </div>
-
-                      <v-chip
-                        size="small"
-                        variant="tonal"
-                        :color="
-                          org?.settingsJson?.features?.allowPublicQuestionnaires
-                            ? 'success'
-                            : 'grey'
-                        "
-                        class="sb-chip"
-                      >
-                        <v-icon
-                          :icon="
-                            org?.settingsJson?.features
-                              ?.allowPublicQuestionnaires
-                              ? 'lucide:check'
-                              : 'lucide:x'
-                          "
-                          size="16"
-                          class="me-1"
-                        />
-                        {{
-                          org?.settingsJson?.features?.allowPublicQuestionnaires
-                            ? "Enabled"
-                            : "Disabled"
-                        }}
-                      </v-chip>
-                    </div>
-                  </v-col>
-
-                  <v-col cols="12">
-                    <div class="text-caption text-medium-emphasis">
-                      Internal notes
-                    </div>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ org?.settingsJson?.notes || "-" }}
-                    </div>
-                  </v-col>
-                </v-row>
-              </v-card-text>
-            </v-card>
-          </v-col>
-
-          <!-- Metadata -->
-          <v-col cols="12">
-            <v-card variant="flat" class="sb-card">
-              <v-card-text class="pa-6">
-                <div class="d-flex align-center ga-2 mb-4">
-                  <v-avatar
-                    size="28"
-                    rounded="lg"
-                    color="primary"
-                    variant="tonal"
-                  >
-                    <v-icon icon="lucide:info" size="16" />
-                  </v-avatar>
-                  <div class="text-subtitle-1 font-weight-bold">Metadata</div>
+              <div>
+                <div class="text-caption text-medium-emphasis">
+                  Internal notes
                 </div>
-
-                <v-row class="ga-4">
-                  <v-col cols="12" md="6">
-                    <div class="text-caption text-medium-emphasis">Created</div>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ formatDate(org?.createdAt) }}
-                    </div>
-                  </v-col>
-
-                  <v-col cols="12" md="6">
-                    <div class="text-caption text-medium-emphasis">
-                      Last updated
-                    </div>
-                    <div class="text-body-2 font-weight-medium">
-                      {{ formatDate(org?.updatedAt) }}
-                    </div>
-                  </v-col>
-                </v-row>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
+                <div class="text-body-2 font-weight-medium">
+                  {{ org?.settingsJson?.notes || "-" }}
+                </div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </div>
