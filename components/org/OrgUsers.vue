@@ -13,13 +13,14 @@
       empty-icon="lucide:ticket-percent"
       empty-title="No users found"
       empty-subtitle="Create your first user."
-      empty-primary-text="Add User"
+      empty-primary-text="Invite User"
       :build-query="buildQuery"
       :delete-action="handleDelete"
       delete-title="Delete user?"
       :delete-label="(u) => u.user?.name ?? u.metaJson?.sendTo ?? '-'"
       enable-panel
       @primary="openCreate"
+      @empty:primary="openCreate"
     >
       <!-- Columns -->
       <!-- User -->

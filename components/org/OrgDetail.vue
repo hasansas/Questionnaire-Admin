@@ -421,4 +421,7 @@ function formatDate(value?: string | Date) {
 
 <style scoped lang="scss">
 // keep styling in your global sb-card/sb-link/sb-chip tokens (no inline styles here)
+.sb-link {
+  color: inherit !important;
+}
 </style>
