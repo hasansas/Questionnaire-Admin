@@ -56,7 +56,12 @@
             No results yet. Start by adding first dimension
           </div>
 
-          <v-btn color="primary" rounded="lg" prepend-icon="lucide:plus">
+          <v-btn
+            color="primary"
+            rounded="lg"
+            prepend-icon="lucide:plus"
+            @click="openCreateDialog"
+          >
             New dimension
           </v-btn>
         </slot>

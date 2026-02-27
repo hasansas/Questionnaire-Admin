@@ -140,6 +140,24 @@
           {{ item.isActive ? "Active" : "Inactive" }}
         </v-chip>
       </template>
+
+      <template #actions="{ item }">
+        <div class="d-flex justify-end ga-1">
+          <v-btn icon variant="text" @click.stop.prevent="openReport(item)">
+            <v-icon icon="lucide:file-text" size="18" />
+          </v-btn>
+          <v-btn icon variant="text" @click.stop.prevent="openEdit(item)">
+            <v-icon icon="lucide:pencil" size="18" />
+          </v-btn>
+          <v-btn
+            icon
+            variant="text"
+            @click.stop.prevent="openDeleteDialog(item)"
+          >
+            <v-icon icon="lucide:trash-2" size="18" />
+          </v-btn>
+        </div>
+      </template>
     </SbResourceTableCard>
 
     <OrgQuestionnaireForm
@@ -234,6 +252,12 @@ function openCreate() {
 function openEdit(item: OrganizationQuestionnaireModel) {
   selectedItem.value = item;
   dialogForm.value = true;
+}
+function openDeleteDialog(item: OrganizationQuestionnaireModel) {
+  tableRef.value?.openDeleteDialog(item);
+}
+function openReport(item: OrganizationQuestionnaireModel) {
+  // ...
 }
 
 async function handleDelete(item: OrganizationQuestionnaireModel) {

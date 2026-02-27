@@ -157,6 +157,26 @@
 
                     <template #append>
                       <div class="d-flex align-center ga-1">
+                        <v-tooltip text="Toggle active" location="top">
+                          <template #activator="{ props }">
+                            <v-btn
+                              v-bind="props"
+                              icon
+                              variant="text"
+                              @click="f.isActive = !f.isActive"
+                            >
+                              <v-icon
+                                :icon="
+                                  f.isActive
+                                    ? 'lucide:toggle-right'
+                                    : 'lucide:toggle-left'
+                                "
+                                :color="f.isActive ? 'primary' : 'grey'"
+                              />
+                            </v-btn>
+                          </template>
+                        </v-tooltip>
+
                         <v-tooltip text="Edit" location="top">
                           <template #activator="{ props }">
                             <v-btn
@@ -167,26 +187,6 @@
                               @click="openEditor(f)"
                             >
                               <v-icon icon="lucide:pencil" />
-                            </v-btn>
-                          </template>
-                        </v-tooltip>
-
-                        <v-tooltip text="Toggle active" location="top">
-                          <template #activator="{ props }">
-                            <v-btn
-                              v-bind="props"
-                              icon
-                              size="small"
-                              variant="text"
-                              @click="f.isActive = !f.isActive"
-                            >
-                              <v-icon
-                                :icon="
-                                  f.isActive
-                                    ? 'lucide:toggle-right'
-                                    : 'lucide:toggle-left'
-                                "
-                              />
                             </v-btn>
                           </template>
                         </v-tooltip>
@@ -241,22 +241,52 @@
         </div>
       </div>
 
-      <!-- Field Editor Dialog -->
-      <v-dialog v-model="editor.open" max-width="760" persistent>
-        <v-card rounded="xl" class="border">
-          <v-card-title class="d-flex align-center justify-space-between">
-            <div class="d-flex align-center ga-2">
-              <div class="text-subtitle-1 font-weight-bold">
-                {{ editor.isEdit ? "Edit Field" : "Add Field" }}
+      <!-- Field Editor Dialog (polished) -->
+      <v-dialog v-model="editor.open" max-width="820" persistent>
+        <v-card rounded="xl" class="border overflow-hidden">
+          <!-- Header -->
+          <div class="px-6 py-4">
+            <div class="d-flex align-center justify-space-between ga-4">
+              <div class="d-flex align-center ga-3 min-w-0">
+                <v-avatar
+                  size="40"
+                  rounded="lg"
+                  color="primary"
+                  variant="tonal"
+                >
+                  <v-icon
+                    :icon="editor.isEdit ? 'lucide:pencil' : 'lucide:plus'"
+                    size="18"
+                  />
+                </v-avatar>
+
+                <div class="min-w-0">
+                  <div class="text-subtitle-1 font-weight-black truncate">
+                    {{ editor.isEdit ? "Edit Field" : "Add Field" }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis truncate">
+                    Configure label, key, type, and optional validation rules.
+                  </div>
+                </div>
               </div>
+
+              <v-btn icon variant="text" @click="closeEditor">
+                <v-icon icon="lucide:x" />
+              </v-btn>
             </div>
-          </v-card-title>
+          </div>
 
           <v-divider />
 
           <v-form ref="editorFormRef" @submit.prevent="applyEditor">
+            <!-- Body -->
             <v-card-text class="pa-6">
-              <v-row>
+              <v-row dense>
+                <!-- Core -->
+                <v-col cols="12">
+                  <div class="text-subtitle-2 font-weight-bold mb-2">Field</div>
+                </v-col>
+
                 <v-col cols="12" md="4">
                   <v-text-field
                     v-model="editor.form.label"
@@ -298,10 +328,85 @@
                   />
                 </v-col>
 
-                <!-- Options for select -->
+                <!-- Switch cards -->
+                <v-col cols="12" md="6">
+                  <v-card variant="outlined" rounded="xl" class="pa-4">
+                    <div class="d-flex align-center justify-space-between ga-4">
+                      <div class="d-flex align-center ga-3 min-w-0">
+                        <v-avatar
+                          size="36"
+                          rounded="lg"
+                          color="success"
+                          variant="tonal"
+                        >
+                          <v-icon icon="lucide:check-circle" size="18" />
+                        </v-avatar>
+
+                        <div class="min-w-0">
+                          <div class="text-body-2 font-weight-bold">
+                            Required
+                          </div>
+                          <div class="text-caption text-medium-emphasis">
+                            User must fill this field.
+                          </div>
+                        </div>
+                      </div>
+
+                      <v-switch
+                        v-model="editor.form.validationJson.required"
+                        inset
+                        color="success"
+                        hide-details
+                      />
+                    </div>
+                  </v-card>
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-card variant="outlined" rounded="xl" class="pa-4">
+                    <div class="d-flex align-center justify-space-between ga-4">
+                      <div class="d-flex align-center ga-3 min-w-0">
+                        <v-avatar
+                          size="36"
+                          rounded="lg"
+                          color="primary"
+                          variant="tonal"
+                        >
+                          <v-icon icon="lucide:toggle-right" size="18" />
+                        </v-avatar>
+
+                        <div class="min-w-0">
+                          <div class="text-body-2 font-weight-bold">Active</div>
+                          <div class="text-caption text-medium-emphasis">
+                            Field is shown in the form.
+                          </div>
+                        </div>
+                      </div>
+
+                      <v-switch
+                        v-model="editor.form.isActive"
+                        inset
+                        color="primary"
+                        hide-details
+                      />
+                    </div>
+                  </v-card>
+                </v-col>
+
+                <!-- Options -->
                 <v-col cols="12" v-if="needsOptions(editor.form.fieldType)">
-                  <div class="d-flex align-center justify-space-between mb-2">
-                    <div class="text-subtitle-2 font-weight-bold">Options</div>
+                  <div
+                    class="d-flex align-center justify-space-between mt-2 mb-2"
+                  >
+                    <div>
+                      <div class="text-subtitle-2 font-weight-bold">
+                        Options
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        Provide choices for users to select.
+                      </div>
+                    </div>
+
                     <v-btn variant="tonal" rounded="lg" @click="addOption">
                       <v-icon start icon="lucide:plus" />
                       Add option
@@ -335,7 +440,11 @@
                           hide-details="auto"
                         />
                       </v-col>
-                      <v-col cols="12" md="2" class="d-flex justify-end">
+                      <v-col
+                        cols="12"
+                        md="2"
+                        class="d-flex justify-end align-center"
+                      >
                         <v-btn icon variant="text" @click="removeOption(i)">
                           <v-icon icon="lucide:trash-2" />
                         </v-btn>
@@ -351,126 +460,96 @@
                   </v-card>
                 </v-col>
 
-                <!-- Optional: message/pattern/min/max -->
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model="editor.form.validationJson.message"
-                    label="Validation message"
-                    density="comfortable"
-                    variant="outlined"
-                    rounded="lg"
-                    hide-details="auto"
-                    prepend-inner-icon="lucide:message-square"
-                  />
-                </v-col>
-
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model="editor.form.validationJson.pattern"
-                    label="Regex pattern"
-                    density="comfortable"
-                    variant="outlined"
-                    rounded="lg"
-                    hide-details="auto"
-                    prepend-inner-icon="lucide:regex"
-                  />
-                </v-col>
-
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model.number="editor.form.validationJson.minLen"
-                    label="Min length"
-                    type="number"
-                    density="comfortable"
-                    variant="outlined"
-                    rounded="lg"
-                    hide-details="auto"
-                    prepend-inner-icon="lucide:arrow-down-0-1"
-                  />
-                </v-col>
-
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    v-model.number="editor.form.validationJson.maxLen"
-                    label="Max length"
-                    type="number"
-                    density="comfortable"
-                    variant="outlined"
-                    rounded="lg"
-                    hide-details="auto"
-                    prepend-inner-icon="lucide:arrow-up-0-1"
-                  />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-card variant="outlined" rounded="xl" class="pa-4">
-                    <div class="d-flex align-center justify-space-between ga-4">
-                      <div class="d-flex align-center ga-3 min-w-0">
-                        <v-avatar
-                          size="36"
-                          rounded="lg"
-                          color="success"
-                          variant="tonal"
-                        >
-                          <v-icon icon="lucide:check-circle" size="18" />
-                        </v-avatar>
-
-                        <div class="min-w-0">
-                          <div class="text-body-2 font-weight-bold">
-                            Required
+                <!-- Advanced validation -->
+                <v-col cols="12" class="mt-2">
+                  <v-card variant="outlined" rounded="xl" class="pa-0">
+                    <v-expansion-panels variant="accordion">
+                      <v-expansion-panel>
+                        <v-expansion-panel-title>
+                          <div class="d-flex align-center ga-2">
+                            <v-icon icon="lucide:shield-check" size="16" />
+                            <span class="font-weight-bold"
+                              >Advanced validation</span
+                            >
+                            <span
+                              class="text-caption text-medium-emphasis ms-2"
+                            >
+                              Optional
+                            </span>
                           </div>
-                          <div class="text-caption text-medium-emphasis">
-                            User must fill this field.
-                          </div>
-                        </div>
-                      </div>
+                        </v-expansion-panel-title>
 
-                      <v-switch
-                        v-model="editor.form.validationJson.required"
-                        inset
-                        color="success"
-                        hide-details
-                      />
-                    </div>
+                        <v-expansion-panel-text>
+                          <v-row dense>
+                            <v-col cols="12" md="6">
+                              <v-text-field
+                                v-model="editor.form.validationJson.message"
+                                label="Validation message"
+                                density="comfortable"
+                                variant="outlined"
+                                rounded="lg"
+                                hide-details="auto"
+                                prepend-inner-icon="lucide:message-square"
+                              />
+                            </v-col>
+
+                            <v-col cols="12" md="6">
+                              <v-text-field
+                                v-model="editor.form.validationJson.pattern"
+                                label="Regex pattern"
+                                density="comfortable"
+                                variant="outlined"
+                                rounded="lg"
+                                hide-details="auto"
+                                prepend-inner-icon="lucide:regex"
+                              />
+                            </v-col>
+
+                            <v-col cols="12" md="6">
+                              <v-text-field
+                                v-model.number="
+                                  editor.form.validationJson.minLen
+                                "
+                                label="Min length"
+                                type="number"
+                                density="comfortable"
+                                variant="outlined"
+                                rounded="lg"
+                                hide-details="auto"
+                                prepend-inner-icon="lucide:arrow-down-0-1"
+                              />
+                            </v-col>
+
+                            <v-col cols="12" md="6">
+                              <v-text-field
+                                v-model.number="
+                                  editor.form.validationJson.maxLen
+                                "
+                                label="Max length"
+                                type="number"
+                                density="comfortable"
+                                variant="outlined"
+                                rounded="lg"
+                                hide-details="auto"
+                                prepend-inner-icon="lucide:arrow-up-0-1"
+                              />
+                            </v-col>
+                          </v-row>
+                        </v-expansion-panel-text>
+                      </v-expansion-panel>
+                    </v-expansion-panels>
                   </v-card>
                 </v-col>
-
-                <!-- <v-col cols="12" md="6">
-                  <v-card variant="outlined" rounded="xl" class="pa-4">
-                    <div class="d-flex align-center justify-space-between ga-4">
-                      <div class="d-flex align-center ga-3 min-w-0">
-                        <v-avatar
-                          size="36"
-                          rounded="lg"
-                          color="primary"
-                          variant="tonal"
-                        >
-                          <v-icon icon="lucide:toggle-right" size="18" />
-                        </v-avatar>
-
-                        <div class="min-w-0">
-                          <div class="text-body-2 font-weight-bold">Active</div>
-                          <div class="text-caption text-medium-emphasis">
-                            Field is shown in the form.
-                          </div>
-                        </div>
-                      </div>
-
-                      <v-switch
-                        v-model="editor.form.isActive"
-                        inset
-                        color="primary"
-                        hide-details
-                      />
-                    </div>
-                  </v-card>
-                </v-col> -->
               </v-row>
             </v-card-text>
 
             <v-divider />
 
+            <!-- Footer -->
             <v-card-actions class="px-6 py-4">
+              <div class="text-caption text-medium-emphasis">
+                Tip: keep keys stable (used for mapping user answers).
+              </div>
               <v-spacer />
               <v-btn variant="text" rounded="lg" @click="closeEditor"
                 >Cancel</v-btn
