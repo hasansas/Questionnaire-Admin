@@ -98,22 +98,31 @@
             </div>
             <v-spacer />
             <v-btn
-              v-if="item.shareUrl"
               icon
               size="x-small"
               variant="text"
-              @click="copy(item.shareUrl)"
+              @click.stop="
+                copy(
+                  item.isPublic
+                    ? (item.publicUrl as string)
+                    : (item.shareUrl as string),
+                )
+              "
             >
               <v-icon icon="lucide:copy" />
             </v-btn>
             <v-btn
-              v-if="item.shareUrl"
               icon
               size="x-small"
               variant="text"
-              :href="item.shareUrl"
+              :href="
+                item.isPublic
+                  ? (item.publicUrl as string)
+                  : (item.shareUrl as string)
+              "
               target="_blank"
               rel="noopener"
+              @click.stop=""
             >
               <v-icon icon="lucide:external-link" />
             </v-btn>

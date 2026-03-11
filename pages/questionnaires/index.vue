@@ -134,6 +134,10 @@
         </v-chip>
       </template>
 
+      <template #item.estimatedTimeMinutes="{ item }">
+        {{ item.estimatedTimeMinutes }} Minutes
+      </template>
+
       <template #item.updatedAt="{ item }">
         <div class="text-caption text-medium-emphasis">
           {{ formatDateLabel(item.updatedAt) }}
@@ -237,6 +241,7 @@ import type { SubmitEventPromise } from "vuetify";
 import {
   createDefaultQuestionnaire as createDefaultDataForm,
   normalizeQuestionnaire as normalizeData,
+  normalizeQuestionnaireForm,
   type QuestionnaireModel,
 } from "~/models/questionnaire";
 import { formatDateLabel } from "~/utils/dateUtils";
@@ -265,7 +270,7 @@ const columns: SbTableColumn<QuestionnaireModel>[] = [
   { title: "Options Mode", key: "optionsMode", sortable: true },
   { title: "Result Visible", key: "showResultToUser", sortable: true },
   { title: "Status", key: "status", sortable: true },
-  { title: "Version", key: "version", sortable: true },
+  { title: "Estimated Time", key: "estimatedTimeMinutes", sortable: true },
   { title: "Updated", key: "updatedAt", sortable: true },
   { title: "", key: "actions", sortable: false, align: "end" },
 ];
@@ -334,23 +339,7 @@ function openDeleteDialog(item: QuestionnaireModel) {
 
 /** Data form */
 const DataForm = ref<InstanceType<typeof QuestionnaireForm> | null>(null);
-const form = ref<QuestionnaireFormModel>({
-  id: "",
-
-  title: "",
-  description: "",
-
-  language: "",
-  status: "",
-  version: 0,
-
-  scoringType: "",
-  showResultToUser: true,
-
-  // options setup
-  optionsMode: null,
-  fixedOptionsJson: [],
-});
+const form = ref<QuestionnaireFormModel>(normalizeQuestionnaireForm());
 
 async function handleOpenDataForm(
   mode: "create" | "edit",
