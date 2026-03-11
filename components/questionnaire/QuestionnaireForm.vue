@@ -2,7 +2,7 @@
   <div class="d-flex flex-column ga-4">
     <!-- Intro -->
     <div class="text-body-2 text-medium-emphasis">
-      Configure questionnaire setup, scoring rules, and visibility.
+      Configure questionnaire setup, scoring rules, visibility, and metadata.
     </div>
 
     <v-form ref="formRef" @submit.prevent>
@@ -61,6 +61,20 @@
                   hide-details="auto"
                   class="mb-4"
                 />
+
+                <v-textarea
+                  v-model.trim="form.shortDescription"
+                  label="Short Description (optional)"
+                  variant="outlined"
+                  rounded="lg"
+                  density="comfortable"
+                  auto-grow
+                  rows="2"
+                  prepend-inner-icon="lucide:text"
+                  hide-details="auto"
+                  class="mb-4"
+                />
+
                 <v-textarea
                   v-model.trim="form.description"
                   label="Description (optional)"
@@ -73,6 +87,20 @@
                   hide-details="auto"
                   class="mb-4"
                 />
+
+                <v-textarea
+                  v-model.trim="form.instructions"
+                  label="Instructions (optional)"
+                  variant="outlined"
+                  rounded="lg"
+                  density="comfortable"
+                  auto-grow
+                  rows="3"
+                  prepend-inner-icon="lucide:file-text"
+                  hide-details="auto"
+                  class="mb-4"
+                />
+
                 <v-select
                   v-model="form.scoringType"
                   label="Scoring Type"
@@ -85,6 +113,7 @@
                   hide-details="auto"
                   class="mb-4"
                 />
+
                 <v-row>
                   <v-col cols="12" md="6">
                     <v-select
@@ -101,7 +130,7 @@
                     />
                   </v-col>
 
-                  <v-col cols="12" md="6">
+                  <!-- <v-col cols="12" md="6">
                     <v-text-field
                       v-model.number="form.version"
                       label="Version"
@@ -110,45 +139,131 @@
                       variant="outlined"
                       rounded="lg"
                       density="comfortable"
-                      :rules="[rules.required]"
+                      :rules="[rules.required, rules.int]"
                       prepend-inner-icon="lucide:hash"
                       hide-details="auto"
                       class="mb-4"
                     />
+                  </v-col> -->
+
+                  <v-col cols="12" md="6">
+                    <v-text-field
+                      v-model.number="form.estimatedTimeMinutes"
+                      label="Estimated Time (minutes)"
+                      type="number"
+                      min="1"
+                      variant="outlined"
+                      rounded="lg"
+                      density="comfortable"
+                      :rules="[rules.numberOptional, rules.required]"
+                      prepend-inner-icon="lucide:clock-3"
+                      hide-details="auto"
+                      class="mb-4"
+                    />
                   </v-col>
+
+                  <!-- <v-col cols="12" md="6">
+                    <v-text-field
+                      v-model.trim="form.coverImageUrl"
+                      label="Cover Image URL (optional)"
+                      variant="outlined"
+                      rounded="lg"
+                      density="comfortable"
+                      :rules="[rules.urlOptional]"
+                      prepend-inner-icon="lucide:image"
+                      hide-details="auto"
+                      class="mb-4"
+                    />
+                  </v-col> -->
                 </v-row>
 
-                <!-- Visibility -->
-                <v-card variant="outlined" rounded="xl" class="pa-4">
-                  <div class="d-flex align-center justify-space-between ga-4">
-                    <div class="d-flex align-center ga-3 min-w-0">
-                      <v-avatar
-                        size="36"
-                        rounded="lg"
-                        color="primary"
-                        variant="tonal"
+                <v-combobox
+                  v-model="form.tags"
+                  label="Tags (optional)"
+                  multiple
+                  chips
+                  closable-chips
+                  clearable
+                  variant="outlined"
+                  rounded="lg"
+                  density="comfortable"
+                  prepend-inner-icon="lucide:tags"
+                  hide-details="auto"
+                  class="mb-4"
+                />
+
+                <!-- Visibility / flags -->
+                <v-row>
+                  <v-col cols="12">
+                    <v-card variant="outlined" rounded="xl" class="pa-4 h-100">
+                      <div
+                        class="d-flex align-center justify-space-between ga-4"
                       >
-                        <v-icon icon="lucide:eye" size="18" />
-                      </v-avatar>
+                        <div class="d-flex align-center ga-3 min-w-0">
+                          <v-avatar
+                            size="36"
+                            rounded="lg"
+                            color="primary"
+                            variant="tonal"
+                          >
+                            <v-icon icon="lucide:eye" size="18" />
+                          </v-avatar>
 
-                      <div class="min-w-0">
-                        <div class="text-body-2 font-weight-bold">
-                          Show Result to User
+                          <div class="min-w-0">
+                            <div class="text-body-2 font-weight-bold">
+                              Show Result to User
+                            </div>
+                            <div class="text-caption text-medium-emphasis">
+                              Users can see their results after submitting.
+                            </div>
+                          </div>
                         </div>
-                        <div class="text-caption text-medium-emphasis">
-                          Users can see their results after submitting.
-                        </div>
+
+                        <v-switch
+                          v-model="form.showResultToUser"
+                          inset
+                          color="primary"
+                          hide-details
+                        />
                       </div>
-                    </div>
+                    </v-card>
+                  </v-col>
 
-                    <v-switch
-                      v-model="form.showResultToUser"
-                      inset
-                      color="primary"
-                      hide-details
-                    />
-                  </div>
-                </v-card>
+                  <v-col cols="12">
+                    <v-card variant="outlined" rounded="xl" class="pa-4 h-100">
+                      <div
+                        class="d-flex align-center justify-space-between ga-4"
+                      >
+                        <div class="d-flex align-center ga-3 min-w-0">
+                          <v-avatar
+                            size="36"
+                            rounded="lg"
+                            color="warning"
+                            variant="tonal"
+                          >
+                            <v-icon icon="lucide:star" size="18" />
+                          </v-avatar>
+
+                          <div class="min-w-0">
+                            <div class="text-body-2 font-weight-bold">
+                              Featured
+                            </div>
+                            <div class="text-caption text-medium-emphasis">
+                              Highlight this questionnaire in listings.
+                            </div>
+                          </div>
+                        </div>
+
+                        <v-switch
+                          v-model="form.isFeatured"
+                          inset
+                          color="warning"
+                          hide-details
+                        />
+                      </div>
+                    </v-card>
+                  </v-col>
+                </v-row>
 
                 <v-divider class="my-6" />
 
@@ -278,7 +393,6 @@
                                     <div
                                       class="d-flex align-start justify-space-between ga-3"
                                     >
-                                      <!-- left: drag handle + title -->
                                       <div
                                         class="d-flex align-start ga-3 min-w-0"
                                       >
@@ -301,7 +415,6 @@
                                         </div>
                                       </div>
 
-                                      <!-- right: delete confirm via menu -->
                                       <v-menu
                                         location="bottom end"
                                         :close-on-content-click="true"
@@ -442,7 +555,6 @@
                               </v-row>
                             </div>
 
-                            <!-- helper footer -->
                             <v-alert
                               v-if="
                                 validationAttempted && fixedOptionsJsonIssue
@@ -533,7 +645,7 @@
                       </div>
 
                       <v-row class="ga-4" no-gutters>
-                        <v-col cols="12" md="6">
+                        <!-- <v-col cols="12" md="6">
                           <div class="text-caption text-medium-emphasis">
                             Version
                           </div>
@@ -541,6 +653,19 @@
                             v{{ form.version || 1 }}
                           </div>
                         </v-col>
+
+                        <v-col cols="12" md="6">
+                          <div class="text-caption text-medium-emphasis">
+                            Estimated time
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{
+                              form.estimatedTimeMinutes
+                                ? `${form.estimatedTimeMinutes} min`
+                                : "—"
+                            }}
+                          </div>
+                        </v-col> -->
 
                         <v-col cols="12">
                           <div class="text-caption text-medium-emphasis">
@@ -553,10 +678,28 @@
 
                         <v-col cols="12">
                           <div class="text-caption text-medium-emphasis">
+                            Short description
+                          </div>
+                          <div class="text-body-2 text-medium-emphasis">
+                            {{ form.shortDescription || "—" }}
+                          </div>
+                        </v-col>
+
+                        <v-col cols="12">
+                          <div class="text-caption text-medium-emphasis">
                             Description
                           </div>
                           <div class="text-body-2 text-medium-emphasis">
                             {{ form.description || "—" }}
+                          </div>
+                        </v-col>
+
+                        <v-col cols="12">
+                          <div class="text-caption text-medium-emphasis">
+                            Instructions
+                          </div>
+                          <div class="text-body-2 text-medium-emphasis">
+                            {{ form.instructions || "—" }}
                           </div>
                         </v-col>
 
@@ -597,6 +740,15 @@
 
                         <v-col cols="12" md="6">
                           <div class="text-caption text-medium-emphasis">
+                            Featured
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ form.isFeatured ? "Yes" : "No" }}
+                          </div>
+                        </v-col>
+
+                        <v-col cols="12" md="6">
+                          <div class="text-caption text-medium-emphasis">
                             Options mode
                           </div>
                           <div class="text-body-2 font-weight-bold">
@@ -605,6 +757,39 @@
                                 ? "Fixed (global)"
                                 : "Per question"
                             }}
+                          </div>
+                        </v-col>
+
+                        <!-- <v-col cols="12" md="6">
+                          <div class="text-caption text-medium-emphasis">
+                            Cover image
+                          </div>
+                          <div
+                            class="text-body-2 font-weight-bold text-truncate"
+                          >
+                            {{ form.coverImageUrl || "—" }}
+                          </div>
+                        </v-col> -->
+
+                        <v-col cols="12">
+                          <div class="text-caption text-medium-emphasis mb-2">
+                            Tags
+                          </div>
+                          <div
+                            v-if="Array.isArray(form.tags) && form.tags.length"
+                            class="d-flex flex-wrap ga-2"
+                          >
+                            <v-chip
+                              v-for="tag in form.tags"
+                              :key="tag"
+                              size="small"
+                              variant="tonal"
+                            >
+                              {{ tag }}
+                            </v-chip>
+                          </div>
+                          <div v-else class="text-body-2 text-medium-emphasis">
+                            —
                           </div>
                         </v-col>
                       </v-row>
@@ -695,7 +880,6 @@ import type { QuestionnaireFormModel } from "~/models/questionnaire";
 import Draggable from "vuedraggable";
 
 function syncFixedOptionsSortOrder() {
-  // keep sortOrder consistent with visual order (1..n)
   form.value.fixedOptionsJson = (form.value.fixedOptionsJson || []).map(
     (o, i) => ({
       ...o,
@@ -715,7 +899,6 @@ export interface QuestionnaireFormRules {
 const form = defineModel<QuestionnaireFormModel>({ required: true });
 const formRef = ref<InstanceType<typeof VForm> | null>(null);
 
-// options
 const languageOptions = [
   { title: "Indonesian", value: "id" },
   { title: "English", value: "en" },
@@ -732,11 +915,9 @@ const scoringTypeOptions = [
   { title: "Total score", value: "total_score" },
 ];
 
-// accordion open first
 const openPanel = ref<number | null>(0);
-
-// only turns "error" after parent submits
 const validationAttempted = ref(false);
+
 const rules = {
   required: (v: any) => !!v || v === 0 || "This field is required",
   min3: (v: any) =>
@@ -752,7 +933,6 @@ const rules = {
   urlOptional: (v: any) => {
     if (!v) return true;
     try {
-      // eslint-disable-next-line no-new
       new URL(String(v));
       return true;
     } catch {
@@ -795,6 +975,28 @@ const fixedOptionsJsonIssue = computed(() => {
   return "";
 });
 
+const normalizedTags = computed(() => {
+  if (!Array.isArray(form.value.tags)) return [];
+  return form.value.tags.map((tag) => String(tag ?? "").trim()).filter(Boolean);
+});
+
+watch(
+  () => form.value.tags,
+  (val) => {
+    if (!Array.isArray(val)) {
+      form.value.tags = [];
+      return;
+    }
+
+    const next = val.map((tag) => String(tag ?? "").trim()).filter(Boolean);
+
+    if (JSON.stringify(next) !== JSON.stringify(val)) {
+      form.value.tags = next;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
 // --- panel completeness ---
 const isBasicComplete = computed(() => {
   const f = form.value;
@@ -803,7 +1005,8 @@ const isBasicComplete = computed(() => {
     !!String(f.language ?? "").trim() &&
     !!String(f.scoringType ?? "").trim() &&
     Number(f.version) >= 1 &&
-    (f.showResultToUser === true || f.showResultToUser === false)
+    (f.showResultToUser === true || f.showResultToUser === false) &&
+    (f.isFeatured === true || f.isFeatured === false)
   );
 });
 
@@ -811,7 +1014,6 @@ const isOptionsComplete = computed(() => {
   const f = form.value;
   if (!f.optionsMode) return false;
   if (f.optionsMode === "per_question") return true;
-  // fixed mode => must pass issue checks
   return fixedOptionsJsonIssue.value === "";
 });
 
@@ -819,7 +1021,6 @@ const canSubmit = computed(
   () => isBasicComplete.value && isOptionsComplete.value,
 );
 
-// --- panel status icon logic ---
 type PanelKey = "basic" | "options" | "review";
 type PanelStatus = "default" | "complete" | "error";
 
@@ -855,7 +1056,6 @@ function focusFirstInvalidPanel() {
   else if (!canSubmit.value) openPanel.value = 2;
 }
 
-// --- fixed options helpers ---
 function resetfixedOptionsJson() {
   form.value.fixedOptionsJson = [
     { label: "Setuju", scoreValue: 2, sortOrder: 1 },
@@ -880,9 +1080,10 @@ function removeFixedOption(sortOrder: number) {
   );
 }
 
-// ---- exposed API for parent submit button ----
 async function validateAll() {
   validationAttempted.value = true;
+
+  form.value.tags = normalizedTags.value;
 
   const res = await formRef.value?.validate();
   const vFormValid = !!res?.valid;
@@ -892,20 +1093,18 @@ async function validateAll() {
 
   return { valid, vFormValid, canSubmit: canSubmit.value };
 }
+
 async function validate() {
   return await formRef.value?.validate();
 }
+
 function reset() {
   formRef.value?.reset();
 }
+
 function resetValidation() {
-  // reset panel status icons (error -> default)
   validationAttempted.value = false;
-
-  // reset Vuetify form validation messages
   formRef.value?.resetValidation();
-
-  // optional: open first panel again
   openPanel.value = 0;
 }
 
@@ -919,12 +1118,6 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-// .sb-accordion :deep(.v-expansion-panel-title) {
-//   padding: 14px 16px;
-//   background-color: var(--color-card-bg) !important;
-//   box-shadow: none !important;
-//   border-width: 1px !important;
-// }
 .sb-accordion {
   box-shadow: none !important;
   border-width: 1px !important;
