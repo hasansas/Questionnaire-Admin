@@ -28,6 +28,7 @@
     >
       <!-- Columns -->
       <template #item.questionnaire="{ item }">
+        <!-- <pre>{{ item }}</pre> -->
         <div class="d-flex align-center ga-3">
           <v-avatar size="36" variant="tonal" rounded="lg" color="primary">
             <v-icon icon="lucide:clipboard-list" size="18" />
@@ -264,7 +265,6 @@ const tableRef = ref<any>(null);
 // Questionnaire table columns (match Questionnaire payload)
 const columns: SbTableColumn<QuestionnaireModel>[] = [
   { title: "Questionnaire", key: "questionnaire", sortable: true },
-  { title: "Description", key: "description", sortable: false },
   { title: "Language", key: "language", sortable: true },
   { title: "Scoring", key: "scoringType", sortable: true },
   { title: "Options Mode", key: "optionsMode", sortable: true },

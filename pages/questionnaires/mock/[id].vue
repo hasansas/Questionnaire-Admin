@@ -1533,7 +1533,6 @@
 import { computed, onMounted, reactive, ref } from "vue";
 
 definePageMeta({
-  layout: "admin",
   middleware: ["auth"],
 });
 
