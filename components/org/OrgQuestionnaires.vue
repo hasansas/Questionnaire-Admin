@@ -152,6 +152,14 @@
 
       <template #actions="{ item }">
         <div class="d-flex justify-end ga-1">
+          <v-btn
+            icon
+            variant="text"
+            :to="`/questionnaires/${item.questionnaire.id}`"
+            @click.stop.prevent=""
+          >
+            <v-icon icon="lucide:eye" size="18" />
+          </v-btn>
           <v-btn icon variant="text" @click.stop.prevent="openReport(item)">
             <v-icon icon="lucide:file-text" size="18" />
           </v-btn>

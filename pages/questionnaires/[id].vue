@@ -234,9 +234,8 @@
             <v-window-item value="bands">
               <div class="pa-4">
                 <v-card rounded="xl" variant="outlined" class="sb-card pa-4">
-                  <div class="text-subtitle-1 font-weight-black">Bands</div>
-                  <div class="text-body-2 text-medium-emphasis mt-1">
-                    Configure score bands and ranges for outcomes.
+                  <div class="pa-4">
+                    <QuestionnaireScoreBands :model="questionnaire" />
                   </div>
                 </v-card>
               </div>
@@ -245,12 +244,7 @@
             <!-- Meanings -->
             <v-window-item value="meanings">
               <div class="pa-4">
-                <v-card rounded="xl" variant="outlined" class="sb-card pa-4">
-                  <div class="text-subtitle-1 font-weight-black">Meanings</div>
-                  <div class="text-body-2 text-medium-emphasis mt-1">
-                    Write interpretation content shown in results.
-                  </div>
-                </v-card>
+                <QuestionnaireMeanings :model="questionnaire" />
               </div>
             </v-window-item>
           </v-window>
@@ -338,5 +332,5 @@ onMounted(() => fetchDatahDetail());
 // Tabs
 // -----------------------
 type TabKey = "overview" | "questions" | "dimensions" | "bands" | "meanings";
-const tab = ref<TabKey>("overview");
+const tab = ref<TabKey>("meanings");
 </script>
