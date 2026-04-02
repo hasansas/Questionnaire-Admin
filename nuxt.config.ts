@@ -62,7 +62,8 @@ export default defineNuxtConfig({
     public: {
       apiBase: process.env.API_URL || "http://localhost:3000",
       apiKey: process.env.API_KEY || "api-key",
-      i18nBaseUrl: process.env.APP_PUBLIC_BASE_URL || 'http://localhost:3355'
+      i18nBaseUrl: process.env.APP_PUBLIC_BASE_URL || 'http://localhost:3355',
+      publicUrl: process.env.APP_PUBLIC_URL || 'http://localhost:3355'
     },
   },
   css: [
