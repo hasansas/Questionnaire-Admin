@@ -180,6 +180,11 @@ const navItems: NavItem[] = [
 
 const settingNavItems: NavItem[] = [
   { title: "General", to: "/settings/general", icon: "lucide:settings" },
+  {
+    title: "Email Template",
+    to: "/settings/email-template",
+    icon: "lucide:mails",
+  },
   { title: "Access", to: "/settings/access", icon: "lucide:shield" },
 ];
 </script>

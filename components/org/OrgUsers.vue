@@ -363,6 +363,7 @@ const props = withDefaults(
   {},
 );
 
+const config = useRuntimeConfig();
 const snack = useAppSnackbar();
 const orgUserStore = useOrgUserStore(props.organizationId);
 
@@ -470,10 +471,12 @@ function roleIcon(key: string) {
 }
 
 type OrgUserRole = "org_viewer" | "org_editor" | "org_admin";
+const baseUrl = config.public.publicUrl;
 const userForm = reactive({
   name: "",
   email: "",
   role: null as OrgUserRole | null,
+  inviteUrl: baseUrl ? `${baseUrl}/org/invitation` : null,
 });
 
 async function submitInvite() {

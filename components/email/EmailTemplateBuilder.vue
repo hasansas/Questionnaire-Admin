@@ -231,7 +231,7 @@ import { computed, nextTick, ref, watch, toRaw } from "vue";
 import {
   type EmailTemplateModel,
   type EmailTemplateCode,
-} from "~/models/emailTemplate";
+} from "~/models/email-template";
 
 type BuilderMode = "create" | "edit";
 
