@@ -2,6 +2,15 @@
 
 export type QuestionnaireQuestionType = "single_choice" | (string & {})
 
+export type QuestionnaireQuestionMode = "text" | "image" | "audio"
+
+export interface QuestionnaireQuestionMediaModel {
+  mediaId: string
+  publicUrl: string | null
+  originalName: string | null
+  mimeType: string | null
+}
+
 export interface QuestionnaireQuestionMeta {
   hint?: string
   [key: string]: any
@@ -34,11 +43,15 @@ export interface QuestionnaireQuestionModel {
   description: string | null
 
   questionType: QuestionnaireQuestionType
+  questionMode: QuestionnaireQuestionMode
   sortOrder: number
   isRequired: boolean
 
   meta: QuestionnaireQuestionMeta | null
   options?: QuestionnaireQuestionOptionModel[]
+
+  media?: QuestionnaireQuestionMediaModel | null
+  imageUrl: string | null
 
   /**
    * Flattened (single) dimension.
@@ -62,6 +75,7 @@ export const createDefaultQuestionnaireQuestion =
     description: null,
 
     questionType: "single_choice",
+    questionMode: "text",
     sortOrder: 1,
     isRequired: true,
 
@@ -69,6 +83,8 @@ export const createDefaultQuestionnaireQuestion =
     options: [],
 
     dimension: null,
+    media: null,
+    imageUrl: null,
 
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -115,12 +131,31 @@ export function normalizeQuestionnaireQuestionDimension(
   }
 }
 
+export function normalizeQuestionnaireQuestionMedia(
+  item?: any,
+  imageUrl?: string | null,
+): QuestionnaireQuestionMediaModel | null {
+  if (!item?.mediaId) return null
+
+  const asset = item?.media
+
+  return {
+    mediaId: String(item.mediaId),
+    publicUrl: imageUrl || (asset?.publicUrl ? String(asset.publicUrl) : null),
+    originalName: asset?.originalName ? String(asset.originalName) : null,
+    mimeType: asset?.mimeType ? String(asset.mimeType) : null,
+  }
+}
+
 export function normalizeQuestionnaireQuestion(
   item?: Partial<QuestionnaireQuestionModel>,
 ): QuestionnaireQuestionModel {
   const rawOptions = (item as any)?.options
   const dimensionMaps = (item as any)?.dimensionMaps
   const dimension = item?.dimension ?? normalizeQuestionnaireQuestionDimension(dimensionMaps)
+  const imageUrl = (item as any)?.imageUrl
+    ? String((item as any).imageUrl)
+    : null
   const question: QuestionnaireQuestionModel = {
     id: String(item?.id ?? ""),
     questionnaireId: String(item?.questionnaireId ?? ""),
@@ -136,6 +171,10 @@ export function normalizeQuestionnaireQuestion(
       (item as any)?.questionType ??
       (item as any)?.question_type ??
       "single_choice",
+    questionMode:
+      (item as any)?.questionMode ??
+      (item as any)?.question_mode ??
+      "text",
     sortOrder: toNumber((item as any)?.sortOrder ?? (item as any)?.sort_order, 1),
     isRequired: Boolean(
       (item as any)?.isRequired ?? (item as any)?.is_required ?? true,
@@ -145,6 +184,8 @@ export function normalizeQuestionnaireQuestion(
     options: normalizeQuestionnaireQuestionOptions(rawOptions),
 
     dimension,
+    media: normalizeQuestionnaireQuestionMedia((item as any)?.media, imageUrl),
+    imageUrl,
 
     createdAt: (item as any)?.createdAt
       ? new Date((item as any).createdAt)

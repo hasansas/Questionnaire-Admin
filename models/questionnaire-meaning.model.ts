@@ -4,6 +4,7 @@ export type MeaningRuleType =
   | "score_band_combo"
   | "score_band"
   | "dominant_dimension"
+  | "dimension_band"
   | "fallback";
 
 export interface QuestionnaireMeaningModel {

@@ -187,6 +187,15 @@
                     <v-icon icon="lucide:grip-vertical" size="18" />
                   </div>
 
+                  <v-avatar
+                    v-if="q.questionMode === 'image' && q.imageUrl"
+                    size="44"
+                    rounded="lg"
+                    class="flex-shrink-0"
+                  >
+                    <v-img :src="q.imageUrl" cover />
+                  </v-avatar>
+
                   <div class="min-w-0">
                     <div class="text-body-2 font-weight-black">
                       <span class="mr-2"># {{ idx + 1 }}.</span>
@@ -194,6 +203,16 @@
                     </div>
 
                     <div class="d-flex ga-2 flex-wrap mt-3">
+                      <v-chip
+                        v-if="q.questionMode === 'image'"
+                        size="small"
+                        variant="tonal"
+                        color="info"
+                        class="px-4"
+                      >
+                        <v-icon icon="lucide:image" size="14" class="me-2" />
+                        Image
+                      </v-chip>
                       <v-chip
                         v-if="isMultiDimension"
                         size="small"
@@ -355,6 +374,79 @@
                     hide-details="auto"
                     placeholder="Example: Saya lebih mudah belajar dari gambar."
                   />
+                </v-col>
+
+                <!-- Question mode -->
+                <v-col cols="12">
+                  <div class="text-caption text-medium-emphasis mb-2">
+                    Question mode
+                  </div>
+                  <v-btn-toggle
+                    v-model="editForm.questionMode"
+                    color="primary"
+                    variant="outlined"
+                    rounded="lg"
+                    density="comfortable"
+                    mandatory
+                  >
+                    <v-btn value="text" prepend-icon="lucide:type">
+                      Text
+                    </v-btn>
+                    <v-btn value="image" prepend-icon="lucide:image">
+                      Image
+                    </v-btn>
+                  </v-btn-toggle>
+                </v-col>
+
+                <!-- Image upload (question mode = image) -->
+                <v-col v-if="editForm.questionMode === 'image'" cols="12">
+                  <v-card rounded="xl" variant="outlined" class="pa-4">
+                    <div class="d-flex align-center ga-4 flex-wrap">
+                      <v-avatar
+                        v-if="editForm.mediaPreviewUrl"
+                        size="72"
+                        rounded="lg"
+                      >
+                        <v-img :src="editForm.mediaPreviewUrl" cover />
+                      </v-avatar>
+                      <v-avatar
+                        v-else
+                        size="72"
+                        rounded="lg"
+                        color="grey-lighten-3"
+                      >
+                        <v-icon icon="lucide:image" size="28" />
+                      </v-avatar>
+
+                      <div class="flex-grow-1 min-w-0">
+                        <v-file-input
+                          accept="image/*"
+                          label="Question image"
+                          variant="outlined"
+                          rounded="lg"
+                          density="comfortable"
+                          prepend-icon=""
+                          prepend-inner-icon="lucide:upload"
+                          :loading="editForm.mediaUploading"
+                          :disabled="editForm.mediaUploading"
+                          hide-details="auto"
+                          @update:model-value="onQuestionImageSelected"
+                        />
+                        <div
+                          v-if="mediaUploadError"
+                          class="text-caption text-error mt-2"
+                        >
+                          {{ mediaUploadError }}
+                        </div>
+                        <div
+                          v-else-if="!editForm.mediaId"
+                          class="text-caption text-medium-emphasis mt-2"
+                        >
+                          An image is required for image-mode questions.
+                        </div>
+                      </div>
+                    </div>
+                  </v-card>
                 </v-col>
 
                 <!-- Dimension selector -->
@@ -649,7 +741,6 @@ const emit = defineEmits<{
 }>();
 
 const snack = useAppSnackbar();
-const api = useApiService();
 
 const questionnaireId = computed(() => props.model?.id || "");
 const optionsMode = computed(() => props.model?.optionsMode || "fixed");
@@ -875,6 +966,10 @@ const editForm = reactive<{
   hint: string;
   dimensionId: string;
   options: LocalOption[];
+  questionMode: "text" | "image";
+  mediaId: string;
+  mediaPreviewUrl: string | null;
+  mediaUploading: boolean;
 }>({
   id: "",
   text: "",
@@ -883,7 +978,13 @@ const editForm = reactive<{
   hint: "...",
   dimensionId: "",
   options: [],
+  questionMode: "text",
+  mediaId: "",
+  mediaPreviewUrl: null,
+  mediaUploading: false,
 });
+
+const mediaUploadError = ref("");
 
 const rules = {
   required: (v: any) => (!!String(v ?? "").trim() ? true : "Required"),
@@ -896,6 +997,7 @@ function resetForm() {
   dialogError.value = "";
   saving.value = false;
   validationAttempted.value = false;
+  mediaUploadError.value = "";
   editForm.id = "";
   editForm.text = "";
   editForm.description = "";
@@ -907,6 +1009,10 @@ function resetForm() {
     { __localId: crypto.randomUUID(), label: "Ragu", scoreValue: 1 },
     { __localId: crypto.randomUUID(), label: "Tidak setuju", scoreValue: 0 },
   ];
+  editForm.questionMode = "text";
+  editForm.mediaId = "";
+  editForm.mediaPreviewUrl = null;
+  editForm.mediaUploading = false;
   nextTick(() => dialogFormRef.value?.resetValidation?.());
 }
 
@@ -922,12 +1028,18 @@ function openEditDialog(item: QuestionnaireQuestionModel) {
   saving.value = false;
   validationAttempted.value = false;
 
+  mediaUploadError.value = "";
   editForm.id = item.id;
   editForm.text = item.text ?? "";
   editForm.description = (item as any).description ?? "";
   editForm.isRequired = Boolean(item.isRequired);
   editForm.hint = String((item as any)?.meta?.hint ?? "...");
   editForm.dimensionId = ""; // mapping not included in payload; keep empty unless you add it later
+  editForm.questionMode =
+    (item as any)?.questionMode === "image" ? "image" : "text";
+  editForm.mediaId = item.media?.mediaId ?? "";
+  editForm.mediaPreviewUrl = item.imageUrl ?? item.media?.publicUrl ?? null;
+  editForm.mediaUploading = false;
 
   // load options for per-question editing UI
   editForm.options =
@@ -945,6 +1057,35 @@ function openEditDialog(item: QuestionnaireQuestionModel) {
 
 function closeDialog() {
   dialogOpen.value = false;
+}
+
+async function onQuestionImageSelected(fileOrFiles: File | File[] | null) {
+  const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
+
+  if (!(file instanceof File) || file.size === 0) {
+    mediaUploadError.value = "No file selected.";
+    return;
+  }
+
+  mediaUploadError.value = "";
+  editForm.mediaUploading = true;
+
+  try {
+    const res = await questionsStore.uploadMedia(file);
+
+    if (!res?.success) {
+      mediaUploadError.value =
+        res?.error?.message || res?.error || "Failed to upload image.";
+      return;
+    }
+
+    editForm.mediaId = res.data?.id ?? "";
+    editForm.mediaPreviewUrl = res.data?.publicUrl ?? null;
+  } catch (err: any) {
+    mediaUploadError.value = err?.message || "Failed to upload image.";
+  } finally {
+    editForm.mediaUploading = false;
+  }
 }
 
 function addOption() {
@@ -971,12 +1112,19 @@ async function handleSave() {
     return;
   }
 
+  if (editForm.questionMode === "image" && !editForm.mediaId) {
+    dialogError.value = "Upload an image before saving.";
+    return;
+  }
+
   saving.value = true;
   try {
     const payload: any = {
       text: editForm.text.trim(),
       description: editForm.description.trim(),
       questionType: "single_choice",
+      questionMode: editForm.questionMode,
+      mediaId: editForm.questionMode === "image" ? editForm.mediaId : null,
 
       isRequired: Boolean(editForm.isRequired),
       meta: { hint: editForm.hint.trim() },

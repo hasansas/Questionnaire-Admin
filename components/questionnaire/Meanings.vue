@@ -1,132 +1,94 @@
 <template>
   <div class="d-flex flex-column ga-4">
-    <v-card rounded="lg" variant="outlined">
-      <v-card-text class="d-flex flex-wrap align-center ga-3">
-        <div>
-          <div class="text-h6 font-weight-bold">Meaning Management</div>
-          <div class="text-medium-emphasis text-body-2">
-            Manage result mappings for questionnaire scoring output.
-          </div>
-        </div>
-
-        <v-spacer />
-
-        <v-chip size="small" variant="tonal">
-          Scoring: {{ props.model.scoringType || "-" }}
-        </v-chip>
-
-        <v-btn
-          color="primary"
-          rounded="lg"
-          prepend-icon="lucide:plus"
-          :loading="initAddDialogLoading"
-          @click="openAddDialog"
-        >
-          Add Meanings
-        </v-btn>
-
-        <v-btn
-          rounded="lg"
-          variant="outlined"
-          prepend-icon="lucide:refresh-cw"
-          :loading="tableLoading"
-          @click="loadMeanings"
-        >
-          Refresh
-        </v-btn>
-      </v-card-text>
-    </v-card>
-
-    <v-alert
-      v-if="pageError"
-      type="error"
-      variant="tonal"
-      rounded="lg"
-      closable
-      @click:close="pageError = null"
+    <!-- @vue-generic {import('~/models/questionnaire-meaning.model').QuestionnaireMeaningModel} -->
+    <SbResourceTableCard
+      ref="tableRef"
+      page-title="Meanings"
+      page-subtitle="Manage result mappings for questionnaire scoring output."
+      primary-text="Add Meanings"
+      primary-icon="lucide:plus"
+      :primary-loading="initAddDialogLoading"
+      :store="store"
+      :columns="columns"
+      search-placeholder="Search rule key, result code/label"
+      :show-filter="false"
+      empty-icon="lucide:list-checks"
+      empty-title="No meanings found"
+      empty-subtitle="Add meanings to interpret questionnaire results."
+      empty-primary-text="Add Meanings"
+      :build-query="buildQuery"
+      :delete-action="handleDelete"
+      delete-title="Delete meaning?"
+      delete-label="resultLabel"
+      delete-label-key="ruleKey"
+      @primary="openAddDialog"
+      @edit="openEditDialog"
+      @empty:primary="openAddDialog"
     >
-      {{ pageError }}
-    </v-alert>
+      <template #item.ruleType="{ item }">
+        <v-chip size="small" variant="tonal">
+          {{ item.ruleType }}
+        </v-chip>
+      </template>
 
-    <v-card rounded="lg" variant="outlined">
-      <v-data-table
-        :headers="headers"
-        :items="store.meanings"
-        :loading="tableLoading"
-        item-value="id"
-      >
-        <template #item.ruleType="{ item }">
-          <v-chip size="small" variant="tonal">
-            {{ item.ruleType }}
+      <template #item.ruleKey="{ item }">
+        <div class="text-body-2">{{ item.ruleKey }}</div>
+      </template>
+
+      <template #item.result="{ item }">
+        <div class="d-flex flex-column">
+          <span class="font-weight-medium">{{
+            item.resultLabel || "-"
+          }}</span>
+          <span class="text-caption text-medium-emphasis">
+            {{ item.resultCode || "-" }}
+          </span>
+        </div>
+      </template>
+
+      <template #item.flags="{ item }">
+        <div class="d-flex flex-wrap ga-1">
+          <v-chip
+            v-if="item.isDefault"
+            size="x-small"
+            color="primary"
+            variant="tonal"
+          >
+            Default
           </v-chip>
-        </template>
+          <v-chip
+            size="x-small"
+            :color="item.isActive ? 'success' : 'grey'"
+            variant="tonal"
+          >
+            {{ item.isActive ? "Active" : "Inactive" }}
+          </v-chip>
+        </div>
+      </template>
 
-        <template #item.ruleKey="{ item }">
-          <div class="text-body-2">{{ item.ruleKey }}</div>
-        </template>
+      <template #item.recommendations="{ item }">
+        <span>{{ item.recommendations?.length || 0 }}</span>
+      </template>
 
-        <template #item.result="{ item }">
-          <div class="d-flex flex-column">
-            <span class="font-weight-medium">{{
-              item.resultLabel || "-"
-            }}</span>
-            <span class="text-caption text-medium-emphasis">
-              {{ item.resultCode || "-" }}
-            </span>
-          </div>
-        </template>
-
-        <template #item.flags="{ item }">
-          <div class="d-flex flex-wrap ga-1">
-            <v-chip
-              v-if="item.isDefault"
-              size="x-small"
-              color="primary"
-              variant="tonal"
-            >
-              Default
-            </v-chip>
-            <v-chip
-              size="x-small"
-              :color="item.isActive ? 'success' : 'grey'"
-              variant="tonal"
-            >
-              {{ item.isActive ? "Active" : "Inactive" }}
-            </v-chip>
-          </div>
-        </template>
-
-        <template #item.recommendations="{ item }">
-          <span>{{ item.recommendations?.length || 0 }}</span>
-        </template>
-
-        <template #item.actions="{ item }">
-          <div class="d-flex ga-2 justify-end">
-            <v-btn
-              size="small"
-              variant="text"
-              icon="lucide:pencil"
-              :loading="editActionLoadingId === item.id"
-              @click="openEditDialog(item)"
-            />
-            <v-btn
-              size="small"
-              variant="text"
-              color="error"
-              icon="lucide:trash-2"
-              :loading="deleteLoadingId === item.id"
-              @click="handleDelete(item)"
-            />
-          </div>
-        </template>
-
-        <template #bottom>
-          <div class="px-4 py-3 text-body-2 text-medium-emphasis">
-            Total meanings: {{ store.totalMeanings }}
-          </div>
-        </template>
-      </v-data-table>
-    </v-card>
+      <template #actions="{ item }">
+        <div class="d-flex ga-2 justify-end">
+          <v-btn
+            size="small"
+            variant="text"
+            icon="lucide:pencil"
+            :loading="editActionLoadingId === item.id"
+            @click.stop="openEditDialog(item)"
+          />
+          <v-btn
+            size="small"
+            variant="text"
+            color="error"
+            icon="lucide:trash-2"
+            @click.stop="tableRef?.openDeleteDialog(item)"
+          />
+        </div>
+      </template>
+    </SbResourceTableCard>
 
     <!-- Add meanings dialog -->
     <v-dialog v-model="addDialog" max-width="1100">
@@ -470,8 +432,7 @@ const store = useQuestionnaireMeaningsStore(props.model.id);
 /* ------------------------------
  * local state
  * ------------------------------ */
-const tableLoading = ref<boolean>(false);
-const pageError = ref<string | null>(null);
+const tableRef = ref<any>(null);
 
 const addDialog = ref<boolean>(false);
 const initAddDialogLoading = ref<boolean>(false);
@@ -482,7 +443,6 @@ const addDialogError = ref<string | null>(null);
 const editDialog = ref<boolean>(false);
 const saveEditLoading = ref<boolean>(false);
 const editActionLoadingId = ref<string | null>(null);
-const deleteLoadingId = ref<string | null>(null);
 const editDialogError = ref<string | null>(null);
 
 const onlyUnused = ref<boolean>(true);
@@ -492,15 +452,20 @@ const selectedRuleKeys = ref<string[]>([]);
 /* ------------------------------
  * table
  * ------------------------------ */
-const headers = [
+const columns: SbTableColumn<QuestionnaireMeaningModel>[] = [
   { title: "Rule Type", key: "ruleType", sortable: false },
   { title: "Rule Key", key: "ruleKey", sortable: false },
   { title: "Result", key: "result", sortable: false },
   { title: "Priority", key: "priority", sortable: true },
   { title: "Recommendations", key: "recommendations", sortable: false },
   { title: "Flags", key: "flags", sortable: false },
-  { title: "Actions", key: "actions", sortable: false, align: "end" as const },
+  { title: "", key: "actions", sortable: false, align: "end" },
 ];
+
+function buildQuery({ search }: { search: string; filters: Record<string, any> }) {
+  const s = String(search ?? "").trim();
+  return s || null;
+}
 
 /* ------------------------------
  * edit form
@@ -540,7 +505,12 @@ const scoringType = computed<string>(() =>
 
 const allowedRuleTypes = computed<MeaningRuleType[]>(() => {
   if (scoringType.value === "multi_dimension") {
-    return ["score_band_combo", "dominant_dimension", "fallback"];
+    return [
+      "score_band_combo",
+      "dominant_dimension",
+      "dimension_band",
+      "fallback",
+    ];
   }
 
   if (scoringType.value === "total_score") {
@@ -604,6 +574,7 @@ function formatRuleTypeLabel(ruleType: MeaningRuleType): string {
   if (ruleType === "score_band_combo") return "Score Band Combo";
   if (ruleType === "score_band") return "Score Band";
   if (ruleType === "dominant_dimension") return "Dominant Dimension";
+  if (ruleType === "dimension_band") return "Dimension Band";
   return "Fallback";
 }
 
@@ -679,19 +650,6 @@ function buildEditPayload(): QuestionnaireMeaningPayload {
 /* ------------------------------
  * actions
  * ------------------------------ */
-async function loadMeanings(): Promise<void> {
-  tableLoading.value = true;
-  pageError.value = null;
-
-  try {
-    await store.fetchMeanings();
-  } catch (error: any) {
-    pageError.value = error?.message || "Failed to load meanings.";
-  } finally {
-    tableLoading.value = false;
-  }
-}
-
 async function reloadPossibleMaps(): Promise<void> {
   possibleLoading.value = true;
   addDialogError.value = null;
@@ -720,7 +678,8 @@ async function openAddDialog(): Promise<void> {
     await reloadPossibleMaps();
     addDialog.value = true;
   } catch (error: any) {
-    pageError.value = error?.message || "Failed to open add meanings dialog.";
+    addDialogError.value =
+      error?.message || "Failed to open add meanings dialog.";
   } finally {
     initAddDialogLoading.value = false;
   }
@@ -765,7 +724,6 @@ async function handleBulkCreate(): Promise<void> {
 
     await store.bulkCreateFromMaps(items);
     addDialog.value = false;
-    await loadMeanings();
   } catch (error: any) {
     addDialogError.value = error?.message || "Failed to create meanings.";
   } finally {
@@ -817,7 +775,6 @@ async function handleSaveEdit(): Promise<void> {
 
     await store.updateMeaning(editForm.id, payload);
     editDialog.value = false;
-    await loadMeanings();
   } catch (error: any) {
     editDialogError.value = error?.message || "Failed to update meaning.";
   } finally {
@@ -826,22 +783,7 @@ async function handleSaveEdit(): Promise<void> {
 }
 
 async function handleDelete(item: QuestionnaireMeaningModel): Promise<void> {
-  const confirmed = window.confirm(
-    `Delete meaning "${item.resultLabel || item.ruleKey}"?`,
-  );
-
-  if (!confirmed) return;
-
-  deleteLoadingId.value = item.id;
-  pageError.value = null;
-
-  try {
-    await store.deleteMeaning(item.id);
-  } catch (error: any) {
-    pageError.value = error?.message || "Failed to delete meaning.";
-  } finally {
-    deleteLoadingId.value = null;
-  }
+  await store.deleteMeaning(item.id);
 }
 
 /* ------------------------------
@@ -849,6 +791,5 @@ async function handleDelete(item: QuestionnaireMeaningModel): Promise<void> {
  * ------------------------------ */
 onMounted(async (): Promise<void> => {
   selectedRuleType.value = getDefaultRuleType();
-  await loadMeanings();
 });
 </script>

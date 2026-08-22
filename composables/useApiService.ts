@@ -49,6 +49,17 @@ export function useApiService() {
       const m = method!.toLowerCase()
       if (['post', 'put', 'patch'].includes(m) && payload !== undefined) {
         axiosConfig.data = payload
+
+        // FormData (file uploads): let the browser set the multipart
+        // boundary itself. The shared axios instance forces
+        // 'Content-Type: application/json' by default, which otherwise
+        // overrides it and breaks multipart parsing on the server.
+        if (typeof FormData !== 'undefined' && payload instanceof FormData) {
+          axiosConfig.headers = {
+            ...axiosConfig.headers,
+            'Content-Type': undefined,
+          }
+        }
       } else if (m === 'get' && payload !== undefined) {
         axiosConfig.params = payload
       }
