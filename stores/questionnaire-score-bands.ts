@@ -255,6 +255,31 @@ export const useQuestionnaireScoreBandsStore = defineStore('questionnaire-score-
       }
     },
 
+    /**
+     * Read-only list of existing score bands (no scope filter — a
+     * questionnaire only ever has bands of one relevant scope).
+     * Unlike `fetchScoreBands`, this never calls the `/generate` endpoint,
+     * so it's safe to call just to display a count.
+     */
+    async fetchScoreBandsList(
+      questionnaireId: string
+    ): Promise<{ success: true; data: QuestionnaireScoreBandGenerateItem[] } | ErrorResult> {
+      const api = useApiService()
+
+      const result = await api.get<QuestionnaireScoreBandGenerateItem[]>(
+        `/v1/questionnaires/${questionnaireId}/score-bands`
+      )
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: String(result.error || 'Gagal memuat score bands.'),
+        }
+      }
+
+      return { success: true, data: result.data || [] }
+    },
+
     async fetchScoreBands(params: {
       questionnaireId: string
       scope: ScoreBandScope
