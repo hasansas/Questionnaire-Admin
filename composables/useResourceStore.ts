@@ -134,7 +134,9 @@ export function useResourceStore<TModel, TInput = TModel>({
       const res = await post<TModel>(endpoint, payload)
       if (res.success) {
         const id = (res.data as any).id
-        const newItem = { ...{ id }, ...payload }
+        // server-assigned id must win — a form payload's own `id` field
+        // (e.g. a blank placeholder for "create" mode) must not override it
+        const newItem = { ...payload, id }
         const item = normalizedJson ? normalizedJson(newItem as TModel) : (newItem as unknown as TModel)
         paginated.addItem(item)
         const createdItem = paginated.getItem({ id })
