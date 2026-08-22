@@ -145,9 +145,9 @@
                   <div class="font-weight-bold">
                     {{ row.label }}
                   </div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ row.key }}
-                  </div>
+                  <v-chip variant="tonal" size="small">
+                    # {{ row.key }}
+                  </v-chip>
                 </td>
 
                 <td

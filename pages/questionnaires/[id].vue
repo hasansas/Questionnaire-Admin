@@ -100,7 +100,7 @@
               <div class="d-flex align-center justify-space-between">
                 <div>
                   <div class="text-caption text-medium-emphasis">Questions</div>
-                  <div class="text-h6 font-weight-black">20</div>
+                  <div class="text-h6 font-weight-black">{{ stats.questions }}</div>
                 </div>
                 <v-avatar
                   size="40"
@@ -114,14 +114,19 @@
             </v-card>
           </v-col>
 
-          <v-col cols="12" sm="6" md="3">
+          <v-col
+            v-if="questionnaire.scoringType === 'multi_dimension'"
+            cols="12"
+            sm="6"
+            md="3"
+          >
             <v-card rounded="xl" variant="outlined" class="pa-4 h-100">
               <div class="d-flex align-center justify-space-between">
                 <div>
                   <div class="text-caption text-medium-emphasis">
                     Dimensions
                   </div>
-                  <div class="text-h6 font-weight-black">6</div>
+                  <div class="text-h6 font-weight-black">{{ stats.dimensions }}</div>
                 </div>
                 <v-avatar size="40" rounded="lg" color="info" variant="tonal">
                   <v-icon icon="lucide:layers" size="18" />
@@ -135,7 +140,7 @@
               <div class="d-flex align-center justify-space-between">
                 <div>
                   <div class="text-caption text-medium-emphasis">Bands</div>
-                  <div class="text-h6 font-weight-black">5</div>
+                  <div class="text-h6 font-weight-black">{{ stats.bands }}</div>
                 </div>
                 <v-avatar
                   size="40"
@@ -154,7 +159,7 @@
               <div class="d-flex align-center justify-space-between">
                 <div>
                   <div class="text-caption text-medium-emphasis">Meanings</div>
-                  <div class="text-h6 font-weight-black">9</div>
+                  <div class="text-h6 font-weight-black">{{ stats.meanings }}</div>
                 </div>
                 <v-avatar
                   size="40"
@@ -284,6 +289,69 @@ const ui = reactive({
 });
 
 // -----------------------
+// Summary stats (Questions / Dimensions / Bands / Meanings)
+// -----------------------
+const stats = reactive({
+  questions: 0,
+  dimensions: 0,
+  bands: 0,
+  meanings: 0,
+});
+
+async function fetchStats(): Promise<void> {
+  const qId = questionnairenId.value;
+  if (!qId || !questionnaire.value) return;
+
+  const isMultiDimension = questionnaire.value.scoringType === "multi_dimension";
+
+  // Deliberately bypass useQuestionnaireQuestions/useQuestionnaireDimensionStore
+  // here — those are singletons keyed by questionnaireId, shared with the
+  // Questions/Dimensions tab components. Calling their fetchAll() with a
+  // cheap `limit=1` (just to read pagination.total) would cache that small
+  // page size into the SAME shared store, and the tab's own later
+  // `limit=100` fetchAll() would then wrongly serve back this stale 1-row
+  // cache instead of making its real request (useResourceStore treats
+  // "already have >= perPage rows cached" as "no need to refetch"). A
+  // direct, uncached API call here avoids poisoning that shared state.
+  const api = useApiService();
+  const scoreBandsStore = useQuestionnaireScoreBandsStore();
+  const meaningsStore = useQuestionnaireMeaningsStore(qId);
+
+  const tasks: Promise<void>[] = [
+    api
+      .get(`/v1/questionnaires/${qId}/questions?limit=1`)
+      .then((res: any) => {
+        if (res.success) stats.questions = res.data?.pagination?.total ?? 0;
+      })
+      .catch(() => {}),
+
+    scoreBandsStore.fetchScoreBandsList(qId).then((res) => {
+      if (res.success) stats.bands = res.data.length;
+    }),
+
+    meaningsStore
+      .fetchMeanings()
+      .then(() => {
+        stats.meanings = meaningsStore.totalMeanings;
+      })
+      .catch(() => {}),
+  ];
+
+  if (isMultiDimension) {
+    tasks.push(
+      api
+        .get(`/v1/questionnaires/${qId}/dimensions?limit=1`)
+        .then((res: any) => {
+          if (res.success) stats.dimensions = res.data?.pagination?.total ?? 0;
+        })
+        .catch(() => {})
+    );
+  }
+
+  await Promise.all(tasks);
+}
+
+// -----------------------
 // Page header text
 // -----------------------
 const pageTitle = computed(() => questionnaire.value?.title || "Questionnaire");
@@ -318,12 +386,16 @@ async function fetchDatahDetail() {
   const getData = await questionnaireStore.getById({
     id: questionnairenId.value,
   });
-  ui.loading = false;
 
   if (!getData.success) {
     ui.error = "Unable to fetch qisMultiDimensionuestionnaire detail.";
+    ui.loading = false;
+    return;
   }
+
   questionnaire.value = getData.data as QuestionnaireModel;
+  await fetchStats();
+  ui.loading = false;
 }
 
 onMounted(() => fetchDatahDetail());
@@ -332,5 +404,5 @@ onMounted(() => fetchDatahDetail());
 // Tabs
 // -----------------------
 type TabKey = "overview" | "questions" | "dimensions" | "bands" | "meanings";
-const tab = ref<TabKey>("meanings");
+const tab = ref<TabKey>("overview");
 </script>

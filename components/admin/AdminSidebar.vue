@@ -173,6 +173,7 @@ const navItems: NavItem[] = [
     to: "/questionnaires",
     icon: "lucide:clipboard-list",
   },
+  { title: "Campaigns", to: "/campaigns", icon: "lucide:megaphone" },
   { title: "User Fields", to: "/user-fields", icon: "lucide:form-input" },
   { title: "Reports", to: "/reports", icon: "lucide:file-text" },
   { title: "Analytics", to: "/analytics", icon: "lucide:line-chart" },
@@ -186,6 +187,8 @@ const settingNavItems: NavItem[] = [
     icon: "lucide:mails",
   },
   { title: "Access", to: "/settings/access", icon: "lucide:shield" },
+  { title: "Invoice Templates", to: "/settings/invoice-templates", icon: "lucide:code" },
+
 ];
 </script>
 
