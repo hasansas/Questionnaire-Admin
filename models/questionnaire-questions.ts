@@ -16,11 +16,16 @@ export interface QuestionnaireQuestionMeta {
   [key: string]: any
 }
 
+export type QuestionnaireOptionMode = "text" | "image"
+
 export interface QuestionnaireQuestionOptionModel {
   key: string
   label: string
+  optionMode: QuestionnaireOptionMode
   scoreValue: number
   sortOrder: number
+  media?: QuestionnaireQuestionMediaModel | null
+  imageUrl: string | null
 }
 
 /**
@@ -98,11 +103,18 @@ function toNumber(v: any, fallback = 0) {
 export function normalizeQuestionnaireQuestionOption(
   item?: Partial<QuestionnaireQuestionOptionModel>,
 ): QuestionnaireQuestionOptionModel {
+  const imageUrl = (item as any)?.imageUrl
+    ? String((item as any).imageUrl)
+    : null
+
   return {
     key: String(item?.key ?? ""),
     label: String(item?.label ?? ""),
+    optionMode: (item as any)?.optionMode === "image" ? "image" : "text",
     scoreValue: toNumber((item as any)?.scoreValue, 0),
     sortOrder: toNumber((item as any)?.sortOrder, 1),
+    media: normalizeQuestionnaireQuestionMedia((item as any)?.media, imageUrl),
+    imageUrl,
   }
 }
 

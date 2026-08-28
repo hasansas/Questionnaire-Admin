@@ -43,7 +43,7 @@
       </ClientOnly>
       <v-main>
         <v-container fluid class="px-8">
-          <v-breadcrumbs :items="breadcrumbs" class="sb-breadcrumbs">
+          <!-- <v-breadcrumbs :items="breadcrumbs" class="sb-breadcrumbs">
             <template #divider>
               <v-icon
                 icon="lucide:chevron-right"
@@ -51,7 +51,7 @@
                 class="text-medium-emphasis"
               />
             </template>
-          </v-breadcrumbs>
+          </v-breadcrumbs> -->
         </v-container>
 
         <v-container fluid class="px-12">
@@ -78,7 +78,7 @@ const authStore = useAuthStore();
 useNotification(authStore.auth.id);
 
 const drawer = ref(true);
-const rail = ref(true);
+const rail = ref(false);
 
 const breadcrumbs = computed(() => {
   const metaCrumbs = (route.meta as any)?.breadcrumbs as
