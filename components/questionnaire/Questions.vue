@@ -229,6 +229,14 @@
                         variant="outlined"
                         class="px-4"
                       >
+                        <v-avatar
+                          v-if="o.optionMode === 'image' && o.imageUrl"
+                          size="18"
+                          rounded="lg"
+                          class="me-2"
+                        >
+                          <v-img :src="o.imageUrl" cover />
+                        </v-avatar>
                         <span class="font-weight-bold me-1">{{ o.label }}</span>
                         <span class="text-medium-emphasis"
                           >({{ o.scoreValue }})</span
@@ -691,6 +699,75 @@
                               />
                             </v-col>
                           </v-row>
+
+                          <v-row dense class="mt-2">
+                            <v-col cols="12">
+                              <v-btn-toggle
+                                v-model="o.optionMode"
+                                color="primary"
+                                variant="outlined"
+                                rounded="lg"
+                                density="compact"
+                                mandatory
+                              >
+                                <v-btn value="text" size="small" prepend-icon="lucide:type">
+                                  Text
+                                </v-btn>
+                                <v-btn value="image" size="small" prepend-icon="lucide:image">
+                                  Image
+                                </v-btn>
+                              </v-btn-toggle>
+                            </v-col>
+
+                            <v-col v-if="o.optionMode === 'image'" cols="12">
+                              <div class="d-flex align-center ga-3">
+                                <v-avatar
+                                  v-if="o.mediaPreviewUrl"
+                                  size="48"
+                                  rounded="lg"
+                                >
+                                  <v-img :src="o.mediaPreviewUrl" cover />
+                                </v-avatar>
+                                <v-avatar
+                                  v-else
+                                  size="48"
+                                  rounded="lg"
+                                  color="grey-lighten-3"
+                                >
+                                  <v-icon icon="lucide:image" size="20" />
+                                </v-avatar>
+
+                                <v-file-input
+                                  accept="image/*"
+                                  label="Option image"
+                                  variant="outlined"
+                                  rounded="lg"
+                                  density="compact"
+                                  prepend-icon=""
+                                  prepend-inner-icon="lucide:upload"
+                                  :loading="o.mediaUploading"
+                                  :disabled="o.mediaUploading"
+                                  hide-details="auto"
+                                  @update:model-value="
+                                    (f: File | File[] | null) =>
+                                      onOptionImageSelected(o, f)
+                                  "
+                                />
+                              </div>
+                              <div
+                                v-if="o.mediaUploadError"
+                                class="text-caption text-error mt-1"
+                              >
+                                {{ o.mediaUploadError }}
+                              </div>
+                              <div
+                                v-else-if="!o.mediaId"
+                                class="text-caption text-medium-emphasis mt-1"
+                              >
+                                An image is required for image-mode options.
+                              </div>
+                            </v-col>
+                          </v-row>
                         </v-card>
                       </div>
                     </template>
@@ -956,6 +1033,11 @@ type LocalOption = {
   label: string;
   scoreValue: number;
   sortOrder?: number;
+  optionMode: "text" | "image";
+  mediaId: string;
+  mediaPreviewUrl: string | null;
+  mediaUploading: boolean;
+  mediaUploadError: string;
 };
 
 const editForm = reactive<{
@@ -986,6 +1068,20 @@ const editForm = reactive<{
 
 const mediaUploadError = ref("");
 
+function createLocalOption(overrides: Partial<LocalOption> = {}): LocalOption {
+  return {
+    __localId: crypto.randomUUID(),
+    label: "",
+    scoreValue: 0,
+    optionMode: "text",
+    mediaId: "",
+    mediaPreviewUrl: null,
+    mediaUploading: false,
+    mediaUploadError: "",
+    ...overrides,
+  };
+}
+
 const rules = {
   required: (v: any) => (!!String(v ?? "").trim() ? true : "Required"),
   min3: (v: any) => (String(v ?? "").trim().length >= 3 ? true : "Min 3 chars"),
@@ -1005,9 +1101,9 @@ function resetForm() {
   editForm.hint = "...";
   editForm.dimensionId = "";
   editForm.options = [
-    { __localId: crypto.randomUUID(), label: "Setuju", scoreValue: 2 },
-    { __localId: crypto.randomUUID(), label: "Ragu", scoreValue: 1 },
-    { __localId: crypto.randomUUID(), label: "Tidak setuju", scoreValue: 0 },
+    createLocalOption({ label: "Setuju", scoreValue: 2 }),
+    createLocalOption({ label: "Ragu", scoreValue: 1 }),
+    createLocalOption({ label: "Tidak setuju", scoreValue: 0 }),
   ];
   editForm.questionMode = "text";
   editForm.mediaId = "";
@@ -1043,13 +1139,17 @@ function openEditDialog(item: QuestionnaireQuestionModel) {
 
   // load options for per-question editing UI
   editForm.options =
-    (item.options || []).map((o: any) => ({
-      __localId: crypto.randomUUID(),
-      key: o.key,
-      label: o.label,
-      scoreValue: Number(o.scoreValue ?? 0),
-      sortOrder: Number(o.sortOrder ?? 1),
-    })) || [];
+    (item.options || []).map((o: any) =>
+      createLocalOption({
+        key: o.key,
+        label: o.label,
+        scoreValue: Number(o.scoreValue ?? 0),
+        sortOrder: Number(o.sortOrder ?? 1),
+        optionMode: o.optionMode === "image" ? "image" : "text",
+        mediaId: o.media?.mediaId ?? "",
+        mediaPreviewUrl: o.imageUrl ?? o.media?.publicUrl ?? null,
+      }),
+    ) || [];
 
   dialogOpen.value = true;
   nextTick(() => dialogFormRef.value?.resetValidation?.());
@@ -1089,15 +1189,45 @@ async function onQuestionImageSelected(fileOrFiles: File | File[] | null) {
 }
 
 function addOption() {
-  editForm.options.push({
-    __localId: crypto.randomUUID(),
-    label: "",
-    scoreValue: 0,
-  });
+  editForm.options.push(createLocalOption());
 }
 
 function removeOption(index: number) {
   editForm.options.splice(index, 1);
+}
+
+async function onOptionImageSelected(
+  option: LocalOption,
+  fileOrFiles: File | File[] | null,
+) {
+  const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
+
+  if (!(file instanceof File) || file.size === 0) {
+    option.mediaUploadError = "No file selected.";
+    return;
+  }
+
+  option.mediaUploadError = "";
+  option.mediaUploading = true;
+
+  try {
+    const res = await questionsStore.uploadMedia(file, {
+      partition: "options",
+    });
+
+    if (!res?.success) {
+      option.mediaUploadError =
+        res?.error?.message || res?.error || "Failed to upload image.";
+      return;
+    }
+
+    option.mediaId = res.data?.id ?? "";
+    option.mediaPreviewUrl = res.data?.publicUrl ?? null;
+  } catch (err: any) {
+    option.mediaUploadError = err?.message || "Failed to upload image.";
+  } finally {
+    option.mediaUploading = false;
+  }
 }
 
 async function handleSave() {
@@ -1117,6 +1247,14 @@ async function handleSave() {
     return;
   }
 
+  if (
+    optionsMode.value !== "fixed" &&
+    editForm.options.some((o) => o.optionMode === "image" && !o.mediaId)
+  ) {
+    dialogError.value = "Upload an image for every image-mode option.";
+    return;
+  }
+
   saving.value = true;
   try {
     const payload: any = {
@@ -1128,9 +1266,11 @@ async function handleSave() {
 
       isRequired: Boolean(editForm.isRequired),
       meta: { hint: editForm.hint.trim() },
-      options: editForm.options.map((o: any) => ({
+      options: editForm.options.map((o: LocalOption) => ({
         label: o.label.trim(),
         scoreValue: Number(o.scoreValue),
+        optionMode: o.optionMode,
+        mediaId: o.optionMode === "image" ? o.mediaId : null,
       })),
     };
 
@@ -1140,9 +1280,11 @@ async function handleSave() {
     }
 
     if (optionsMode.value !== "fixed") {
-      payload.options = editForm.options.map((o: any) => ({
+      payload.options = editForm.options.map((o: LocalOption) => ({
         label: o.label.trim(),
         scoreValue: Number(o.scoreValue),
+        optionMode: o.optionMode,
+        mediaId: o.optionMode === "image" ? o.mediaId : null,
       }));
     }
 
