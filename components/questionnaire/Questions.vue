@@ -1,5 +1,40 @@
 <template>
-  <div>
+  <div class="question-builder-page">
+    <section class="question-builder-hero">
+      <div class="min-w-0">
+        <span class="question-builder-eyebrow">Question builder</span>
+        <h2 class="question-builder-title">Questions</h2>
+        <p class="question-builder-subtitle">
+          Organize questions, options, and scoring maps from a cleaner
+          workspace.
+        </p>
+        <div class="question-builder-status-row">
+          <span class="question-builder-status-pill">
+            {{ isMultiDimension ? "Multi-dimension" : "Total score" }}
+          </span>
+          <span v-if="isMultiDimension" class="question-builder-status-note">
+            {{ dimensionItems.length }}
+            {{ dimensionItems.length === 1 ? "dimension" : "dimensions" }}
+          </span>
+          <span class="question-builder-status-note">
+            {{ localRows.length }}
+            {{ localRows.length === 1 ? "question" : "questions" }}
+          </span>
+          <span
+            class="question-builder-status-note"
+            :class="{
+              'question-builder-status-note--error': incompleteSectionCount > 0,
+            }"
+          >
+            {{ incompleteSectionCount }}
+            incomplete
+            {{ isMultiDimension ? "dimension" : "section"
+            }}{{ incompleteSectionCount === 1 ? "" : "s" }}
+          </span>
+        </div>
+      </div>
+    </section>
+
     <v-card rounded="xl" variant="outlined" class="sb-card">
       <!-- Error -->
       <div v-if="uiState.error" class="pa-10 text-center">
@@ -39,7 +74,10 @@
       />
 
       <!-- Empty -->
-      <div v-else-if="items.length === 0" class="pa-10 text-center">
+      <div
+        v-else-if="items.length === 0 && !isMultiDimension"
+        class="pa-10 text-center"
+      >
         <v-avatar
           size="56"
           rounded="xl"
@@ -71,85 +109,19 @@
         <div class="pa-5 pb-3">
           <div class="d-flex align-start justify-space-between flex-wrap ga-4">
             <div class="min-w-0">
-              <div class="text-subtitle-1 font-weight-black">Questions</div>
+              <div class="text-subtitle-1 font-weight-black">
+                {{ isMultiDimension ? "Sections" : "Questions" }}
+              </div>
               <div class="text-body-2 text-medium-emphasis mt-1">
-                Drag to reorder. Load all questions to enable “Save order”.
+                Drag dimensions or questions to reorder them.
               </div>
             </div>
 
-            <div class="d-flex align-center ga-2 flex-wrap">
-              <!-- <v-chip size="small" variant="tonal">
-                <v-icon icon="lucide:list-checks" size="16" class="me-1" />
-                {{ items.length }} loaded
-              </v-chip>
-
-              <v-chip
-                size="small"
-                variant="tonal"
-                :color="optionsMode === 'fixed' ? 'success' : 'warning'"
-              >
-                <v-icon
-                  :icon="
-                    optionsMode === 'fixed'
-                      ? 'lucide:toggle-right'
-                      : 'lucide:toggle-left'
-                  "
-                  size="16"
-                  class="me-1"
-                />
-                Options:
-                {{ optionsMode === "fixed" ? "Fixed" : "Per-question" }}
-              </v-chip>
-
-              <v-chip v-if="hasMore" size="small" variant="tonal" color="info">
-                <v-icon icon="lucide:arrow-down" size="16" class="me-1" />
-                More available
-              </v-chip>
-
-              <v-btn
-                rounded="lg"
-                variant="outlined"
-                prepend-icon="lucide:rotate-ccw"
-                :disabled="!hasChanges"
-                @click="resetOrder"
-              >
-                Reset
-              </v-btn>
-
-              <v-btn
-                rounded="lg"
-                color="primary"
-                prepend-icon="lucide:save"
-                :disabled="!canSaveOrder"
-                :loading="uiState.savingOrder"
-                @click="saveOrder"
-              >
-                Save order
-              </v-btn> -->
-
-              <v-btn
-                rounded="lg"
-                color="primary"
-                prepend-icon="lucide:plus"
-                @click="openCreateDialog"
-              >
-                New question
-              </v-btn>
-            </div>
+            <div class="d-flex align-center ga-2 flex-wrap"></div>
           </div>
 
           <v-alert
-            v-if="hasChanges"
-            type="info"
-            variant="tonal"
-            rounded="lg"
-            class="mt-4"
-          >
-            Order changed. Click <b>Save order</b> to apply.
-          </v-alert>
-
-          <v-alert
-            v-else-if="hasMore"
+            v-if="hasMore"
             type="info"
             variant="tonal"
             rounded="lg"
@@ -161,307 +133,499 @@
 
         <v-divider />
         <!-- List -->
-        <div class="pa-4">
-          <div class="d-flex flex-column ga-3">
-            <v-card
-              v-for="(q, idx) in localRows"
-              :key="q.id"
-              rounded="xl"
+        <div
+          class="question-builder-workspace"
+          :class="{ 'question-builder-workspace--editor-open': dialogOpen }"
+        >
+          <aside class="question-builder-sidebar">
+            <div class="question-builder-sidebar-head">
+              <div class="d-flex align-center ga-3 min-w-0">
+                <v-icon icon="lucide:folder" color="primary" size="20" />
+                <span class="question-builder-sidebar-label">
+                  {{ isMultiDimension ? "Dimensions" : "Questions" }}
+                </span>
+              </div>
+              <v-btn
+                size="small"
+                rounded="lg"
+                variant="outlined"
+                append-icon="lucide:plus"
+                @click="
+                  isMultiDimension
+                    ? openCreateDimensionDialog()
+                    : openCreateDialog()
+                "
+              >
+                Add
+              </v-btn>
+            </div>
+
+            <v-text-field
+              v-model.trim="questionSearch"
+              clearable
+              hide-details
+              density="compact"
               variant="outlined"
-              class="pa-4 sb-draggable"
-              :class="{
-                'sb-dragging': draggingId === q.id,
-                'sb-drop-target': dropTargetId === q.id && draggingId !== q.id,
-              }"
-              draggable="true"
-              @dragstart="onDragStart($event, q)"
-              @dragenter.prevent="onDragEnter(q)"
-              @dragover.prevent
-              @dragleave="onDragLeave(q)"
-              @drop.prevent="onDrop(q)"
-              @dragend="onDragEnd"
-            >
-              <div class="d-flex align-start justify-space-between ga-3">
-                <div class="d-flex align-start ga-3 min-w-0">
-                  <div class="sb-handle mt-1" aria-hidden="true">
-                    <v-icon icon="lucide:grip-vertical" size="18" />
-                  </div>
+              rounded="lg"
+              placeholder="Search"
+              prepend-inner-icon="lucide:search"
+              class="question-builder-search"
+            />
 
-                  <v-avatar
-                    v-if="q.questionMode === 'image' && q.imageUrl"
-                    size="44"
-                    rounded="lg"
-                    class="flex-shrink-0"
+            <div v-if="!questionSections.length" class="question-section-empty">
+              No dimensions yet.
+            </div>
+
+            <div v-else :key="sectionKey" class="question-section-list">
+              <section
+                v-for="section in questionSections"
+                :key="section.id"
+                class="question-section"
+                :class="{
+                  'question-section--selected':
+                    selectedSectionId === section.id,
+                  'question-section--incomplete': !section.questions.length,
+                  'question-section--sortable': canSortSection(section),
+                  'sb-dragging': draggingDimensionId === section.id,
+                  'sb-drop-target':
+                    dimensionDropTargetId === section.id &&
+                    draggingDimensionId !== section.id,
+                }"
+                :draggable="canSortSection(section)"
+                @dragstart="onDimensionDragStart($event, section)"
+                @dragenter.prevent="onDimensionDragEnter(section)"
+                @dragover.prevent
+                @dragleave="onDimensionDragLeave(section)"
+                @drop.prevent="onDimensionDrop(section)"
+                @dragend="onDimensionDragEnd"
+              >
+                <div class="question-section-head">
+                  <button
+                    type="button"
+                    class="question-section-card"
+                    @click="selectSection(section)"
                   >
-                    <v-img :src="q.imageUrl" cover />
-                  </v-avatar>
-
-                  <div class="min-w-0">
-                    <div class="text-body-2 font-weight-black">
-                      <span class="mr-2"># {{ idx + 1 }}.</span>
-                      <span>{{ q.text }}</span>
+                    <v-icon icon="lucide:grip-vertical" size="18" />
+                    <div class="question-section-copy">
+                      <span class="question-section-title">
+                        {{ section.name }}
+                      </span>
+                      <span class="question-section-meta">
+                        <span v-if="section.key">{{ section.key }}</span>
+                        <span v-if="section.key">•</span>
+                        <span>
+                          {{ section.questions.length }}
+                          {{
+                            section.questions.length === 1
+                              ? "question"
+                              : "questions"
+                          }}
+                        </span>
+                      </span>
                     </div>
+                    <v-spacer />
+                    <v-chip
+                      size="x-small"
+                      label
+                      class="question-section-status"
+                      :color="section.questions.length ? 'success' : 'error'"
+                      variant="tonal"
+                    >
+                      {{ section.questions.length ? "Ready" : "Empty" }}
+                    </v-chip>
+                  </button>
 
-                    <div class="d-flex ga-2 flex-wrap mt-3">
-                      <v-chip
-                        v-if="q.questionMode === 'image'"
-                        size="small"
-                        variant="tonal"
-                        color="info"
-                        class="px-4"
-                      >
-                        <v-icon icon="lucide:image" size="14" class="me-2" />
-                        Image
-                      </v-chip>
-                      <v-chip
-                        v-if="isMultiDimension"
-                        size="small"
-                        variant="tonal"
-                        class="px-4"
-                      >
-                        <v-icon icon="lucide:layers" size="14" class="me-2" />
-                        {{ q.dimension?.name }}
-                      </v-chip>
-                      <v-chip
-                        v-for="o in (q.options || []).slice(0, 4)"
-                        :key="o.key"
-                        size="small"
-                        variant="outlined"
-                        class="px-4"
-                      >
-                        <v-avatar
-                          v-if="o.optionMode === 'image' && o.imageUrl"
-                          size="18"
-                          rounded="lg"
-                          class="me-2"
-                        >
-                          <v-img :src="o.imageUrl" cover />
-                        </v-avatar>
-                        <span class="font-weight-bold me-1">{{ o.label }}</span>
-                        <span class="text-medium-emphasis"
-                          >({{ o.scoreValue }})</span
-                        >
-                      </v-chip>
-                      <v-chip
-                        v-if="(q.options || []).length > 4"
-                        size="x-small"
-                        variant="tonal"
-                        class="px-2"
-                      >
-                        +{{ (q.options || []).length - 4 }} more
-                      </v-chip>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="d-flex align-center ga-1">
                   <v-btn
                     icon
                     variant="text"
                     size="small"
-                    aria-label="Edit"
-                    @click="openEditDialog(q)"
+                    class="question-section-toggle"
+                    :aria-label="
+                      isSectionExpanded(section.id)
+                        ? 'Collapse dimension'
+                        : 'Expand dimension'
+                    "
+                    @click.stop="toggleSection(section.id)"
                   >
-                    <v-icon icon="lucide:pencil" size="18" />
+                    <v-icon
+                      :icon="
+                        isSectionExpanded(section.id)
+                          ? 'lucide:chevron-up'
+                          : 'lucide:chevron-down'
+                      "
+                      size="19"
+                    />
                   </v-btn>
+                </div>
 
-                  <v-menu location="bottom end" :close-on-content-click="true">
-                    <template #activator="{ props: menuProps }">
+                <v-expand-transition>
+                  <div
+                    v-show="isSectionExpanded(section.id)"
+                    class="question-section-panel"
+                  >
+                    <div
+                      v-if="section.questions.length"
+                      class="question-row-list"
+                    >
+                      <div
+                        v-for="q in section.questions"
+                        :key="q.id"
+                        class="question-row sb-draggable"
+                        :class="{
+                          'sb-dragging': draggingId === q.id,
+                          'sb-drop-target':
+                            dropTargetId === q.id && draggingId !== q.id,
+                          'question-row--selected': selectedQuestionId === q.id,
+                        }"
+                        draggable="true"
+                        @click="openEditDialog(q)"
+                        @dragstart.stop="onDragStart($event, q)"
+                        @dragenter.prevent.stop="onDragEnter(q)"
+                        @dragover.prevent.stop
+                        @dragleave.stop="onDragLeave(q)"
+                        @drop.prevent.stop="onDrop(q)"
+                        @dragend.stop="onDragEnd"
+                      >
+                      <v-avatar size="26">
+                          <v-icon icon="lucide:grip-vertical" size="18" />
+                        </v-avatar>
+                        <v-avatar size="28" rounded="lg" variant="tonal">
+                          {{ questionNumber(q) }}
+                        </v-avatar>
+                        <span class="question-row-text ml-2">
+                          {{ plainTextFromHtml(q.text) }}
+                        </span>
+                        <v-spacer />
+                        <div
+                          v-if="deletingQuestionId === q.id"
+                          class="question-row-delete-confirm"
+                        >
+                          <v-btn
+                            size="x-small"
+                            color="error"
+                            variant="flat"
+                            :loading="deleting"
+                            @click.stop="deleteQuestion(q)"
+                          >
+                            Delete
+                          </v-btn>
+                          <v-btn
+                            icon
+                            variant="outlined"
+                            size="x-small"
+                            aria-label="Cancel delete"
+                            :disabled="deleting"
+                            @click.stop="cancelDeleteQuestion"
+                          >
+                            <v-icon icon="lucide:x" size="14" />
+                          </v-btn>
+                        </div>
+                        <v-btn
+                          v-else
+                          icon
+                          variant="text"
+                          size="x-small"
+                          aria-label="Delete question"
+                          @click.stop="confirmDeleteQuestion(q)"
+                        >
+                          <v-icon icon="lucide:trash-2" size="16" />
+                        </v-btn>
+                      </div>
+                    </div>
+
+                    <div v-else class="question-section-alert">
+                      This dimension has no question yet.
+                    </div>
+
+                    <div class="question-section-actions">
                       <v-btn
-                        v-bind="menuProps"
-                        icon
-                        variant="text"
-                        aria-label="Option actions"
+                        size="small"
+                        rounded="lg"
+                        variant="outlined"
+                        :disabled="section.id === 'unassigned'"
+                        @click="openCreateDialog(section.id)"
                       >
-                        <v-icon icon="lucide:trash-2" size="18" />
+                        Add Question
                       </v-btn>
-                    </template>
+                    </div>
+                  </div>
+                </v-expand-transition>
+              </section>
+            </div>
 
-                    <v-list density="comfortable" rounded="xl" class="sb-list">
-                      <v-list-item
-                        title="Delete question"
-                        class="text-error"
-                        @click="deleteQuestion(q)"
-                      >
-                        <template #prepend>
-                          <v-icon
-                            icon="lucide:trash-2"
-                            size="18"
-                            class="text-error"
-                          />
-                        </template>
-                      </v-list-item>
-                      <v-divider />
-                      <v-list-item title="Cancel" link>
-                        <template #prepend>
-                          <v-icon icon="lucide:x" size="18" />
-                        </template>
-                      </v-list-item>
-                    </v-list>
-                  </v-menu>
+            <!-- Load more -->
+            <div class="mt-5">
+              <div v-if="uiState.loadingMore" class="d-flex align-center ga-3">
+                <v-progress-circular indeterminate size="18" />
+                <div class="text-body-2 text-medium-emphasis">
+                  Loading more…
                 </div>
               </div>
-            </v-card>
-          </div>
 
-          <!-- Load more -->
-          <div class="mt-5">
-            <div v-if="uiState.loadingMore" class="d-flex align-center ga-3">
-              <v-progress-circular indeterminate size="18" />
-              <div class="text-body-2 text-medium-emphasis">Loading more…</div>
-            </div>
-
-            <div
-              v-else-if="hasMore"
-              class="d-flex align-center justify-space-between flex-wrap ga-2"
-            >
-              <div class="text-caption text-medium-emphasis">
-                Scroll to load more, or use the button.
-              </div>
-              <v-btn
-                rounded="lg"
-                variant="outlined"
-                prepend-icon="lucide:arrow-down"
-                :disabled="uiState.loadingMore"
-                @click="loadMore"
+              <div
+                v-else-if="hasMore"
+                class="d-flex align-center justify-space-between flex-wrap ga-2"
               >
-                Load more
-              </v-btn>
-            </div>
+                <div class="text-caption text-medium-emphasis">
+                  Scroll to load more, or use the button.
+                </div>
+                <v-btn
+                  rounded="lg"
+                  variant="outlined"
+                  prepend-icon="lucide:arrow-down"
+                  :disabled="uiState.loadingMore"
+                  @click="loadMore"
+                >
+                  Load more
+                </v-btn>
+              </div>
 
-            <div v-else class="text-caption text-medium-emphasis">
-              You’ve reached the end.
+              <div ref="sentinelRef" class="sb-sentinel" />
             </div>
+          </aside>
 
-            <div ref="sentinelRef" class="sb-sentinel" />
-          </div>
+          <main class="question-builder-preview">
+            <v-card flat rounded="xl" class="question-preview-card">
+              <template v-if="selectedQuestion">
+                <div class="question-preview-title-row">
+                  <span class="question-preview-number">
+                    {{ questionNumber(selectedQuestion) }}.
+                  </span>
+                  <div class="min-w-0">
+                    <div
+                      class="question-preview-text"
+                      v-html="selectedQuestion.text"
+                    />
+                    <p v-if="isMultiDimension">
+                      {{ selectedQuestion.dimension?.name || "Unassigned" }}
+                    </p>
+                  </div>
+                </div>
+
+                <v-img
+                  v-if="getQuestionImageUrl(selectedQuestion)"
+                  :src="getQuestionImageUrl(selectedQuestion)"
+                  rounded="lg"
+                  class="question-preview-image my-6"
+                  cover
+                />
+
+                <v-img
+                  v-if="
+                    selectedQuestion.questionMode === 'image' &&
+                    selectedQuestion.imageUrl
+                  "
+                  :src="selectedQuestion.imageUrl"
+                  rounded="lg"
+                  class="question-preview-image my-6"
+                  cover
+                />
+
+                <div class="question-preview-options">
+                  <article
+                    v-for="option in selectedQuestion.options || []"
+                    :key="option.key"
+                    class="question-preview-option"
+                    :class="{
+                      active: option.scoreValue === highestOptionScore,
+                    }"
+                  >
+                    <v-icon
+                      :icon="
+                        option.scoreValue === highestOptionScore
+                          ? 'lucide:circle-dot'
+                          : 'lucide:circle'
+                      "
+                      size="19"
+                    />
+                    <v-avatar
+                      v-if="option.optionMode === 'image' && option.imageUrl"
+                      size="42"
+                      rounded="lg"
+                    >
+                      <v-img :src="option.imageUrl" cover />
+                    </v-avatar>
+                    <span>{{ option.label }}</span>
+                    <v-spacer />
+                    <v-chip size="x-small" variant="tonal">
+                      {{ option.scoreValue }}
+                    </v-chip>
+                  </article>
+                </div>
+              </template>
+
+              <div v-else class="question-preview-empty">
+                <v-icon icon="lucide:mouse-pointer-square" size="28" />
+                <strong>Select a question</strong>
+                <span
+                  >Choose a question from the left drawer to preview it.</span
+                >
+              </div>
+            </v-card>
+          </main>
         </div>
       </template>
     </v-card>
 
-    <!-- Add/Edit Dialog -->
-    <v-dialog v-model="dialogOpen" persistent max-width="680">
-      <v-card rounded="xl">
-        <v-card-title class="d-flex align-center ga-3">
+    <!-- Right editor drawer -->
+    <v-navigation-drawer
+      v-model="dialogOpen"
+      location="right"
+      temporary
+      floating
+      :scrim="false"
+      width="400"
+      class="question-builder-editor-drawer"
+    >
+      <template #prepend>
+        <v-toolbar flat color="white" class="question-builder-editor-toolbar">
           <v-avatar
             size="40"
             rounded="lg"
-            :color="dialogMode === 'create' ? 'primary' : 'info'"
+            :color="
+              editorMode === 'dimension'
+                ? 'primary'
+                : dialogMode === 'create'
+                  ? 'primary'
+                  : 'info'
+            "
             variant="tonal"
+            class="mr-4"
           >
             <v-icon
-              :icon="dialogMode === 'create' ? 'lucide:plus' : 'lucide:pencil'"
+              :icon="
+                editorMode === 'dimension'
+                  ? 'lucide:layers'
+                  : dialogMode === 'create'
+                    ? 'lucide:plus'
+                    : 'lucide:pencil'
+              "
               size="18"
             />
           </v-avatar>
-
           <div class="min-w-0">
             <div class="text-h6 font-weight-black">
-              {{ dialogMode === "create" ? "New question" : "Edit question" }}
+              {{
+                editorMode === "dimension"
+                  ? dialogMode === "create"
+                    ? "New dimension"
+                    : "Edit Dimension"
+                  : dialogMode === "create"
+                    ? "New question"
+                    : "Edit question"
+              }}
             </div>
             <div class="text-caption text-medium-emphasis">
-              Configure question text, requirement, and scoring behavior.
+              {{
+                editorMode === "dimension"
+                  ? dialogMode === "create"
+                    ? "Create a questionnaire dimension."
+                    : "Update dimension details."
+                  : "Configure question."
+              }}
             </div>
           </div>
-        </v-card-title>
+          <v-spacer />
+          <v-btn
+            icon
+            variant="outlined"
+            size="small"
+            aria-label="Close editor"
+            @click="closeDialog"
+          >
+            <v-icon icon="lucide:chevron-right" size="18" />
+          </v-btn>
+        </v-toolbar>
+        <v-divider class="ma-0" />
+      </template>
+
+      <v-card flat class="question-builder-editor-card mt-4">
         <v-card variant="flat" class="overflow-y-auto">
           <v-card-text class="px-5 pt-2 pb-4">
-            <v-form ref="dialogFormRef" @submit.prevent="handleSave">
+            <v-alert
+              v-if="dialogError"
+              type="error"
+              variant="tonal"
+              rounded="lg"
+              class="mb-4"
+            >
+              {{ dialogError }}
+            </v-alert>
+
+            <v-form
+              v-if="editorMode === 'dimension'"
+              ref="dimensionFormRef"
+              @submit.prevent="handleDimensionSave"
+            >
               <v-row dense>
                 <v-col cols="12">
-                  <v-textarea
-                    v-model.trim="editForm.text"
-                    label="Question text"
+                  <v-text-field
+                    v-model.trim="dimensionForm.name"
+                    label="Name"
                     variant="outlined"
                     rounded="lg"
                     density="comfortable"
-                    auto-grow
-                    rows="2"
-                    prepend-inner-icon="lucide:message-square"
+                    prepend-inner-icon="lucide:type"
                     :rules="[rules.required, rules.min3]"
                     hide-details="auto"
-                    placeholder="Example: Saya lebih mudah belajar dari gambar."
                   />
                 </v-col>
-
-                <!-- Question mode -->
                 <v-col cols="12">
-                  <div class="text-caption text-medium-emphasis mb-2">
-                    Question mode
-                  </div>
-                  <v-btn-toggle
-                    v-model="editForm.questionMode"
-                    color="primary"
+                  <v-textarea
+                    v-model.trim="dimensionForm.description"
+                    label="Description"
                     variant="outlined"
                     rounded="lg"
                     density="comfortable"
-                    mandatory
+                    prepend-inner-icon="lucide:align-left"
+                    hide-details="auto"
+                    auto-grow
+                    rows="3"
+                  />
+                </v-col>
+                <v-col v-if="dialogMode === 'edit'" cols="12">
+                  <v-divider class="my-4" />
+                  <div
+                    v-if="dimensionDeleteConfirm"
+                    class="dimension-delete-confirm"
                   >
-                    <v-btn value="text" prepend-icon="lucide:type">
-                      Text
+                    <v-btn
+                      color="error"
+                      variant="flat"
+                      :loading="deletingDimension"
+                      @click="deleteDimension"
+                    >
+                      Delete Dimension
                     </v-btn>
-                    <v-btn value="image" prepend-icon="lucide:image">
-                      Image
+                    <v-btn
+                      variant="outlined"
+                      :disabled="deletingDimension"
+                      @click="dimensionDeleteConfirm = false"
+                    >
+                      Cancel
                     </v-btn>
-                  </v-btn-toggle>
+                  </div>
+                  <v-btn
+                    v-else
+                    rounded="lg"
+                    variant="outlined"
+                    color="error"
+                    prepend-icon="lucide:trash-2"
+                    @click="dimensionDeleteConfirm = true"
+                  >
+                    Delete Dimension
+                  </v-btn>
                 </v-col>
+              </v-row>
+            </v-form>
 
-                <!-- Image upload (question mode = image) -->
-                <v-col v-if="editForm.questionMode === 'image'" cols="12">
-                  <v-card rounded="xl" variant="outlined" class="pa-4">
-                    <div class="d-flex align-center ga-4 flex-wrap">
-                      <v-avatar
-                        v-if="editForm.mediaPreviewUrl"
-                        size="72"
-                        rounded="lg"
-                      >
-                        <v-img :src="editForm.mediaPreviewUrl" cover />
-                      </v-avatar>
-                      <v-avatar
-                        v-else
-                        size="72"
-                        rounded="lg"
-                        color="grey-lighten-3"
-                      >
-                        <v-icon icon="lucide:image" size="28" />
-                      </v-avatar>
-
-                      <div class="flex-grow-1 min-w-0">
-                        <v-file-input
-                          accept="image/*"
-                          label="Question image"
-                          variant="outlined"
-                          rounded="lg"
-                          density="comfortable"
-                          prepend-icon=""
-                          prepend-inner-icon="lucide:upload"
-                          :loading="editForm.mediaUploading"
-                          :disabled="editForm.mediaUploading"
-                          hide-details="auto"
-                          @update:model-value="onQuestionImageSelected"
-                        />
-                        <div
-                          v-if="mediaUploadError"
-                          class="text-caption text-error mt-2"
-                        >
-                          {{ mediaUploadError }}
-                        </div>
-                        <div
-                          v-else-if="!editForm.mediaId"
-                          class="text-caption text-medium-emphasis mt-2"
-                        >
-                          An image is required for image-mode questions.
-                        </div>
-                      </div>
-                    </div>
-                  </v-card>
-                </v-col>
-
+            <v-form v-else ref="dialogFormRef" @submit.prevent="handleSave">
+              <v-row>
                 <!-- Dimension selector -->
-                <v-col v-if="isMultiDimension" cols="12">
+                <!-- <v-col v-if="isMultiDimension" cols="12">
+                  <div class="question-editor-label">Dimension</div>
                   <v-select
                     v-model="editForm.dimensionId"
-                    label="Dimension"
                     :items="dimensionItems"
                     item-title="name"
                     item-value="id"
@@ -472,10 +636,74 @@
                     :rules="[rules.required]"
                     hide-details="auto"
                   />
-                  <div class="text-caption text-medium-emphasis mt-2">
-                    This will map the question to the selected dimension (weight
-                    = 1).
+                </v-col> -->
+
+                <!-- Question mode -->
+                <v-col cols="12">
+                  <div class="question-editor-label">Question mode</div>
+                  <v-select
+                    v-model="editForm.questionMode"
+                    :items="questionModeItems"
+                    item-title="title"
+                    item-value="value"
+                    variant="outlined"
+                    rounded="lg"
+                    density="comfortable"
+                    prepend-inner-icon="lucide:list-filter"
+                    hide-details="auto"
+                  />
+                </v-col>
+
+                <!-- Image upload (question mode = image) -->
+                <v-col v-if="editForm.questionMode === 'image'" cols="12">
+                  <InputImageUploader
+                    label="Image"
+                    hint="Required media for image-mode questions."
+                    ratio="wide"
+                    :src="editForm.mediaPreviewUrl"
+                    :loading="editForm.mediaUploading"
+                    :error="mediaUploadError"
+                    @change="onQuestionModeImageSelected"
+                    @remove="clearQuestionModeImage"
+                  />
+                </v-col>
+
+                <!-- Question text -->
+                <v-col cols="12">
+                  <div class="question-editor-field">
+                    <div class="question-editor-label">Question text</div>
+                    <ClientOnly>
+                      <EditorTiptapEditor
+                        v-model="editForm.text"
+                        toolbar-preset="minimal"
+                        :show-toolbar-preset-switch="false"
+                        :toolbar-icon-only="true"
+                        :show-history-buttons="false"
+                        toolbar-size="small"
+                        :min-height="132"
+                        :max-height="220"
+                        :disabled="saving"
+                        placeholder="Example: Saya lebih mudah belajar dari gambar."
+                      />
+                    </ClientOnly>
+                    <div v-if="questionTextError" class="question-editor-error">
+                      {{ questionTextError }}
+                    </div>
                   </div>
+                </v-col>
+
+                <!-- Question image -->
+                <v-col cols="12">
+                  <InputImageUploader
+                    label="Question image"
+                    hint="Optional question illustration."
+                    ratio="wide"
+                    :src="editForm.questionImagePreviewUrl"
+                    :loading="editForm.questionImageUploading"
+                    :error="questionImageUploadError"
+                    @change="onQuestionImageSelected"
+                    @remove="clearQuestionImage"
+                  />
                 </v-col>
 
                 <!-- Options editor (per-question only) -->
@@ -527,7 +755,6 @@
                         <v-card
                           v-for="o in props.model.fixedOptionsJson || []"
                           :key="o.sortOrder"
-                          dimensionItems
                           rounded="xl"
                           variant="tonal"
                           color="grey"
@@ -664,12 +891,6 @@
                                     />
                                   </template>
                                 </v-list-item>
-                                <v-divider />
-                                <v-list-item link title="Cancel">
-                                  <template #prepend>
-                                    <v-icon size="20" icon="lucide:x" />
-                                  </template>
-                                </v-list-item>
                               </v-list>
                             </v-menu>
                           </div>
@@ -710,62 +931,36 @@
                                 density="compact"
                                 mandatory
                               >
-                                <v-btn value="text" size="small" prepend-icon="lucide:type">
+                                <v-btn
+                                  value="text"
+                                  size="small"
+                                  prepend-icon="lucide:type"
+                                >
                                   Text
                                 </v-btn>
-                                <v-btn value="image" size="small" prepend-icon="lucide:image">
+                                <v-btn
+                                  value="image"
+                                  size="small"
+                                  prepend-icon="lucide:image"
+                                >
                                   Image
                                 </v-btn>
                               </v-btn-toggle>
                             </v-col>
 
                             <v-col v-if="o.optionMode === 'image'" cols="12">
-                              <div class="d-flex align-center ga-3">
-                                <v-avatar
-                                  v-if="o.mediaPreviewUrl"
-                                  size="48"
-                                  rounded="lg"
-                                >
-                                  <v-img :src="o.mediaPreviewUrl" cover />
-                                </v-avatar>
-                                <v-avatar
-                                  v-else
-                                  size="48"
-                                  rounded="lg"
-                                  color="grey-lighten-3"
-                                >
-                                  <v-icon icon="lucide:image" size="20" />
-                                </v-avatar>
-
-                                <v-file-input
-                                  accept="image/*"
-                                  label="Option image"
-                                  variant="outlined"
-                                  rounded="lg"
-                                  density="compact"
-                                  prepend-icon=""
-                                  prepend-inner-icon="lucide:upload"
-                                  :loading="o.mediaUploading"
-                                  :disabled="o.mediaUploading"
-                                  hide-details="auto"
-                                  @update:model-value="
-                                    (f: File | File[] | null) =>
-                                      onOptionImageSelected(o, f)
-                                  "
-                                />
-                              </div>
-                              <div
-                                v-if="o.mediaUploadError"
-                                class="text-caption text-error mt-1"
-                              >
-                                {{ o.mediaUploadError }}
-                              </div>
-                              <div
-                                v-else-if="!o.mediaId"
-                                class="text-caption text-medium-emphasis mt-1"
-                              >
-                                An image is required for image-mode options.
-                              </div>
+                              <InputImageUploader
+                                label="Option image"
+                                hint="Required for image-mode options."
+                                ratio="wide"
+                                :src="o.mediaPreviewUrl"
+                                :loading="o.mediaUploading"
+                                :error="o.mediaUploadError"
+                                @change="
+                                  (payload) => onOptionImageSelected(o, payload)
+                                "
+                                @remove="clearOptionImage(o)"
+                              />
                             </v-col>
                           </v-row>
                         </v-card>
@@ -777,48 +972,49 @@
             </v-form>
           </v-card-text>
         </v-card>
-
-        <v-divider class="sb-divider" />
-
-        <div class="px-5 py-4 d-flex justify-end ga-2">
-          <v-btn
-            rounded="lg"
-            variant="tonal"
-            :disabled="saving"
-            @click="closeDialog"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-            rounded="lg"
-            color="primary"
-            :loading="saving"
-            prepend-icon="lucide:save"
-            @click="handleSave"
-          >
-            {{ dialogMode === "create" ? "Create" : "Save changes" }}
-          </v-btn>
-        </div>
       </v-card>
-    </v-dialog>
+
+      <template #append>
+        <v-divider class="ma-0" />
+        <v-card flat class="question-builder-editor-footer">
+          <v-btn
+            block
+            size="large"
+            rounded="lg"
+            variant="outlined"
+            :loading="saving"
+            @click="
+              editorMode === 'dimension' ? handleDimensionSave() : handleSave()
+            "
+          >
+            {{
+              editorMode === "dimension"
+                ? "Save changes"
+                : dialogMode === "create"
+                  ? "Create"
+                  : "Save changes"
+            }}
+          </v-btn>
+        </v-card>
+      </template>
+    </v-navigation-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { QuestionnaireModel } from "~/models/questionnaire";
+import type { QuestionnaireDimensionModel } from "~/models/questionnaire-dimension";
 import type { QuestionnaireQuestionModel } from "~/models/questionnaire-questions";
-import { normalizeQuestionnaireQuestions } from "~/models/questionnaire-questions";
-import { formatDateLabel } from "~/utils/dateUtils";
+import {
+  normalizeQuestionnaireQuestion,
+  normalizeQuestionnaireQuestions,
+} from "~/models/questionnaire-questions";
 
 const props = defineProps<{ model: QuestionnaireModel }>();
 
-const emit = defineEmits<{
-  (e: "delete", item: QuestionnaireQuestionModel): void;
-  (e: "saveOrder", payload: { id: string; sortOrder: number }[]): void;
-}>();
-
 const snack = useAppSnackbar();
 
+const sectionKey = ref<number>(0);
 const questionnaireId = computed(() => props.model?.id || "");
 const optionsMode = computed(() => props.model?.optionsMode || "fixed");
 const isMultiDimension = computed(
@@ -832,7 +1028,6 @@ const uiState = reactive({
   loading: false,
   loaded: false,
   loadingMore: false,
-  savingOrder: false,
   error: false,
   errorTitle: `Couldn’t load data`,
   errorMessage: "",
@@ -853,6 +1048,41 @@ const items = computed<QuestionnaireQuestionModel[]>(() => {
 /** Keep local order stable (draggable) */
 const localRows = ref<QuestionnaireQuestionModel[]>([]);
 const baselineOrder = ref<string[]>([]);
+const questionSearch = ref("");
+const selectedQuestionId = ref<string | null>(null);
+const selectedSectionId = ref<string | null>(null);
+const expandedSections = ref<string[]>([]);
+const dimensionItems = computed(() => dimensionStore.items);
+const localDimensions = ref<QuestionnaireDimensionModel[]>([]);
+const baselineDimensionOrder = ref<string[]>([]);
+
+function syncLocalDimensionsFromStore(nextRows: QuestionnaireDimensionModel[]) {
+  const sorted = [...nextRows].sort(
+    (a, b) => Number(a.sortOrder ?? 0) - Number(b.sortOrder ?? 0),
+  );
+  const map = new Map(sorted.map((dimension) => [dimension.id, dimension]));
+
+  const kept = localDimensions.value
+    .map((dimension) => map.get(dimension.id))
+    .filter(Boolean) as QuestionnaireDimensionModel[];
+
+  const keptIds = new Set(kept.map((dimension) => dimension.id));
+  const appended = sorted.filter((dimension) => !keptIds.has(dimension.id));
+
+  localDimensions.value = [...kept, ...appended];
+
+  if (!baselineDimensionOrder.value.length) {
+    baselineDimensionOrder.value = sorted.map((dimension) => dimension.id);
+  } else {
+    const baseSet = new Set(baselineDimensionOrder.value);
+    baselineDimensionOrder.value = [
+      ...baselineDimensionOrder.value.filter((id) => map.has(id)),
+      ...appended
+        .map((dimension) => dimension.id)
+        .filter((id) => !baseSet.has(id)),
+    ];
+  }
+}
 
 function syncLocalRowsFromStore(nextRows: QuestionnaireQuestionModel[]) {
   const sorted = [...nextRows].sort(
@@ -861,7 +1091,19 @@ function syncLocalRowsFromStore(nextRows: QuestionnaireQuestionModel[]) {
   const map = new Map(sorted.map((x) => [x.id, x]));
 
   const kept = localRows.value
-    .map((x) => map.get(x.id))
+    .map((x) => {
+      const incoming = map.get(x.id);
+      if (!incoming) return null;
+
+      return {
+        ...x,
+        ...incoming,
+        dimension: incoming.dimension ?? x.dimension,
+        options: incoming.options?.length ? incoming.options : x.options,
+        imageUrl: incoming.imageUrl ?? x.imageUrl,
+        media: incoming.media ?? x.media,
+      };
+    })
     .filter(Boolean) as QuestionnaireQuestionModel[];
 
   const keptIds = new Set(kept.map((x) => x.id));
@@ -882,39 +1124,545 @@ function syncLocalRowsFromStore(nextRows: QuestionnaireQuestionModel[]) {
 }
 
 watch(items, (rows) => syncLocalRowsFromStore(rows), { immediate: true });
-
-const hasChanges = computed(() => {
-  const current = localRows.value.map((x) => x.id);
-  const base = baselineOrder.value;
-  if (current.length !== base.length) return true;
-  return current.some((id, i) => id !== base[i]);
+watch(dimensionItems, (rows) => syncLocalDimensionsFromStore(rows), {
+  immediate: true,
 });
 
-const canSaveOrder = computed(() => !hasMore.value && hasChanges.value);
+watch(
+  localRows,
+  (rows) => {
+    if (
+      selectedQuestionId.value &&
+      !rows.some((q) => q.id === selectedQuestionId.value)
+    ) {
+      selectedQuestionId.value = null;
+    }
+  },
+  { immediate: true },
+);
 
-function resetOrder() {
-  const map = new Map(localRows.value.map((x) => [x.id, x]));
-  localRows.value = baselineOrder.value
-    .map((id) => map.get(id))
-    .filter(Boolean) as QuestionnaireQuestionModel[];
+const filteredRows = computed(() => {
+  const search = questionSearch.value.trim().toLowerCase();
+  if (!search) return localRows.value;
+
+  return localRows.value.filter((question) => {
+    const haystack = [
+      question.text,
+      question.dimension?.name,
+      question.dimension?.key,
+      ...(question.options || []).map((option) => option.label),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(search);
+  });
+});
+
+const selectedQuestion = computed(
+  () =>
+    localRows.value.find(
+      (question) => question.id === selectedQuestionId.value,
+    ) ?? null,
+);
+
+const highestOptionScore = computed(() => {
+  const scores = (selectedQuestion.value?.options || []).map((option) =>
+    Number(option.scoreValue),
+  );
+  return scores.length ? Math.max(...scores) : null;
+});
+
+type QuestionSection = {
+  id: string;
+  key: string;
+  name: string;
+  questions: QuestionnaireQuestionModel[];
+};
+
+function resolveQuestionSection(
+  question: QuestionnaireQuestionModel,
+  sectionMap: Map<string, QuestionSection>,
+) {
+  const rawDimensionId = String((question as any).dimensionId ?? "");
+  const dimension = question.dimension;
+  const dimensionId = dimension?.id || rawDimensionId;
+  const dimensionKey = dimension?.key || "";
+
+  if (dimensionId && sectionMap.has(dimensionId)) {
+    return sectionMap.get(dimensionId) ?? null;
+  }
+
+  if (dimensionKey) {
+    const matchedSection = [...sectionMap.values()].find(
+      (section) => section.key === dimensionKey,
+    );
+    if (matchedSection) return matchedSection;
+  }
+
+  if (dimension) {
+    return {
+      id: dimensionId || dimensionKey,
+      key: dimension.key,
+      name: dimension.name,
+      questions: [],
+    };
+  }
+
+  return null;
 }
 
-async function saveOrder() {
-  if (!canSaveOrder.value) {
-    snack.open("Load all questions before saving order.", { color: "warning" });
+const questionSections = computed<QuestionSection[]>(() => {
+  if (!isMultiDimension.value) {
+    return [
+      {
+        id: "all",
+        key: "",
+        name: "Questions",
+        questions: filteredRows.value,
+      },
+    ];
+  }
+
+  const sectionMap = new Map<string, QuestionSection>();
+
+  for (const dimension of localDimensions.value) {
+    sectionMap.set(dimension.id, {
+      id: dimension.id,
+      key: dimension.key,
+      name: dimension.name,
+      questions: [],
+    });
+  }
+
+  const unassigned: QuestionSection = {
+    id: "unassigned",
+    key: "",
+    name: "Unassigned",
+    questions: [],
+  };
+
+  for (const question of filteredRows.value) {
+    const section = resolveQuestionSection(question, sectionMap);
+
+    if (section && !sectionMap.has(section.id)) {
+      sectionMap.set(section.id, section);
+    }
+
+    (section ?? unassigned).questions.push(question);
+  }
+
+  const sections = [...sectionMap.values()];
+  if (unassigned.questions.length) sections.push(unassigned);
+  return sections;
+});
+
+const incompleteSectionCount = computed(() => {
+  if (!isMultiDimension.value) {
+    return localRows.value.length ? 0 : 1;
+  }
+
+  return questionSections.value.filter(
+    (section) => section.id !== "unassigned" && !section.questions.length,
+  ).length;
+});
+
+function questionNumber(question: QuestionnaireQuestionModel) {
+  const index = localRows.value.findIndex((item) => item.id === question.id);
+  return index >= 0 ? index + 1 : "";
+}
+
+function getQuestionImageUrl(question: QuestionnaireQuestionModel | null) {
+  return (
+    (question as any)?.questionImageUrl ||
+    (question as any)?.questionImage?.publicUrl ||
+    (question as any)?.questionImage?.media?.publicUrl ||
+    null
+  );
+}
+
+function isSectionExpanded(sectionId: string) {
+  return expandedSections.value.includes(sectionId);
+}
+
+function toggleSection(sectionId: string) {
+  expandedSections.value = isSectionExpanded(sectionId)
+    ? expandedSections.value.filter((id) => id !== sectionId)
+    : [...expandedSections.value, sectionId];
+}
+
+function selectQuestion(question: QuestionnaireQuestionModel) {
+  selectedQuestionId.value = question.id;
+  selectedSectionId.value =
+    question.dimension?.id || question.dimension?.key || null;
+}
+
+function selectSection(section: QuestionSection) {
+  selectedSectionId.value = section.id;
+  selectedQuestionId.value = null;
+
+  if (!isMultiDimension.value || section.id === "unassigned") {
+    closeDialog();
     return;
   }
-  uiState.savingOrder = true;
-  try {
-    const payload = localRows.value.map((q, idx) => ({
-      id: q.id,
-      sortOrder: idx + 1,
+
+  openDimensionEditor(section);
+}
+
+function resolveQuestionDimensionId(question: QuestionnaireQuestionModel) {
+  const dimension = question.dimension;
+  if (!dimension) return "";
+
+  if (
+    dimension.id &&
+    dimensionItems.value.some((item) => item.id === dimension.id)
+  ) {
+    return dimension.id;
+  }
+
+  const matchedByKey = dimensionItems.value.find(
+    (item) => item.key === dimension.key,
+  );
+  return matchedByKey?.id ?? "";
+}
+
+function resolveDimension(id: string) {
+  const dimension =
+    localDimensions.value.find((dimension) => dimension.id === id) ??
+    dimensionItems.value.find((dimension) => dimension.id === id);
+
+  if (dimension) return dimension;
+
+  const section = questionSections.value.find((section) => section.id === id);
+  if (!section || section.id === "unassigned") return null;
+
+  return {
+    id: section.id,
+    questionnaireId: questionnaireId.value,
+    key: section.key,
+    name: section.name,
+    description: null,
+    sortOrder: 1,
+  };
+}
+
+function upsertLocalQuestion(question: QuestionnaireQuestionModel) {
+  const index = localRows.value.findIndex((item) => item.id === question.id);
+  localRows.value =
+    index === -1
+      ? [...localRows.value, question]
+      : localRows.value.map((item) =>
+          item.id === question.id ? { ...item, ...question } : item,
+        );
+
+  if (!baselineOrder.value.includes(question.id)) {
+    baselineOrder.value = [...baselineOrder.value, question.id];
+  }
+}
+
+function removeLocalQuestion(questionId: string) {
+  localRows.value = localRows.value.filter((item) => item.id !== questionId);
+  baselineOrder.value = baselineOrder.value.filter((id) => id !== questionId);
+  if (selectedQuestionId.value === questionId) {
+    selectedQuestionId.value = null;
+    closeDialog();
+  }
+}
+
+function buildLocalQuestionFromForm(
+  responseData: any,
+  fallbackId: string,
+): QuestionnaireQuestionModel {
+  const rawQuestion = responseData?.question ?? responseData ?? {};
+  const dimension = resolveDimension(editForm.dimensionId);
+  const questionDimension = dimension
+    ? {
+        id: dimension.id,
+        key: dimension.key,
+        name: dimension.name,
+        weight: 1,
+      }
+    : null;
+  const rawOptions =
+    optionsMode.value === "fixed"
+      ? props.model.fixedOptionsJson || []
+      : editForm.options.map((option, index) => ({
+          key: option.key || `option_${index + 1}`,
+          label: option.label,
+          scoreValue: option.scoreValue,
+          sortOrder: index + 1,
+          optionMode: option.optionMode,
+          imageUrl: option.mediaPreviewUrl,
+          media: option.mediaId ? { mediaId: option.mediaId } : null,
+        }));
+
+  return normalizeQuestionnaireQuestion({
+    ...rawQuestion,
+    id: rawQuestion?.id || fallbackId,
+    questionnaireId: questionnaireId.value,
+    text: editForm.text.trim(),
+    description: editForm.description.trim() || null,
+    questionType: "single_choice",
+    questionMode: editForm.questionMode,
+    isRequired: Boolean(editForm.isRequired),
+    sortOrder: rawQuestion?.sortOrder ?? localRows.value.length + 1,
+    meta: { hint: editForm.hint.trim() },
+    questionImageUrl: editForm.questionImagePreviewUrl,
+    questionImage: editForm.questionImageId
+      ? {
+          mediaId: editForm.questionImageId,
+          publicUrl: editForm.questionImagePreviewUrl,
+          originalName: null,
+          mimeType: null,
+        }
+      : null,
+    imageUrl:
+      editForm.questionMode === "image" ? editForm.mediaPreviewUrl : null,
+    media:
+      editForm.questionMode === "image" && editForm.mediaId
+        ? {
+            mediaId: editForm.mediaId,
+            publicUrl: editForm.mediaPreviewUrl,
+            originalName: null,
+            mimeType: null,
+          }
+        : null,
+    dimensionId: editForm.dimensionId,
+    dimension: questionDimension,
+    options: rawOptions,
+    dimensionMaps: questionDimension
+      ? [
+          {
+            dimensionId: questionDimension.id,
+            weight: 1,
+            dimension: questionDimension,
+          },
+        ]
+      : [],
+  });
+}
+
+function upsertLocalDimension(dimension: QuestionnaireDimensionModel) {
+  const index = localDimensions.value.findIndex(
+    (item) => item.id === dimension.id,
+  );
+  localDimensions.value =
+    index === -1
+      ? [...localDimensions.value, dimension]
+      : localDimensions.value.map((item) =>
+          item.id === dimension.id ? { ...item, ...dimension } : item,
+        );
+
+  if (!baselineDimensionOrder.value.includes(dimension.id)) {
+    baselineDimensionOrder.value = [
+      ...baselineDimensionOrder.value,
+      dimension.id,
+    ];
+  }
+
+  localRows.value = localRows.value.map((question) => {
+    if (question.dimension?.id !== dimension.id) return question;
+
+    return {
+      ...question,
+      dimension: {
+        ...question.dimension,
+        key: dimension.key,
+        name: dimension.name,
+      },
+    };
+  });
+}
+
+function removeLocalDimension(dimensionId: string) {
+  localDimensions.value = localDimensions.value.filter(
+    (item) => item.id !== dimensionId,
+  );
+  baselineDimensionOrder.value = baselineDimensionOrder.value.filter(
+    (id) => id !== dimensionId,
+  );
+  expandedSections.value = expandedSections.value.filter(
+    (id) => id !== dimensionId,
+  );
+  if (selectedSectionId.value === dimensionId) {
+    selectedSectionId.value = null;
+    closeDialog();
+  }
+}
+
+function canSortSection(section: QuestionSection) {
+  return isMultiDimension.value && section.id !== "unassigned";
+}
+
+const draggingDimensionId = ref<string | null>(null);
+const dimensionDropTargetId = ref<string | null>(null);
+
+function onDimensionDragStart(evt: DragEvent, section: QuestionSection) {
+  if (!canSortSection(section)) return;
+  draggingDimensionId.value = section.id;
+  dimensionDropTargetId.value = null;
+  evt.dataTransfer?.setData("text/plain", section.id);
+  if (evt.dataTransfer) evt.dataTransfer.effectAllowed = "move";
+}
+
+function onDimensionDragEnter(section: QuestionSection) {
+  if (
+    !canSortSection(section) ||
+    !draggingDimensionId.value ||
+    draggingDimensionId.value === section.id
+  ) {
+    return;
+  }
+  dimensionDropTargetId.value = section.id;
+}
+
+function onDimensionDragLeave(section: QuestionSection) {
+  if (dimensionDropTargetId.value === section.id) {
+    dimensionDropTargetId.value = null;
+  }
+}
+
+async function onDimensionDrop(section: QuestionSection) {
+  const fromId = draggingDimensionId.value;
+  if (!fromId || fromId === section.id || !canSortSection(section)) return;
+
+  const fromIndex = localDimensions.value.findIndex(
+    (dimension) => dimension.id === fromId,
+  );
+  const toIndex = localDimensions.value.findIndex(
+    (dimension) => dimension.id === section.id,
+  );
+  if (fromIndex < 0 || toIndex < 0) return;
+
+  const previousDimensions = [...localDimensions.value];
+  const previousQuestions = [...localRows.value];
+  const next = [...localDimensions.value];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
+  localDimensions.value = next;
+  dimensionDropTargetId.value = null;
+
+  await saveDimensionOrder(previousDimensions, previousQuestions);
+}
+
+function onDimensionDragEnd() {
+  draggingDimensionId.value = null;
+  dimensionDropTargetId.value = null;
+}
+
+function getQuestionDimensionId(question: QuestionnaireQuestionModel) {
+  return (
+    question.dimension?.id || String((question as any).dimensionId ?? "") || ""
+  );
+}
+
+function sortQuestionsByDimensionOrder() {
+  const dimensionIds = localDimensions.value.map((dimension) => dimension.id);
+  const dimensionIndex = new Map(
+    dimensionIds.map((dimensionId, index) => [dimensionId, index]),
+  );
+
+  const indexedRows = localRows.value.map((question, index) => ({
+    question,
+    index,
+  }));
+
+  const sortedRows = indexedRows
+    .sort((a, b) => {
+      const aDimensionIndex =
+        dimensionIndex.get(getQuestionDimensionId(a.question)) ??
+        Number.MAX_SAFE_INTEGER;
+      const bDimensionIndex =
+        dimensionIndex.get(getQuestionDimensionId(b.question)) ??
+        Number.MAX_SAFE_INTEGER;
+
+      if (aDimensionIndex !== bDimensionIndex) {
+        return aDimensionIndex - bDimensionIndex;
+      }
+
+      return a.index - b.index;
+    })
+    .map(({ question }, index) => ({
+      ...question,
+      sortOrder: index + 1,
     }));
-    emit("saveOrder", payload);
-    baselineOrder.value = localRows.value.map((x) => x.id);
-    snack.open("Order saved (UI).", { color: "success" });
-  } finally {
-    uiState.savingOrder = false;
+
+  localRows.value = sortedRows;
+  baselineOrder.value = sortedRows.map((question) => question.id);
+
+  return sortedRows.map((question) => ({
+    id: question.id,
+    sortOrder: question.sortOrder,
+  }));
+}
+
+async function saveQuestionOrder(
+  orderPayload: { id: string; sortOrder: number }[],
+) {
+  try {
+    for (const question of orderPayload) {
+      const result = await questionsStore.update(question.id, {
+        id: question.id,
+        sortOrder: question.sortOrder,
+      } as any);
+
+      if (!result?.success) return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function saveDimensionOrder(
+  previousDimensions: QuestionnaireDimensionModel[],
+  previousQuestions: QuestionnaireQuestionModel[],
+) {
+  const payload = localDimensions.value.map((dimension, index) => ({
+    ...dimension,
+    sortOrder: index + 1,
+  }));
+
+  try {
+    const results = await Promise.all(
+      payload.map((dimension) =>
+        dimensionStore.update(dimension.id, {
+          id: dimension.id,
+          name: dimension.name,
+          description: dimension.description ?? "",
+          sortOrder: dimension.sortOrder,
+        } as any),
+      ),
+    );
+
+    const failed = results.find((result) => !result?.success);
+    if (failed) {
+      localDimensions.value = previousDimensions;
+      localRows.value = previousQuestions;
+      snack.open("Failed to save dimension order.", { color: "error" });
+      return;
+    }
+
+    localDimensions.value = payload;
+    baselineDimensionOrder.value = payload.map((dimension) => dimension.id);
+    const questionOrderPayload = sortQuestionsByDimensionOrder();
+    const questionOrderSaved = await saveQuestionOrder(questionOrderPayload);
+
+    if (!questionOrderSaved) {
+      localRows.value = previousQuestions;
+      snack.open("Dimension order saved, but question order failed.", {
+        color: "warning",
+      });
+      return;
+    }
+
+    snack.open("Dimension and question order saved.", { color: "success" });
+  } catch {
+    localDimensions.value = previousDimensions;
+    localRows.value = previousQuestions;
+    snack.open("Failed to save dimension order.", { color: "error" });
   }
 }
 
@@ -935,7 +1683,7 @@ function onDragEnter(target: QuestionnaireQuestionModel) {
 function onDragLeave(target: QuestionnaireQuestionModel) {
   if (dropTargetId.value === target.id) dropTargetId.value = null;
 }
-function onDrop(target: QuestionnaireQuestionModel) {
+async function onDrop(target: QuestionnaireQuestionModel) {
   const fromId = draggingId.value;
   if (!fromId || fromId === target.id) return;
 
@@ -943,11 +1691,28 @@ function onDrop(target: QuestionnaireQuestionModel) {
   const toIndex = localRows.value.findIndex((x) => x.id === target.id);
   if (fromIndex < 0 || toIndex < 0) return;
 
+  const previousRows = [...localRows.value];
   const next = [...localRows.value];
   const [moved] = next.splice(fromIndex, 1);
   next.splice(toIndex, 0, moved);
-  localRows.value = next;
+  localRows.value = next.map((question, index) => ({
+    ...question,
+    sortOrder: index + 1,
+  }));
   dropTargetId.value = null;
+
+  const saved = await saveQuestionOrder([
+    { id: moved.id, sortOrder: toIndex + 1 },
+  ]);
+
+  if (!saved) {
+    localRows.value = previousRows;
+    snack.open("Failed to save question order.", { color: "error" });
+    return;
+  }
+
+  baselineOrder.value = localRows.value.map((question) => question.id);
+  snack.open("Question order saved.", { color: "success" });
 }
 function onDragEnd() {
   draggingId.value = null;
@@ -994,7 +1759,7 @@ onMounted(async () => {
 
   // prefetch dimensions for dialog if needed
   if (isMultiDimension.value) {
-    await dimensionStore.fetchAll({});
+    await dimensionStore.fetchAll({ query: "limit=100" });
   }
 
   observer = new IntersectionObserver(
@@ -1017,15 +1782,16 @@ onBeforeUnmount(() => {
  * Dialog add/edit
  */
 type DialogMode = "create" | "edit";
+type EditorMode = "question" | "dimension";
 const dialogOpen = ref(false);
 const dialogMode = ref<DialogMode>("create");
+const editorMode = ref<EditorMode>("question");
 const dialogFormRef = ref<any>(null);
+const dimensionFormRef = ref<any>(null);
 const dialogError = ref("");
 const saving = ref(false);
 const deleting = ref(false);
 const validationAttempted = ref(false);
-
-const dimensionItems = computed(() => dimensionStore.items);
 
 type LocalOption = {
   __localId: string;
@@ -1049,6 +1815,9 @@ const editForm = reactive<{
   dimensionId: string;
   options: LocalOption[];
   questionMode: "text" | "image";
+  questionImageId: string;
+  questionImagePreviewUrl: string | null;
+  questionImageUploading: boolean;
   mediaId: string;
   mediaPreviewUrl: string | null;
   mediaUploading: boolean;
@@ -1061,12 +1830,62 @@ const editForm = reactive<{
   dimensionId: "",
   options: [],
   questionMode: "text",
+  questionImageId: "",
+  questionImagePreviewUrl: null,
+  questionImageUploading: false,
   mediaId: "",
   mediaPreviewUrl: null,
   mediaUploading: false,
 });
 
+const dimensionForm = reactive({
+  id: "",
+  key: "",
+  name: "",
+  description: "",
+});
+
 const mediaUploadError = ref("");
+const questionImageUploadError = ref("");
+const deletingQuestionId = ref<string | null>(null);
+const dimensionDeleteConfirm = ref(false);
+const deletingDimension = ref(false);
+
+const questionModeItems = [
+  { title: "Text", value: "text" },
+  { title: "Image", value: "image" },
+];
+
+const questionTextPlain = computed(() => plainTextFromHtml(editForm.text));
+const questionTextError = computed(() => {
+  if (!validationAttempted.value) return "";
+  if (!questionTextPlain.value) return "Question text is required.";
+  if (questionTextPlain.value.length < 3) {
+    return "Question text must be at least 3 characters.";
+  }
+  return "";
+});
+
+type ImageUploaderPayload =
+  | File
+  | File[]
+  | { file: File | null; remove?: boolean }
+  | null;
+
+function plainTextFromHtml(value: string): string {
+  return String(value || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#039;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 function createLocalOption(overrides: Partial<LocalOption> = {}): LocalOption {
   return {
@@ -1094,6 +1913,7 @@ function resetForm() {
   saving.value = false;
   validationAttempted.value = false;
   mediaUploadError.value = "";
+  questionImageUploadError.value = "";
   editForm.id = "";
   editForm.text = "";
   editForm.description = "";
@@ -1106,31 +1926,50 @@ function resetForm() {
     createLocalOption({ label: "Tidak setuju", scoreValue: 0 }),
   ];
   editForm.questionMode = "text";
+  editForm.questionImageId = "";
+  editForm.questionImagePreviewUrl = null;
+  editForm.questionImageUploading = false;
   editForm.mediaId = "";
   editForm.mediaPreviewUrl = null;
   editForm.mediaUploading = false;
   nextTick(() => dialogFormRef.value?.resetValidation?.());
 }
 
-function openCreateDialog() {
+function openCreateDialog(dimensionId = "") {
+  editorMode.value = "question";
   dialogMode.value = "create";
   resetForm();
+  if (isMultiDimension.value) {
+    const selectedDimensionId = dimensionItems.value.some(
+      (dimension) => dimension.id === selectedSectionId.value,
+    )
+      ? selectedSectionId.value
+      : "";
+    editForm.dimensionId = dimensionId || selectedDimensionId || "";
+  }
   dialogOpen.value = true;
 }
 
 function openEditDialog(item: QuestionnaireQuestionModel) {
+  selectQuestion(item);
+  editorMode.value = "question";
   dialogMode.value = "edit";
   dialogError.value = "";
   saving.value = false;
   validationAttempted.value = false;
 
   mediaUploadError.value = "";
+  questionImageUploadError.value = "";
   editForm.id = item.id;
   editForm.text = item.text ?? "";
   editForm.description = (item as any).description ?? "";
   editForm.isRequired = Boolean(item.isRequired);
   editForm.hint = String((item as any)?.meta?.hint ?? "...");
-  editForm.dimensionId = ""; // mapping not included in payload; keep empty unless you add it later
+  editForm.questionImageId = String(item.questionImage?.mediaId ?? "");
+  editForm.questionImagePreviewUrl =
+    item.questionImageUrl ?? item.questionImage?.publicUrl ?? null;
+  editForm.questionImageUploading = false;
+  editForm.dimensionId = resolveQuestionDimensionId(item);
   editForm.questionMode =
     (item as any)?.questionMode === "image" ? "image" : "text";
   editForm.mediaId = item.media?.mediaId ?? "";
@@ -1155,15 +1994,176 @@ function openEditDialog(item: QuestionnaireQuestionModel) {
   nextTick(() => dialogFormRef.value?.resetValidation?.());
 }
 
+function openCreateDimensionDialog() {
+  editorMode.value = "dimension";
+  dialogMode.value = "create";
+  selectedQuestionId.value = null;
+  selectedSectionId.value = null;
+  dialogError.value = "";
+  saving.value = false;
+  dimensionForm.id = "";
+  dimensionForm.key = "";
+  dimensionForm.name = "";
+  dimensionForm.description = "";
+  dimensionDeleteConfirm.value = false;
+  dialogOpen.value = true;
+  nextTick(() => dimensionFormRef.value?.resetValidation?.());
+}
+
+function openDimensionEditor(section: QuestionSection) {
+  if (!isMultiDimension.value || section.id === "unassigned") return;
+
+  const dimension = dimensionItems.value.find((item) => item.id === section.id);
+  if (!dimension) return;
+
+  editorMode.value = "dimension";
+  dialogMode.value = "edit";
+  dialogError.value = "";
+  saving.value = false;
+  dimensionForm.id = dimension.id;
+  dimensionForm.key = dimension.key ?? "";
+  dimensionForm.name = dimension.name ?? "";
+  dimensionForm.description = dimension.description ?? "";
+  dimensionDeleteConfirm.value = false;
+  dialogOpen.value = true;
+  nextTick(() => dimensionFormRef.value?.resetValidation?.());
+}
+
 function closeDialog() {
   dialogOpen.value = false;
 }
 
-async function onQuestionImageSelected(fileOrFiles: File | File[] | null) {
-  const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
+async function handleDimensionSave() {
+  dialogError.value = "";
+
+  const res = await dimensionFormRef.value?.validate?.();
+  if (!res?.valid) return;
+  if (dialogMode.value === "edit" && !dimensionForm.id) return;
+
+  saving.value = true;
+  try {
+    const payload = {
+      id: dialogMode.value === "edit" ? dimensionForm.id : "",
+      name: dimensionForm.name.trim(),
+      description: dimensionForm.description.trim(),
+    };
+
+    const response =
+      dialogMode.value === "create"
+        ? await dimensionStore.create(payload)
+        : await dimensionStore.update(dimensionForm.id, payload);
+
+    if (typeof response?.success === "boolean" && !response.success) {
+      const errorMsg =
+        response.error?.message || response.error || "Failed to save dimension";
+      snack?.open?.(errorMsg, { color: "error" });
+      return;
+    }
+
+    const savedDimension = response?.data as
+      | QuestionnaireDimensionModel
+      | undefined;
+    if (savedDimension?.id) {
+      upsertLocalDimension(savedDimension);
+      selectedSectionId.value = savedDimension.id;
+    }
+    snack.open(
+      dialogMode.value === "create"
+        ? "Dimension created."
+        : "Dimension updated.",
+      { color: "success" },
+    );
+    closeDialog();
+  } catch (err: any) {
+    dialogError.value =
+      err?.response?.data?.error?.message ||
+      err?.response?.data?.message ||
+      err?.message ||
+      "Failed to save dimension";
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function deleteDimension() {
+  if (!dimensionForm.id) return;
+
+  deletingDimension.value = true;
+  try {
+    const res = await dimensionStore.remove(dimensionForm.id);
+
+    if (typeof res?.success === "boolean" && !res.success) {
+      const errorMsg =
+        res.error?.message || res.error || "Failed to delete dimension";
+      snack?.open?.(errorMsg, { color: "error" });
+      return;
+    }
+
+    removeLocalDimension(dimensionForm.id);
+    snack.open("Dimension deleted.", { color: "success" });
+  } catch (err: any) {
+    const errorMsg =
+      err?.response?.data?.error?.message ||
+      err?.response?.data?.message ||
+      err?.message ||
+      "Failed to delete dimension";
+    snack?.open?.(errorMsg, { color: "error" });
+  } finally {
+    deletingDimension.value = false;
+    dimensionDeleteConfirm.value = false;
+  }
+}
+
+function getImageUploaderFile(payload: ImageUploaderPayload): File | null {
+  if (Array.isArray(payload)) return payload[0] ?? null;
+  if (payload instanceof File) return payload;
+  return payload?.file ?? null;
+}
+
+async function onQuestionImageSelected(
+  payload: ImageUploaderPayload,
+): Promise<void> {
+  const file = getImageUploaderFile(payload);
 
   if (!(file instanceof File) || file.size === 0) {
-    mediaUploadError.value = "No file selected.";
+    clearQuestionImage();
+    return;
+  }
+
+  questionImageUploadError.value = "";
+  editForm.questionImageUploading = true;
+
+  try {
+    const res = await questionsStore.uploadMedia(file);
+
+    if (!res?.success) {
+      questionImageUploadError.value =
+        res?.error?.message || res?.error || "Failed to upload image.";
+      return;
+    }
+
+    editForm.questionImageId = res.data?.id ?? "";
+    editForm.questionImagePreviewUrl = res.data?.publicUrl ?? null;
+  } catch (err: any) {
+    questionImageUploadError.value = err?.message || "Failed to upload image.";
+  } finally {
+    editForm.questionImageUploading = false;
+  }
+}
+
+function clearQuestionImage(): void {
+  editForm.questionImageId = "";
+  editForm.questionImagePreviewUrl = null;
+  questionImageUploadError.value = "";
+}
+
+async function onQuestionModeImageSelected(
+  payload: ImageUploaderPayload,
+): Promise<void> {
+  const file = getImageUploaderFile(payload);
+
+  if (!(file instanceof File) || file.size === 0) {
+    clearQuestionModeImage();
     return;
   }
 
@@ -1188,6 +2188,12 @@ async function onQuestionImageSelected(fileOrFiles: File | File[] | null) {
   }
 }
 
+function clearQuestionModeImage(): void {
+  editForm.mediaId = "";
+  editForm.mediaPreviewUrl = null;
+  mediaUploadError.value = "";
+}
+
 function addOption() {
   editForm.options.push(createLocalOption());
 }
@@ -1198,12 +2204,12 @@ function removeOption(index: number) {
 
 async function onOptionImageSelected(
   option: LocalOption,
-  fileOrFiles: File | File[] | null,
-) {
-  const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
+  payload: ImageUploaderPayload,
+): Promise<void> {
+  const file = getImageUploaderFile(payload);
 
   if (!(file instanceof File) || file.size === 0) {
-    option.mediaUploadError = "No file selected.";
+    clearOptionImage(option);
     return;
   }
 
@@ -1230,12 +2236,20 @@ async function onOptionImageSelected(
   }
 }
 
+function clearOptionImage(option: LocalOption): void {
+  option.mediaId = "";
+  option.mediaPreviewUrl = null;
+  option.mediaUploadError = "";
+}
+
 async function handleSave() {
   validationAttempted.value = true;
   dialogError.value = "";
 
   const res = await dialogFormRef.value?.validate?.();
   if (!res?.valid) return;
+
+  if (questionTextError.value) return;
 
   if (optionsMode.value !== "fixed" && editForm.options.length < 2) {
     dialogError.value = "Add at least 2 options.";
@@ -1262,6 +2276,7 @@ async function handleSave() {
       description: editForm.description.trim(),
       questionType: "single_choice",
       questionMode: editForm.questionMode,
+      questionImageMediaId: editForm.questionImageId || null,
       mediaId: editForm.questionMode === "image" ? editForm.mediaId : null,
 
       isRequired: Boolean(editForm.isRequired),
@@ -1300,6 +2315,20 @@ async function handleSave() {
         }
       }
 
+      const createdQuestionId = String(res?.data?.id || "");
+      const targetDimensionId = editForm.dimensionId;
+
+      if (createdQuestionId) {
+        upsertLocalQuestion(
+          buildLocalQuestionFromForm(res?.data, createdQuestionId),
+        );
+        selectedQuestionId.value = createdQuestionId;
+      }
+      if (targetDimensionId && !isSectionExpanded(targetDimensionId)) {
+        toggleSection(targetDimensionId);
+      }
+
+      sectionKey.value++;
       snack.open("Question created.", { color: "success" });
       closeDialog();
 
@@ -1319,6 +2348,8 @@ async function handleSave() {
         }
       }
 
+      upsertLocalQuestion(buildLocalQuestionFromForm(res?.data, id));
+      selectedQuestionId.value = id;
       snack.open("Changes saved.", { color: "success" });
       closeDialog();
 
@@ -1335,7 +2366,15 @@ async function handleSave() {
   }
 }
 
-async function deleteQuestion(question: any) {
+function confirmDeleteQuestion(question: QuestionnaireQuestionModel) {
+  deletingQuestionId.value = question.id;
+}
+
+function cancelDeleteQuestion() {
+  deletingQuestionId.value = null;
+}
+
+async function deleteQuestion(question: QuestionnaireQuestionModel) {
   try {
     deleting.value = true;
     const res = await questionsStore.remove(question.id);
@@ -1349,6 +2388,8 @@ async function deleteQuestion(question: any) {
       }
     }
 
+    removeLocalQuestion(question.id);
+    deletingQuestionId.value = null;
     snack.open("Question deleted.", { color: "success" });
   } catch (err: any) {
     dialogError.value =
@@ -1408,6 +2449,485 @@ function onOptionDragEnd() {
 </script>
 
 <style scoped lang="scss">
+.question-builder-page {
+  display: grid;
+  gap: 24px;
+}
+
+.question-builder-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 28px;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(var(--v-theme-primary), 0.14),
+      transparent 34%
+    ),
+    linear-gradient(135deg, #ffffff, #f8fbff 52%, #f4f7fb);
+}
+
+.question-builder-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.question-builder-title {
+  margin: 10px 0 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.question-builder-subtitle {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.question-builder-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.question-builder-status-pill,
+.question-builder-status-note {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.question-builder-status-pill {
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.12);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.question-builder-status-note {
+  color: #475569;
+  background: rgba(148, 163, 184, 0.14);
+}
+
+.question-builder-status-note--error {
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.08);
+}
+
+.question-section-list {
+  display: grid;
+  gap: 12px;
+  background: transparent;
+}
+
+.question-builder-workspace {
+  display: grid;
+  grid-template-columns: 400px minmax(0, 1fr);
+  min-height: 640px;
+  background:
+    linear-gradient(90deg, #ffffff 0, #ffffff 400px, transparent 400px),
+    radial-gradient(
+      circle at top left,
+      rgba(var(--v-theme-primary), 0.07),
+      transparent 36%
+    ),
+    #f8fafc;
+}
+
+.question-builder-sidebar {
+  padding: 24px;
+  border-right: 1px solid rgba(148, 163, 184, 0.18);
+  background: #fff;
+}
+
+.question-builder-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.question-builder-sidebar-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.question-builder-search {
+  margin-bottom: 18px;
+}
+
+.question-builder-preview {
+  min-width: 0;
+  padding: 32px;
+  overflow: auto;
+  transition: padding-right 0.18s ease;
+}
+
+.question-builder-workspace--editor-open .question-builder-preview {
+  padding-right: 432px;
+}
+
+.question-preview-card {
+  max-width: 720px;
+  min-height: 520px;
+  margin: 0 auto;
+  padding: 56px 64px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 28px !important;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+}
+
+.question-preview-title-row {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.question-preview-number {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.question-preview-text {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #1f2937;
+}
+
+.question-preview-text :deep(p) {
+  margin: 0 0 10px;
+}
+
+.question-preview-text :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.question-preview-title-row p {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.question-preview-image {
+  max-height: 280px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.question-preview-options {
+  display: grid;
+  gap: 12px;
+  margin-top: 36px;
+  padding-left: 66px;
+}
+
+.question-preview-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 1px solid rgba(var(--v-theme-primary), 0.24);
+  border-radius: 14px;
+  color: #1f2937;
+  background: rgba(var(--v-theme-primary), 0.04);
+}
+
+.question-preview-option.active {
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.12);
+}
+
+.question-preview-empty {
+  display: flex;
+  min-height: 400px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #64748b;
+  text-align: center;
+}
+
+.question-preview-empty strong {
+  color: #0f172a;
+}
+
+.question-builder-editor-drawer {
+  border-left: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: none !important;
+
+  :deep(.v-navigation-drawer__content) {
+    box-shadow: none !important;
+  }
+}
+
+.question-builder-editor-toolbar {
+  min-height: 68px;
+  padding: 0 16px;
+}
+
+.question-builder-editor-card {
+  background: transparent;
+}
+
+.question-builder-editor-footer {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.question-editor-field {
+  display: grid;
+  gap: 8px;
+}
+
+.question-editor-label {
+  margin-bottom: 4px;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.question-editor-error {
+  color: rgb(var(--v-theme-error));
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.question-editor-field :deep(.tiptap-editor > .v-card) {
+  border-color: rgba(148, 163, 184, 0.28);
+  border-radius: 16px !important;
+  box-shadow: none;
+}
+
+.question-editor-field
+  :deep(.tiptap-editor > .v-card > .v-card-text:first-child) {
+  padding: 10px 12px !important;
+}
+
+.question-editor-field :deep(.tiptap-editor .sb-toolbar-btn) {
+  min-width: 32px;
+  min-height: 32px;
+  border-color: rgba(148, 163, 184, 0.22);
+  background: #fff;
+}
+
+.question-editor-field
+  :deep(.tiptap-editor .sb-toolbar-btn:not(.sb-toolbar-btn--icon-only)) {
+  padding: 0 10px;
+}
+
+.question-editor-field :deep(.tiptap-editor .editor-surface) {
+  min-height: 132px !important;
+  padding: 14px !important;
+  background: #fff;
+}
+
+.question-editor-field :deep(.tiptap-content) {
+  color: #1f2937;
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
+
+.question-editor-field :deep(.tiptap-content p:last-child) {
+  margin-bottom: 0;
+}
+
+.question-section {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 20px !important;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.question-section--sortable {
+  cursor: grab;
+}
+
+.question-section--sortable:active {
+  cursor: grabbing;
+}
+
+.question-section--selected {
+  border-color: rgba(var(--v-theme-primary), 0.34);
+}
+
+.question-section--incomplete {
+  border-color: rgba(var(--v-theme-error), 0.34);
+}
+
+.question-section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: stretch;
+  min-height: 64px !important;
+  padding: 0 !important;
+}
+
+.question-section-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 14px 0 14px 16px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.question-section-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.question-section-title {
+  overflow: hidden;
+  color: #1f2937;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.question-section-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.question-section-status {
+  min-width: 52px;
+  justify-content: center;
+  font-size: 0.66rem;
+}
+
+.question-section-toggle {
+  width: 48px !important;
+  height: 100% !important;
+  min-height: 64px;
+  border-radius: 0 !important;
+  color: #6b7280;
+}
+
+.question-section-panel {
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.question-row {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  color: #64748b;
+  cursor: pointer;
+}
+
+.question-row:last-child {
+  border-bottom: 0;
+}
+
+.question-row-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 5px;
+  color: #374151;
+  background: #e5e7eb;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.question-row-text {
+  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.question-row--selected {
+  color: #0f172a;
+  background: rgba(var(--v-theme-primary), 0.06);
+}
+
+.question-row-delete-confirm,
+.dimension-delete-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.question-section-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 86px;
+  border: 1px dashed rgba(148, 163, 184, 0.32);
+  border-radius: 18px;
+  color: #64748b;
+  font-size: 0.88rem;
+  background: #f8fafc;
+}
+
+.question-section-alert {
+  margin: 16px;
+  padding: 10px 12px;
+  border: 1px solid rgba(var(--v-theme-error), 0.36);
+  border-radius: 14px;
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.04);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.question-section-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px 16px;
+}
+
 .sb-handle {
   width: 28px;
   height: 28px;
@@ -1432,5 +2952,42 @@ function onOptionDragEnd() {
 }
 .sb-sentinel {
   height: 1px;
+}
+
+@media (max-width: 960px) {
+  .question-builder-hero {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 24px;
+  }
+
+  .question-builder-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .question-builder-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .question-builder-preview {
+    padding: 20px;
+  }
+
+  .question-builder-workspace--editor-open .question-builder-preview {
+    padding-right: 20px;
+  }
+
+  .question-preview-card {
+    padding: 28px 22px;
+  }
+
+  .question-preview-title-row {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .question-preview-options {
+    padding-left: 0;
+  }
 }
 </style>
