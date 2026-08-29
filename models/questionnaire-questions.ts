@@ -57,6 +57,8 @@ export interface QuestionnaireQuestionModel {
 
   media?: QuestionnaireQuestionMediaModel | null
   imageUrl: string | null
+  questionImage?: QuestionnaireQuestionMediaModel | null
+  questionImageUrl: string | null
 
   /**
    * Flattened (single) dimension.
@@ -90,6 +92,8 @@ export const createDefaultQuestionnaireQuestion =
     dimension: null,
     media: null,
     imageUrl: null,
+    questionImage: null,
+    questionImageUrl: null,
 
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -168,6 +172,9 @@ export function normalizeQuestionnaireQuestion(
   const imageUrl = (item as any)?.imageUrl
     ? String((item as any).imageUrl)
     : null
+  const questionImageUrl = (item as any)?.questionImageUrl
+    ? String((item as any).questionImageUrl)
+    : null
   const question: QuestionnaireQuestionModel = {
     id: String(item?.id ?? ""),
     questionnaireId: String(item?.questionnaireId ?? ""),
@@ -198,6 +205,11 @@ export function normalizeQuestionnaireQuestion(
     dimension,
     media: normalizeQuestionnaireQuestionMedia((item as any)?.media, imageUrl),
     imageUrl,
+    questionImage: normalizeQuestionnaireQuestionMedia(
+      (item as any)?.questionImage,
+      questionImageUrl,
+    ),
+    questionImageUrl,
 
     createdAt: (item as any)?.createdAt
       ? new Date((item as any).createdAt)

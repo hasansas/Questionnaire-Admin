@@ -133,14 +133,15 @@ export function useResourceStore<TModel, TInput = TModel>({
     try {
       const res = await post<TModel>(endpoint, payload)
       if (res.success) {
-        const id = (res.data as any).id
+        const responseData = (res.data as any)?.question ?? res.data
+        const id = (responseData as any)?.id
         // server-assigned id must win — a form payload's own `id` field
         // (e.g. a blank placeholder for "create" mode) must not override it
-        const newItem = { ...payload, id }
+        const newItem = id ? { ...payload, ...responseData, id } : responseData
         const item = normalizedJson ? normalizedJson(newItem as TModel) : (newItem as unknown as TModel)
-        paginated.addItem(item)
-        const createdItem = paginated.getItem({ id })
-        return { success: true, statusCode: 200, data: createdItem?.item }
+        if (id) paginated.addItem(item)
+        const createdItem = id ? paginated.getItem({ id }) : null
+        return { success: true, statusCode: 200, data: createdItem?.item ?? res.data }
       } else {
         throw new Error(res.error || 'Failed to create resource')
       }
@@ -154,7 +155,9 @@ export function useResourceStore<TModel, TInput = TModel>({
     try {
       const res = await patch<TModel>(`${endpoint}/${id}`, payload)
       if (res.success) {
-        const item = normalizedJson ? normalizedJson(payload as any) : (payload as unknown as TModel)
+        const responseData = (res.data as any)?.question ?? res.data
+        const nextItem = responseData && (responseData as any)?.id ? responseData : payload
+        const item = normalizedJson ? normalizedJson(nextItem as any) : (nextItem as unknown as TModel)
         paginated.editItem({ ...item, id })
         const updatedItem = paginated.getItem({ id })
         return { success: true, statusCode: 200, data: updatedItem?.item }

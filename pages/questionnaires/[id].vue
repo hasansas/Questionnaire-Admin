@@ -50,14 +50,6 @@
             Questions
           </v-tab>
 
-          <v-tab
-            v-if="questionnaire.scoringType === 'multi_dimension'"
-            value="dimensions"
-          >
-            <v-icon icon="lucide:layers" size="18" class="me-2" />
-            Dimensions
-          </v-tab>
-
           <v-tab value="bands">
             <v-icon icon="lucide:sliders-horizontal" size="18" class="me-2" />
             Bands
@@ -84,16 +76,6 @@
             <v-window-item value="questions">
               <div class="pa-4">
                 <QuestionnaireQuestions :model="questionnaire" />
-              </div>
-            </v-window-item>
-
-            <!-- Dimensions (for multi-dimension scoring)-->
-            <v-window-item
-              v-if="questionnaire.scoringType === 'multi_dimension'"
-              value="dimensions"
-            >
-              <div class="pa-4">
-                <QuestionnaireDimensions :model="questionnaire" />
               </div>
             </v-window-item>
 
