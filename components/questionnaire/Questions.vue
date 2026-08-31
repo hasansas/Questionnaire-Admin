@@ -286,7 +286,7 @@
                         @drop.prevent.stop="onDrop(q)"
                         @dragend.stop="onDragEnd"
                       >
-                      <v-avatar size="26">
+                        <v-avatar size="26">
                           <v-icon icon="lucide:grip-vertical" size="18" />
                         </v-avatar>
                         <v-avatar size="28" rounded="lg" variant="tonal">
@@ -2635,7 +2635,7 @@ function onOptionDragEnd() {
 }
 
 .question-preview-image {
-  max-height: 280px;
+  margin-left: 64px;
   border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
