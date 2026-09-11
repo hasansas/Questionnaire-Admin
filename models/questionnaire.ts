@@ -7,11 +7,14 @@ export type QuestionnaireScoringType =
   | 'total_score'
   | (string & {})
 
+export type QuestionnaireScoringMode = 'points' | 'percentage' | (string & {})
+
 export type QuestionnaireOptionsMode = 'fixed' | 'per_question' | (string & {})
 
 export interface QuestionnaireFixedOptionModel {
   label: string
   scoreValue: number
+  isCorrect: boolean
   sortOrder: number
 }
 
@@ -38,6 +41,7 @@ export interface QuestionnaireModel {
   version: number
 
   scoringType: QuestionnaireScoringType
+  scoringMode: QuestionnaireScoringMode
   showResultToUser: boolean
   optionsMode: QuestionnaireOptionsMode
   fixedOptionsJson: QuestionnaireFixedOptionModel[]
@@ -73,12 +77,13 @@ export const createDefaultQuestionnaire = (): QuestionnaireModel => ({
   version: 1,
 
   scoringType: 'multi_dimension',
+  scoringMode: 'points',
   showResultToUser: true,
   optionsMode: 'fixed',
   fixedOptionsJson: [
-    { label: 'Setuju', scoreValue: 2, sortOrder: 1 },
-    { label: 'Ragu', scoreValue: 1, sortOrder: 2 },
-    { label: 'Tidak setuju', scoreValue: 0, sortOrder: 3 },
+    { label: 'Setuju', scoreValue: 2, isCorrect: false, sortOrder: 1 },
+    { label: 'Ragu', scoreValue: 1, isCorrect: false, sortOrder: 2 },
+    { label: 'Tidak setuju', scoreValue: 0, isCorrect: false, sortOrder: 3 },
   ],
 
   isFeatured: false,
@@ -124,6 +129,7 @@ function normalizeFixedOptions(
         : typeof o?.score_value === 'number'
           ? o.score_value
           : Number(o?.scoreValue ?? o?.score_value ?? 0),
+    isCorrect: Boolean(o?.isCorrect ?? o?.is_correct ?? false),
     sortOrder:
       typeof o?.sortOrder === 'number'
         ? o.sortOrder
@@ -214,6 +220,8 @@ export function normalizeQuestionnaire(
 
     scoringType:
       (item?.scoringType as QuestionnaireScoringType) ?? fallback.scoringType,
+    scoringMode:
+      ((item as any)?.scoringMode as QuestionnaireScoringMode) ?? fallback.scoringMode,
     showResultToUser:
       typeof item?.showResultToUser === 'boolean'
         ? item.showResultToUser
@@ -269,6 +277,7 @@ export type QuestionnaireFormModel = Pick<
   | 'status'
   | 'version'
   | 'scoringType'
+  | 'scoringMode'
   | 'showResultToUser'
   | 'optionsMode'
   | 'fixedOptionsJson'
@@ -353,6 +362,8 @@ export function normalizeQuestionnaireForm(
 
     scoringType:
       (item?.scoringType as QuestionnaireScoringType) ?? fallback.scoringType,
+    scoringMode:
+      ((item as any)?.scoringMode as QuestionnaireScoringMode) ?? fallback.scoringMode,
     showResultToUser:
       typeof item?.showResultToUser === 'boolean'
         ? item.showResultToUser

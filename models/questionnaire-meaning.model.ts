@@ -42,6 +42,8 @@ export interface QuestionnaireMeaningBulkCreateItemModel {
   ruleJson: Record<string, any>;
   resultCode: string;
   resultLabel: string;
+  description?: string;
+  recommendations?: string[];
   priority: number;
 }
 

@@ -427,12 +427,18 @@
                     :key="option.key"
                     class="question-preview-option"
                     :class="{
-                      active: option.scoreValue === highestOptionScore,
+                      active: isPercentageMode
+                        ? option.isCorrect
+                        : option.scoreValue === highestOptionScore,
                     }"
                   >
                     <v-icon
                       :icon="
-                        option.scoreValue === highestOptionScore
+                        (
+                          isPercentageMode
+                            ? option.isCorrect
+                            : option.scoreValue === highestOptionScore
+                        )
                           ? 'lucide:circle-dot'
                           : 'lucide:circle'
                       "
@@ -447,7 +453,15 @@
                     </v-avatar>
                     <span>{{ option.label }}</span>
                     <v-spacer />
-                    <v-chip size="x-small" variant="tonal">
+                    <v-chip
+                      v-if="isPercentageMode"
+                      size="x-small"
+                      variant="tonal"
+                      :color="option.isCorrect ? 'success' : undefined"
+                    >
+                      {{ option.isCorrect ? "Correct" : "Wrong" }}
+                    </v-chip>
+                    <v-chip v-else size="x-small" variant="tonal">
                       {{ option.scoreValue }}
                     </v-chip>
                   </article>
@@ -896,7 +910,7 @@
                           </div>
 
                           <v-row dense class="mt-2">
-                            <v-col cols="12" md="7">
+                            <v-col cols="12" :md="isPercentageMode ? 8 : 7">
                               <v-text-field
                                 v-model.trim="o.label"
                                 label="Label"
@@ -907,7 +921,21 @@
                                 hide-details="auto"
                               />
                             </v-col>
-                            <v-col cols="12" md="5">
+                            <v-col
+                              v-if="isPercentageMode"
+                              cols="12"
+                              md="4"
+                              class="d-flex align-center"
+                            >
+                              <v-checkbox
+                                v-model="o.isCorrect"
+                                label="Correct"
+                                density="compact"
+                                color="success"
+                                hide-details
+                              />
+                            </v-col>
+                            <v-col v-else cols="12" md="5">
                               <v-text-field
                                 v-model.number="o.scoreValue"
                                 label="Score"
@@ -1019,6 +1047,9 @@ const questionnaireId = computed(() => props.model?.id || "");
 const optionsMode = computed(() => props.model?.optionsMode || "fixed");
 const isMultiDimension = computed(
   () => props.model?.scoringType === "multi_dimension",
+);
+const isPercentageMode = computed(
+  () => props.model?.scoringMode === "percentage",
 );
 
 const questionsStore = useQuestionnaireQuestions(questionnaireId.value);
@@ -1391,6 +1422,7 @@ function buildLocalQuestionFromForm(
           key: option.key || `option_${index + 1}`,
           label: option.label,
           scoreValue: option.scoreValue,
+          isCorrect: Boolean(option.isCorrect),
           sortOrder: index + 1,
           optionMode: option.optionMode,
           imageUrl: option.mediaPreviewUrl,
@@ -1798,6 +1830,7 @@ type LocalOption = {
   key?: string;
   label: string;
   scoreValue: number;
+  isCorrect: boolean;
   sortOrder?: number;
   optionMode: "text" | "image";
   mediaId: string;
@@ -1892,6 +1925,7 @@ function createLocalOption(overrides: Partial<LocalOption> = {}): LocalOption {
     __localId: crypto.randomUUID(),
     label: "",
     scoreValue: 0,
+    isCorrect: false,
     optionMode: "text",
     mediaId: "",
     mediaPreviewUrl: null,
@@ -1983,6 +2017,7 @@ function openEditDialog(item: QuestionnaireQuestionModel) {
         key: o.key,
         label: o.label,
         scoreValue: Number(o.scoreValue ?? 0),
+        isCorrect: Boolean(o.isCorrect),
         sortOrder: Number(o.sortOrder ?? 1),
         optionMode: o.optionMode === "image" ? "image" : "text",
         mediaId: o.media?.mediaId ?? "",
@@ -2073,7 +2108,9 @@ async function handleDimensionSave() {
         : "Dimension updated.",
       { color: "success" },
     );
-    closeDialog();
+    if (dialogMode.value === "create") {
+      closeDialog();
+    }
   } catch (err: any) {
     dialogError.value =
       err?.response?.data?.error?.message ||
@@ -2269,6 +2306,15 @@ async function handleSave() {
     return;
   }
 
+  if (
+    optionsMode.value !== "fixed" &&
+    isPercentageMode.value &&
+    !editForm.options.some((o) => o.isCorrect)
+  ) {
+    dialogError.value = "Mark at least one option as correct.";
+    return;
+  }
+
   saving.value = true;
   try {
     const payload: any = {
@@ -2284,6 +2330,7 @@ async function handleSave() {
       options: editForm.options.map((o: LocalOption) => ({
         label: o.label.trim(),
         scoreValue: Number(o.scoreValue),
+        isCorrect: Boolean(o.isCorrect),
         optionMode: o.optionMode,
         mediaId: o.optionMode === "image" ? o.mediaId : null,
       })),
@@ -2298,6 +2345,7 @@ async function handleSave() {
       payload.options = editForm.options.map((o: LocalOption) => ({
         label: o.label.trim(),
         scoreValue: Number(o.scoreValue),
+        isCorrect: Boolean(o.isCorrect),
         optionMode: o.optionMode,
         mediaId: o.optionMode === "image" ? o.mediaId : null,
       }));
@@ -2351,7 +2399,6 @@ async function handleSave() {
       upsertLocalQuestion(buildLocalQuestionFromForm(res?.data, id));
       selectedQuestionId.value = id;
       snack.open("Changes saved.", { color: "success" });
-      closeDialog();
 
       return;
     }
