@@ -82,11 +82,7 @@
             <!-- Bands -->
             <v-window-item value="bands">
               <div class="pa-4">
-                <v-card rounded="xl" variant="outlined" class="sb-card pa-4">
-                  <div class="pa-4">
-                    <QuestionnaireScoreBands :model="questionnaire" />
-                  </div>
-                </v-card>
+                <QuestionnaireScoreBands :model="questionnaire" />
               </div>
             </v-window-item>
 
@@ -146,7 +142,8 @@ async function fetchStats(): Promise<void> {
   const qId = questionnairenId.value;
   if (!qId || !questionnaire.value) return;
 
-  const isMultiDimension = questionnaire.value.scoringType === "multi_dimension";
+  const isMultiDimension =
+    questionnaire.value.scoringType === "multi_dimension";
 
   // Deliberately bypass useQuestionnaireQuestions/useQuestionnaireDimensionStore
   // here — those are singletons keyed by questionnaireId, shared with the
@@ -188,7 +185,7 @@ async function fetchStats(): Promise<void> {
         .then((res: any) => {
           if (res.success) stats.dimensions = res.data?.pagination?.total ?? 0;
         })
-        .catch(() => {})
+        .catch(() => {}),
     );
   }
 

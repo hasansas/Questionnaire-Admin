@@ -142,10 +142,69 @@ export function useQuestionnaireMeaningsStore(questionnaireId: string) {
       return normalized;
     }
 
+    /**
+     * Lightweight completion check for a rule type — does NOT touch
+     * `possibleMaps` (unlike `fetchPossibleMeaningMaps`), so it's safe to
+     * call for rule types other than the one currently selected in the UI.
+     */
+    async function fetchRuleTypeCompletion(
+      ruleType: MeaningRuleType
+    ): Promise<{ ruleType: MeaningRuleType; total: number; complete: boolean }> {
+      const res = await api.get(
+        `/v1/questionnaires/${questionnaireId}/meaning-map-options`,
+        {
+          ruleType,
+          onlyUnused: false,
+        }
+      );
+
+      if (!res.success) {
+        throw new Error(res.error || "Failed to check rule type completion.");
+      }
+
+      const raw = (res.data?.data ?? res.data) as any;
+      const items = Array.isArray(raw?.items) ? raw.items : [];
+      const total = items.length;
+      const complete =
+        total > 0 && items.every((item: any) => Boolean(item?.isUsed));
+
+      return { ruleType, total, complete };
+    }
+
+    async function generateMeaningsPrompt(
+      ruleType: MeaningRuleType,
+      onlyUnused: boolean = true
+    ): Promise<{
+      ruleType: MeaningRuleType;
+      totalCombinations: number;
+      prompt: string;
+    }> {
+      const res = await api.get(
+        `/v1/questionnaires/${questionnaireId}/meanings/prompt`,
+        {
+          ruleType,
+          onlyUnused,
+        }
+      );
+
+      if (!res.success) {
+        throw new Error(res.error || "Failed to generate prompt.");
+      }
+
+      const raw = (res.data?.data ?? res.data) as any;
+      return {
+        ruleType: (String(raw?.ruleType ?? ruleType) || ruleType) as MeaningRuleType,
+        totalCombinations: Number.isFinite(Number(raw?.totalCombinations))
+          ? Number(raw.totalCombinations)
+          : 0,
+        prompt: String(raw?.prompt ?? ""),
+      };
+    }
+
     async function bulkCreateFromMaps(
       items: QuestionnaireMeaningBulkCreateItemModel[]
     ): Promise<QuestionnaireMeaningModel[]> {
-      const res = await api.post(
+      const res = await api.put(
         `/v1/questionnaires/${questionnaireId}/meanings/bulk-create-from-maps`,
         {
           items,
@@ -153,7 +212,7 @@ export function useQuestionnaireMeaningsStore(questionnaireId: string) {
       );
 
       if (!res.success) {
-        throw new Error(res.error || "Failed to create meanings.");
+        throw new Error(res.error || "Failed to save meanings.");
       }
 
       return refresh();
@@ -200,6 +259,8 @@ export function useQuestionnaireMeaningsStore(questionnaireId: string) {
       fetchAll,
       fetchMeanings,
       fetchPossibleMeaningMaps,
+      fetchRuleTypeCompletion,
+      generateMeaningsPrompt,
       bulkCreateFromMaps,
       updateMeaning,
       deleteMeaning,

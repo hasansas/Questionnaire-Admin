@@ -101,6 +101,14 @@
                 : "Total score"
             }}
           </span>
+          <v-chip
+            v-if="item.scoringMode === 'percentage'"
+            size="x-small"
+            variant="tonal"
+            color="success"
+          >
+            %
+          </v-chip>
         </div>
       </template>
 
@@ -267,10 +275,10 @@ const columns: SbTableColumn<QuestionnaireModel>[] = [
   { title: "Questionnaire", key: "questionnaire", sortable: true },
   { title: "Scoring", key: "scoringType", sortable: true },
   { title: "Options Mode", key: "optionsMode", sortable: true },
-  { title: "Result Visible", key: "showResultToUser", sortable: true },
+  // { title: "Result Visible", key: "showResultToUser", sortable: true },
   { title: "Status", key: "status", sortable: true },
   { title: "Estimated Time", key: "estimatedTimeMinutes", sortable: true },
-  { title: "Updated", key: "updatedAt", sortable: true },
+  // { title: "Updated", key: "updatedAt", sortable: true },
   { title: "", key: "language", sortable: true },
   { title: "", key: "actions", sortable: false, align: "end" },
 ];

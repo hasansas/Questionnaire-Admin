@@ -23,6 +23,7 @@ export interface QuestionnaireQuestionOptionModel {
   label: string
   optionMode: QuestionnaireOptionMode
   scoreValue: number
+  isCorrect: boolean
   sortOrder: number
   media?: QuestionnaireQuestionMediaModel | null
   imageUrl: string | null
@@ -116,6 +117,7 @@ export function normalizeQuestionnaireQuestionOption(
     label: String(item?.label ?? ""),
     optionMode: (item as any)?.optionMode === "image" ? "image" : "text",
     scoreValue: toNumber((item as any)?.scoreValue, 0),
+    isCorrect: Boolean((item as any)?.isCorrect),
     sortOrder: toNumber((item as any)?.sortOrder, 1),
     media: normalizeQuestionnaireQuestionMedia((item as any)?.media, imageUrl),
     imageUrl,

@@ -101,18 +101,47 @@
                   class="mb-4"
                 />
 
-                <v-select
-                  v-model="form.scoringType"
-                  label="Scoring Type"
-                  :items="scoringTypeOptions"
-                  variant="outlined"
-                  rounded="lg"
-                  density="comfortable"
-                  :rules="[rules.required]"
-                  prepend-inner-icon="lucide:layers"
-                  hide-details="auto"
-                  class="mb-4"
-                />
+                <v-row>
+                  <v-col cols="12" md="6">
+                    <v-select
+                      v-model="form.scoringType"
+                      label="Scoring Type"
+                      :items="scoringTypeOptions"
+                      variant="outlined"
+                      rounded="lg"
+                      density="comfortable"
+                      :rules="[rules.required]"
+                      prepend-inner-icon="lucide:layers"
+                      hide-details="auto"
+                      class="mb-4"
+                    />
+                  </v-col>
+
+                  <v-col cols="12" md="6">
+                    <v-select
+                      v-model="form.scoringMode"
+                      label="Scoring Mode"
+                      :items="scoringModeOptions"
+                      variant="outlined"
+                      rounded="lg"
+                      density="comfortable"
+                      :rules="[rules.required]"
+                      prepend-inner-icon="lucide:percent"
+                      hide-details="auto"
+                      class="mb-4"
+                    />
+                  </v-col>
+                </v-row>
+
+                <div
+                  v-if="form.scoringMode === 'percentage'"
+                  class="text-caption text-medium-emphasis mb-4"
+                >
+                  Percentage mode: options carry no score value — mark the
+                  correct answer(s) on each question/option instead. Result
+                  is computed as % correct (per dimension + overall, for
+                  multi-dimension).
+                </div>
 
                 <v-row>
                   <v-col cols="12" md="6">
@@ -497,7 +526,17 @@
                                         />
                                       </v-col>
 
-                                      <v-col cols="4">
+                                      <v-col v-if="form.scoringMode === 'percentage'" cols="4" class="d-flex align-center">
+                                        <v-checkbox
+                                          v-model="item.isCorrect"
+                                          label="Correct"
+                                          density="comfortable"
+                                          color="success"
+                                          hide-details
+                                        />
+                                      </v-col>
+
+                                      <v-col v-else cols="4">
                                         <v-text-field
                                           v-model.number="item.scoreValue"
                                           label="Score"
@@ -731,6 +770,21 @@
 
                         <v-col cols="12" md="6">
                           <div class="text-caption text-medium-emphasis">
+                            Scoring mode
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{
+                              form.scoringMode === "percentage"
+                                ? "Percentage"
+                                : form.scoringMode === "points"
+                                  ? "Points"
+                                  : "—"
+                            }}
+                          </div>
+                        </v-col>
+
+                        <v-col cols="12" md="6">
+                          <div class="text-caption text-medium-emphasis">
                             Show result
                           </div>
                           <div class="text-body-2 font-weight-bold">
@@ -915,6 +969,11 @@ const scoringTypeOptions = [
   { title: "Total score", value: "total_score" },
 ];
 
+const scoringModeOptions = [
+  { title: "Points", value: "points" },
+  { title: "Percentage", value: "percentage" },
+];
+
 const openPanel = ref<number | null>(0);
 const validationAttempted = ref(false);
 
@@ -966,8 +1025,13 @@ const fixedOptionsJsonIssue = computed(() => {
   const missingLabel = opts.some((o) => !String(o.label ?? "").trim());
   if (missingLabel) return "Each option must have a label.";
 
-  const missingScore = opts.some((o) => !isFiniteNumber(o.scoreValue));
-  if (missingScore) return "Each option must have a numeric score.";
+  if (form.value.scoringMode === "percentage") {
+    const hasCorrect = opts.some((o) => o.isCorrect === true);
+    if (!hasCorrect) return "At least one option must be marked correct.";
+  } else {
+    const missingScore = opts.some((o) => !isFiniteNumber(o.scoreValue));
+    if (missingScore) return "Each option must have a numeric score.";
+  }
 
   const badOrder = opts.some((o) => !(Number(o.sortOrder) >= 1));
   if (badOrder) return "Each option order must be at least 1.";
@@ -1058,9 +1122,9 @@ function focusFirstInvalidPanel() {
 
 function resetfixedOptionsJson() {
   form.value.fixedOptionsJson = [
-    { label: "Setuju", scoreValue: 2, sortOrder: 1 },
-    { label: "Ragu", scoreValue: 1, sortOrder: 2 },
-    { label: "Tidak setuju", scoreValue: 0, sortOrder: 3 },
+    { label: "Setuju", scoreValue: 2, isCorrect: false, sortOrder: 1 },
+    { label: "Ragu", scoreValue: 1, isCorrect: false, sortOrder: 2 },
+    { label: "Tidak setuju", scoreValue: 0, isCorrect: false, sortOrder: 3 },
   ];
 }
 
@@ -1070,7 +1134,7 @@ function addFixedOption() {
     : [];
   const nextOrder =
     (arr.reduce((m, o) => Math.max(m, Number(o.sortOrder || 0)), 0) || 0) + 1;
-  arr.push({ label: "", scoreValue: 0, sortOrder: nextOrder });
+  arr.push({ label: "", scoreValue: 0, isCorrect: false, sortOrder: nextOrder });
   form.value.fixedOptionsJson = arr;
 }
 
